@@ -1,0 +1,642 @@
+\chapter{Matrix Factorization Methods}  
+\label{chap:svd}
+
+% \section{The Goal}
+
+Recall the brief introduction in Chapter \ref{chap:prologue}:  Let $A$
+denote the ratings matrix, with the element in row $i$, column $j$
+storing the rating of item $j$ given by user $i$.  Most of $A$ is
+unknown, i.e.\ NA values in R.  We wish to estimate the unknown ones.
+
+Say the dimension of $A$ is $u \times v$.  We wish to find rank-$k$
+matrices $W$ ($u \times k$) and $H$ ($k \times v$) such that  
+
+\begin{equation}
+\label{awh}
+A \approx W H
+\end{equation}
+
+Again, most of the elements of $A$ are unknown.  But because
+it is typically the case that similar users have similar ratings
+patterns, we hope to obtain good estimates of all of $A$ even though
+only a small part of it is known.
+
+This is a form of dimension reduction, with the rank $k$ controlling the
+bias-variance tradeoff.  Typically a good approximation can be achieved with
+
+\begin{equation}
+k \ll \textrm{ rank}(A)
+\end{equation}
+
+There are two main approaches to matrix factorization in recommender
+systems and general machine learning:
+
+\begin{itemize}
+
+\item Singular Value Decomposition (SVD):  This is a ``cousin'' of PCA,
+kind of a ``square root'' of the latter.  There is a function in base R
+for this, \textbf{svd()}.
+
+\item Nonnegative Matrix Factorization (NMF): Here the matrix $A$ has
+nonnegative elements, and one desires the same property for $W$ and $H$.
+This may lead to sparsity in $WH$, and in some cases a helpful
+intepretability.  There are several R packages for this; see below.
+
+\end{itemize} 
+
+Since most of the issues are the same for both methods, we'll mainly stick
+to one, NMF.
+
+\section{Notation}
+
+We'll use the following notation for a matrix $Q$
+
+\begin{itemize}
+
+\item $Q_{ij}$:  element in row $i$, column $j$
+
+\item $Q_{i \cdot}$:  row $i$
+
+\item $Q_{\cdot j}$:  column $j$
+
+\end{itemize}
+
+\section{Synthetic, Representative RS Users}
+
+Note the key relation, which we showed in Section \ref{partmat}:
+
+\begin{equation}
+(WH)_{i \cdot} = \sum_{m=1}^k W_{im} H_{m \cdot}
+\end{equation}
+
+In other words, in (\ref{awh}), we have that:
+
+\begin{itemize}
+
+\item [(a)] The entire vector of predicted ratings by user $i$ can be
+expressed as a linear combination of the rows of $H$.
+
+\item [(b)] Thus the rows of $H$ can be thought of as an ``approximate
+basis'' for the rows of $A$.\footnote{Recall that the term
+\textit{basis} in linear algebra means a linearly independent set of
+vectors that spans the given subspace, i.e.\ any vector in the subspace
+can be expressed as a linear combinations of the basis vectors.} 
+
+\item [(c)] The rows of $H$ can thus be thought of as synthetic
+``users'' who are representative of users in general.  $H_{rs}$ is the
+rating that synthetic user $r$ gives item $s$.
+
+\end{itemize} 
+
+In this manner, we can predict ratings for any user that is already in
+$A$.  but what about an entirely new user?  What we need is the
+coordinates of this new user with respect to the rows of $H$.  We'll see
+how to get these later in the chapter.\footnote{After accumlating enough
+new users, of course, we should update $A$, and thus $W$ and $H$.}
+
+Of course, interchanging the roles of rows and columns above, we have
+that the columns of $W$ serve as an approximate basis for the columns of
+$A$.  In other words, the latter become synthetic, representative items,
+e.g.\ representative movies in the MovieLens data.
+
+\section{The Case of Entirely Known A}
+
+This notion of {\it nonnegative matrix factorization} has become widely
+used in a variety of ML applications in which the matrix $A$ entirely
+known. 
+
+\subsection{Image Classification}
+
+Say we have $n$ image files, each of which has brightness data for $r$
+rows and $c$ columns of pixels.  We also know the class, i.e.\ the
+subject, of each image.  The famous MNIST dataset, for instance,
+consists of 70,000 28x28 images of hand-drawn digits.  Thus the data for
+an image consists of $28^2 = 784$ pixel intensities, each in the range
+0,1,2,...,255.  (255 is fully black, 0 is fully white and the others are
+shades of gray.) We have 10 classes, '0' through '9'.
+
+We wish to predict the classses of new images. Denote the class of
+image $j$ in our original data by $C_j$.
+
+We form a matrix $A$ with $n$ rows and $w = rc$ columns, where the
+$i^{th}$ row, $A_{i \cdot}$ stores the data for the $i^{th}$ image, say
+in row-major order:\footnote{Make sure not to confuse the rows of $A$
+with the rows of an image.} $A_{i \cdot}$ would first store row 1 of
+that image, then store row 2 of the image, and so on.\footnote{For
+simplicity here we will assume greyscale.  For color, each row of $A$
+will consist of three pixel vectors, one for each primary color.}
+
+In the sense stated above, the rows of $H$ serve as synthetic,
+representative images.  Row $i$ of $A$, i.e.\ the $i^{th}$ image in our
+training data, is then approximately a linear combination of the rows of
+$H$, with the coordinates being the elements of row $i$ of $W$.
+
+% So, in predicting the class of a new image, we first need to find the
+% coordinate vector $h$ of that image with respect to the columns of $W$.  
+% We then find the closest $H_{\cdot s}$ to $h$, and guess the class of
+% the new image to be that of image $s$.\footnote{There are lots of
+% variants of this.}
+
+So, just as in the PCA case, we transform our training data, via $A
+\rightarrow W$.  We apply our favorite classification method, say the
+logistic, to this new training data (together with the class vector for
+that data), then use it to classify new data vectors $S$.  
+
+To do the latter, we must find the coordinates of $S$ with respect to the
+rows of $H$.  This means finding the linear combination of rows of $H$
+that is closest to $S, i.e.$
+
+\begin{equation}
+\label{slh}
+\arg\min_l || S - l'H ||
+\end{equation}
+
+When then set $\lambda$ to the minimizing $l$ (we'll see how, shortly),
+and this is the coordinate vector for the new case.
+
+
+
+
+Thus we are going from $rc$ variables to $rk$ of them, where $k$ is the
+chosen rank.  If
+
+\begin{equation}
+k \ll \textrm{ rank}(A)
+\end{equation}
+
+we have a big dimension reduction.
+
+Again, there is the issue of choosing $k$, as with choosing $s$ in PCA,
+and so on.  More on this in Section \ref{chooserank}.
+
+\subsection{Text classification}
+
+Here $A$ consists of, say, word counts. We have a list of $k$ keywords,
+and $d$ documents of known classes (politics, finance, sports etc.).
+Row $i$ of $A$ contains the counts of the various keywords (or maybe
+just a binary variable indicating presence or absence of the word).
+Otherwise, the situation is the same as for image recognition above.
+
+\subsection{Relation to Recommender Systems}
+
+Many RS methods are text-based or even image-based.  Say there is a new
+movie, not user ratings yet at all.  One might compare the movie
+studio's synopsis of the film with those of flims for which we have
+ratings data, and try to predict how well each user would like this
+film.
+
+A more ambiitious approach would be to do the same for images in the film's
+ad trailer.
+
+\subsection{How Do We Minimize (\ref{slh})?}
+\label{howmin}
+
+To answer this question, it will be helpful to keep some concrete
+numbers in mind, say with the MNIST data.  Say we wish a rank of 50.
+Then
+
+\begin{itemize}
+
+\item $A$ is 70000x784;
+
+\item $W$ is 70000x0;
+
+\item $H$ is 50x784;
+
+\item $S$ is 1x784; and
+
+\item $l$ is 50x1.
+
+\end{itemize} 
+
+Keeping these numbers in mind as concrete examples,
+now note that in (\ref{slh}),
+
+\begin{equation}
+\label{slh1}
+|| S - l'H ||^2 = (S - l'H)(S - l'H)'
+\end{equation}
+
+This looks pretty close to (\ref{dab}).  But recall that $S$ and $l'H$
+are row vectors, so (\ref{slh1}) looks slightly different.  Now, using
+the fact from linear algebra that $(UV)' = V'U'$, (\ref{slh1}) says
+
+\begin{equation}
+\label{slh2}
+|| S - l'H ||^2 = (S' - H'l)(S' - H'l)
+\end{equation}
+
+Now it's in the form of (\ref{dab}), so our minimization problem is
+solved!  In (\ref{famouslm}), just set $D$, $A$ and $b$ to $S'$, $H'$
+and $l$, respectively.  This gives us
+
+\begin{equation}
+\lambda = (HH')^{-1} HS'
+\end{equation}
+
+We could compute this directly, using R's matrix operations (for matrix
+inversion, we can use \textbf{solve()}, or for better numerical
+accuracy, \textbf{solve.qr()}), but it's easier to send it to
+\textbf{lm()}, e.g.
+
+\begin{lstlisting}
+lm(s ~ t(h) - 1)$coef
+\end{lstlisting}
+
+The `-1'' tells \textbf{lm()}, ``Don't add a column of 1s to $H'$.''
+
+\section{The R Package NMF}
+
+The R package {\bf NMF} is quite extensive, with many, many options.  In
+its simplest form, though, it is quite easy to use.  For a matrix {\bf
+a} and desired rank {\bf k}, we simply run
+
+\begin{lstlisting}
+> nout <- nmf(a,k)
+\end{lstlisting}
+
+Here the returned value {\bf nout} is an object of class {\bf "NMF"}
+defined in the package.  It uses R's S4 class structure, with
+\lstinline{@} as the delimiter denoting class membership, as opposed to
+\$ as in the S3 case.  
+
+As is the case in many R packages, {\bf "NMF"} objects contain classes
+within classes.  The computed factors are in {\bf nout@fit@W} and {\bf
+nout@fit@H}.
+
+Let's illustrate it in an image context, using the following:
+
+\includegraphics[width=3.6in]{Images/MtRush.png}
+
+Here we have only one image, and we'll store it as a matrix $A$ (rows of
+the matrix corresponding to rows of $A$).  we'll use NMF to compress it,
+not do classification.  First obtain $A$:
+
+\begin{lstlisting}
+> library(pixmap) 
+# read file
+> mtr <- read.pnm('MtRush.pgm') 
+> class(mtr)
+[1] "pixmapGrey"
+attr(,"package")
+[1] "pixmap"
+# mtr is an R S4 object of class "pixmapGrey"
+# extract the pixels matrix
+> a <- mtr@grey
+\end{lstlisting}
+
+Now, perform NMF with rank 50, find the approximation to $A$, and
+display it:
+
+\begin{lstlisting}
+> aout <- nmf(a,50)
+> w <- aout@fit@W
+> h <- aout@fit@H
+> approxa <- w %*% h
+# brightness values must be in [0,1]
+> approxa <- pmin(approxa,1) 
+> mtrnew <- mtr
+> mtrnew@grey <- approxa 
+> plot(mtrnew)  # dispatched to plot.pixmapGrey()
+\end{lstlisting}
+
+Here is the result:
+
+\includegraphics[width=3.6in]{Images/MtRush50.png}
+
+This is somewhat blurry.  The original matrix has dimension $194 \times
+259$, and thus presumably has rank 194.\footnote{One could check this by
+finding the number of nonzero eigenvalues of $A'A$, say by running
+\textbf{prcomp()}.} We've approximated the matrix by one of rank only
+50.  We could use this for compression, and if we had millions of
+images and this amount of blurriness were acceptable, we could take this
+approach.
+
+Actually, there are better ways to compress images, and this was just an
+illustration of the effect of the reduced rank.  Getting back to our
+classification context, the point is:
+
+\begin{itemize}
+
+\item When we use the term \textit{low-rank approximation}, it is indeed
+approximate, as can be seen by the blurriness.  
+
+\item Applying NMF or PCA/SVD to a whole collection of images, e.g.\
+MNIST, further heightens this approximate nature of the process.
+
+\item But we need to do something to avoid overfitting, i.e.\ some kind
+of dimension reduction, and finding a low-rank approximation does that.
+
+\end{itemize} 
+
+\section{Computation}
+
+How are the NMF solutions found?  What is {\bf nmf()} doing internally?
+
+Needless to say, the methods are all iterative, with one approach being
+that of the Alternating Least Squares algorithm AltLS).  It's quite
+intuitive, builds on our previous material and provides insight into NMF
+itself.\footnote{By the way, Alt.\ Least Squares is not the default for
+{\bf nmf()}.  To select it, set {\bf method = 'snmf/r'}.}
+
+And most importantly ---  AltLS is easily adapted to the recommender
+systems setting.  Remember, recommender systems differ fundamentally
+from, say, the image and text classification applications cited earlier,
+due to the fact that some, typically the vast majority, of elements of
+the $A$ matrix are unknown.  
+
+So let's take a look, still assuming for now that $A$ \textit{is}
+competely known.
+
+
+\subsection{Objective Function}
+
+We need an {\it objective function}, a criterion to optimize, in this
+case a criterion for goodness of approximation. Here we will take that
+to be the {\it Frobenius} norm (Section \ref{vecnorms}),
+
+\begin{equation}
+\label{froben}
+\|Q\|_2 = 
+\sqrt{
+\sum_{i,j} Q_{ij}^2
+}
+\end{equation}
+
+So our criterion for error of approximation will be
+
+\begin{equation}
+\label{errawh}
+\|A - WH\|_2
+\end{equation}
+
+This measure is specified in {\bf nmf()} by setting {\bf objective =
+'euclidean'}.
+
+\subsection{Alternating Least Squares}
+
+So, how does Alternating Least Squares work?  Suppose just for a moment
+that we know the exact value of $W$, with $H$ unknown.  Then for each
+$j$ we could minimize
+
+\begin{equation}
+\label{errajwhj}
+\|A_{\cdot j} - W H_{\cdot j}\|_2
+\end{equation}
+
+We are seeking to find $H_{\cdot j}$ that minimizes (\ref{froben}), with
+$A_{\cdot j}$ and $W$ known.  But since the Frobenius norm is just a sum
+of squares, that minimization is just a least-squares problem, i.e.\
+linear regression, just as in Section \ref{howmin}.  We are
+``predicting'' $A_{\cdot j}$ from $W$,
+
+So again in the notation of Section \ref{lmdetails}:
+
+\begin{itemize}
+
+\item The matrix $A$ there is our $W$ here, known.
+
+\item The vector $D$ there is our $A_{\cdot j}$ here, known.
+
+\item The vector $b$ there is our $H_{\cdot j}$ here, unknown and to be
+solved for.
+
+\end{itemize} 
+
+So we compute
+
+\begin{lstlisting}
+> h[,j] <- lm(a[,j] ~ w - 1)$coef
+\end{lstlisting}
+
+for each $j$.\footnote{The -1 specifies that we do not want a constant term in
+the model.}
+
+On the other hand, suppose we know $H$ but not $W$.  We could take 
+transposes,
+
+\begin{equation}
+A' = H' W'
+\end{equation}
+
+and then just interchange the roles of $W$ and $H$ above.  Here a call
+to {\bf lm()} gives us a column of $W'$, thus a row of $W$, and we do
+this for all rows.
+
+Putting all this together, we first choose initial guesses, say random
+numbers, for $W$ and $H$; {\bf nmf()} gives us various choices as to how
+to do this.  Then we alternate: Compute the new guess for $W$ assuming
+$H$ is correct, then choose the new guess for $H$ based on that new $W$,
+and so on.
+
+During the above process, we may generate some negative values.  If so,
+we simply truncate to 0.
+
+\subsection{Back to Recommender Systems:  Dealing with the Missing Values}
+
+In our recommender systems setting, of course, most of $A$ is missing.  But we can easily adapt to that.  In (\ref{errajwhj}), simply replace $A_{\cdot j}$ by the known elements of that vector, and replace $W$ by the corresponding rows.  Then proceed as before.
+
+% \subsubsection{Multiplicative Update}
+% 
+% Alternating Least Squares is appealing in several senses.  At each
+% iteration, it is minimizing a {\it convex} function, meaning in essence
+% that there is a unique local and global minimum; it is easy to
+% implement, since there are many least-squares routines publicly
+% available, such as {\bf lm()} here; and above all, it has a nice
+% interpretation, predicting columns of $A$.
+% 
+% Another popular algorithm is {\it multiplicative update}, due to Lee and
+% Seung.  Here are the update formulas for $W$ given $H$ and {\it vice
+% versa}:
+% 
+% \begin{equation}
+% W \leftarrow W \circ 
+% \frac
+% {AH'}
+% {WHH'}
+% \end{equation}
+% 
+% \begin{equation}
+% H \leftarrow H \circ 
+% \frac
+% {W'A}
+% {W'WH}
+% \end{equation}
+% 
+% where $Q \circ R$ and $\frac{Q}{R}$ represent \underline{elementwise}
+% multiplication and division with conformable matrices $Q$ and $R$, and
+% the juxtaposition $QR$ means ordinary matrix multiplication.
+
+\subsection{Convergence and Uniqueness Issues}
+
+There are no panaceas for applications considered here.  Every solution
+has potential problems.  I like to call this the Pillow Theorem ---
+pound down on one fluffy part and another part pops up.
+
+Unlike the PCA case, one issue with NMF is uniqueness --- there might
+not be a unique pair $(W,H)$ that minimizes (\ref{errawh}).\footnote{See
+Donoho and Stodden,￼{\it When Does Non-Negative Matrix Factorization
+Give a Correct Decomposition into Parts?},
+\url{https://web.stanford.edu/~vcs/papers/NMFCDP.pdf}.}  In fact, one
+can see this immediately:  Doubling $W$ while having $H$ leaves the
+product $WH$ unchanged.  Of course, the product is all that really
+counts, but in turn, this may result in convergence problems. The NMF
+documentation recommends running {\bf nmf()} multiple times; it will use
+a different seed for the random initial values each time.
+
+The Alternating Least Squares method used here is considered by some to
+have better convergence properties, since the solution at each iteration
+is unique.  This may come at the expense of slower convergence.
+
+\section{How Do We Choose the Rank?}
+\label{chooserank}
+
+This is not an easy question.  One approach would be to use
+\textbf{prcomp}, or for that matter \textbf{svd()}, to find the
+eigenvalues, then take our rank to be the number of ``large''
+eigenvalues, as discussed in Chapter \ref{chap:linalg}.  
+
+Of course, the typical way rank is chosen is cross validation.
+
+\section{Why Nonnegative?}
+
+In the applications we've mentioned here, we always have $A_{ij} \geq 0$.
+However, that doesn't necesarily mean that we need $W$ and $H$ to be
+nonnegative, and indeed if we were to use PCA, they may not so.  (With
+PCA, even their product could have negative element, which we would
+truncate to 0.)  Why use NMF, i.e.\ why insist that the factors $W$ and
+$H$ themselves be nonnegative?
+
+There are a couple of reasons NMF may be preferable.  First, truncation
+may be questionable if we have a lot of negative values.  But the second
+reason is that NMF may be more useful, as follows:
+
+In a facial image recognition case, say, there is hope that the vectors
+$W_{\cdot j}$ will be {\it sparse}, i.e.\ mostly 0s. Then we might have,
+say, the nonzero elements of $W_{\cdot 1}$ correspond to eyes, $W_{\cdot
+2}$ correspond to nose and so on with other parts of the face.  We are
+then ``summing'' to form a complete face.  This may enable effective
+{\it parts-based recognition}, with helpful interpretations.
+
+In our recommender systems setting, this parts-based effect, NMF would
+give us crisper distinction among the various synthetic users.  This may
+reveal clusters of user behavior, which could be quite helpful to the
+analyst.
+
+\section{Functions in rectools}
+
+The \textbf{recoSystem} package by Chih-Jen Li \textit{et al} has a good
+implementation of NMF for recommender systems (i.e.\ it handles the
+missing values).  However, it uses R6 classes (and is complicated in
+other ways), which are unfamiliar to many R users, so the
+\textbf{rectools} package provides wrappers.  Basic call forms are:
+
+\begin{lstlisting}
+trainReco(ratingsIn,rnk=10,nmf=FALSE)
+predict.RecoS3(recoObj,testSet)
+\end{lstlisting}
+
+Here \textbf{ratingsIn} is the usual three-column (userID,itemID,rating)
+(plus covariates, if any) data frame; \textbf{rnk} is the desired rank;
+\textbf{nmf} is false for SVD, true for NMF; \textbf{recoObj} is the 
+return value from \textbf{trainReco()}; and \textbf{testSet} is the test
+set, in the same format as \textbf{ratingsIn}, minus the ratings column.
+
+The return value from \textbf{trainReco()} is an R S3 object of class
+'RecoS3', with components $P$ and $Q$, corresponding to $W$ and $H'$ in
+our notation.  In the case of covariates (see below), some R
+\textbf{attributes} are also included.
+
+\section{Dealing with Covariates}
+
+The easiest approach to handling covariates is to simply ``subtract them
+out'' for the data via linear regression, then run NMF/SVD on the
+resulting \textit{residuals},\footnote{In regression modeling, the
+values of true Y minus the fitted model are called ``residuals.'' They
+are often used to assess quality of model fit. There is a
+\textbf{residuals}} component in the S3 object returned by
+\textbf{lm().} and finally, at the prediction stage, add the regression
+values back in.
+
+Here are relevant code excerpts:
+
+\textbf{trainReco()}:
+
+\begin{lstlisting}
+hasCovs <- (ncol(ratingsIn) > 3)
+if (hasCovs) {
+    covs <- as.matrix(ratingsIn[, -(1:3)])
+    lmout <- lm(ratingsIn[, 3] ~ covs)
+    # now make fake ratings; for NMF, must be >= 0
+    minResid <- min(lmout$residuals)  
+    ratingsIn[, 3] <- lmout$residuals - minResid
+}
+...
+r$train(train_set, opts = list(dim = rnk, nmf = nmf))
+result <- r$output(out_memory(), out_memory())
+attr(result, "hasCovs") <- hasCovs
+if (hasCovs) {
+    attr(result, "covCoefs") <- coef(lmout)
+    # add the residuals back in
+    attr(result, "minResid") <- minResid
+}
+class(result) <- "RecoS3"
+result
+\end{lstlisting}
+
+\textbf{predict.RecoS3()}:
+
+\begin{lstlisting}
+if (hasCovs) {
+     tmp <- c(1, testCovs[i, ]) %*% covCoefs + minResid
+}
+pred[i] <- p[j, ] %*% q[k, ] + tmp
+\end{lstlisting}
+
+In the covariates case, \textbf{trainReco()} replaces the ratings by the
+residuals, so the product $WH$ approximates them rather than the
+original $A$.  Then in \textbf{predict.RecoS3()}, after multiplying
+$W_{i \cdot}$ and $H_{\cdot j}$, the estimated regression function value
+for the given case is added back in.
+
+The role of \textbf{minResid} is this:  If we are using NMF, fitting to the
+residuals, which are both positive and negative, makes no sense.  So, we
+subtract the (algebraically) smallest residual, resulting in only
+nonnegative values.  Again, this is added back in later on.
+
+\section{Regularization}
+
+Recall Section \ref{dosomething}, where we introduced the idea of
+shrinkage as a guard against overfitting.
+
+For NMF (or SVD), we probably don't want to force some predicted ratings
+to 0, the $l_2$ norm is a popular choice.  Thus, instead of choosing $W$ and
+$H$ to minimize (\ref{errawh}), we minimize
+
+\begin{equation}
+||A - WH||_2 + \gamma_1 ||W||_2^2 + \gamma_2 ||H||_2^2
+\end{equation}
+
+Both $\gamma_1$ and $\gamma_2$ are tuning parameters.
+
+\section{``Bias'' Removal}
+
+As noted in Chapter \ref{chap:knn}, some users tend to give more liberal
+ratings, while others tend to be more cautious.  Similarly, some items
+tend to be rated more highly than others.  One way of dealing with
+that is to adjust our ratings matrix $A$ accordingly:  For each user
+$i$, let $R_i$ denote the average of all known ratings from that user.
+Also, for each item $j$ let $S_j$ denote the average of all known ratings
+for that item.  These are termed \textit{biases}. Then do the replacement
+
+\begin{equation}
+A_{uv} \leftarrow A_{uv} - R_u - S_v
+\end{equation}
+
+and then form the matrix factorization as usual.  In the end, after
+estimating the unknown entries in $A$, restore
+the subtracted quantities:
+
+\begin{equation}
+A_{uv} \leftarrow A_{uv} + R_u + S_v
+\end{equation}

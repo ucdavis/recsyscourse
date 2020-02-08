@@ -1,0 +1,195 @@
+\chapter{Nearest-Neighbor Methods}  
+\label{chap:knn} 
+
+Recall our preview in Chapter \ref{chap:prologue}.
+\textit{Collaborative filtering} RS methods are based on known user-item
+ratings, as opposed to, e.g., methods based on textual user evaluations.
+All of the methods in that chapter fall into this category.  The most
+natural, and earliest, such method was \textit{user-based filtering},
+also known as \textit{memory-based filtering}.
+
+\section{Notation}
+
+As before, let $A$ denote the ratings matrix.  The element $a_{ij}$ in
+row $i$, column $j$, is the rating that user $i$ has given/would give to
+item $j$. In the latter case, $a_{ij}$ is unknown, and its predicted value
+will be denoted by $\widehat{a}_{ij}$.  Following R notation, we will
+refer to the unknown values as NAs.
+
+Note that for large applications, the matrix $A$ is far too large to
+store in memory.  One could resort to storage schemes for
+\textit{sparse} matrices, e.g.\ \textit{Compresed Row Storage}, but here
+we will simply use $A$ to help explain concepts.  In the
+\textbf{rectools} package, the input data is run through
+\textbf{formUserData()} and algorithms use that instead of $A$.  This
+function orgamizes the data into an R list, one element per user.  Each
+such element records the ratings made by that user. 
+
+Let's refer to a new case to be predicted as NC.
+
+\section{User-Based Filtering}
+
+In predicting how a given user would rate a given item, we first find
+all users that have rated the given item, then determine which of those
+users are most similar to the given user.  Our prediction is then the
+average of the ratings of the given item among such ``similar'' users.
+A corresponding approach based on items is used as well.  We focus on
+such methods in this chapter.
+
+\subsection{Matrix View}
+
+In terms of the matrix $A$ above, we first look at column $j$.  We cull
+the rows having non-NA values in this column, and for each of those
+rows, find the distance of that row to the NC.  Take the $k$ closest
+rows, and finally, average the value of $a_{mj}$ to get
+$\widehat{a}_{ij}$ (with $m$ ranging over the row numbers of the
+selected rows).
+
+\subsection{(One) Implementation}
+
+Below is code from \textbf{rectools} (somewhat simplified).  The
+arguments are:
+
+\begin{itemize}
+
+\item \textbf{origData:}  The original dataset, after having been run through
+\textbf{formUserData()}. 
+
+\item \textbf{newData:}  The element of \textbf{origData} for NC.\footnote{If
+NC is new, not in the database (called \textit{cold start}), we
+synthesize a list element for it, assuming NC has rated at least one
+item.}
+
+\item \textbf{newItem:}  ID number of the item to be predicted for NC.
+
+\item k:  The number(s) of nearest neighbors.  Can be a vector.
+
+\end{itemize} 
+
+\begin{lstlisting}[numbers=left]
+predict.usrData <- function(origData,newData,newItem,k)
+{
+   # we first need to narrow origData down to the users who 
+   # have rated newItem
+
+   # here oneUsr is one user record in origData; the function will look for a 
+   # j such that element j in the items list for this user matches the item 
+   # of interest, newItem; (j,rating) will be returned
+
+   checkNewItem <- function(oneUsr) {
+      whichOne <- which(oneUsr$itms == newItem)
+      if (length(whichOne) == 0) {
+         return(c(NA,NA))
+      } else return(c(whichOne,oneUsr$ratings[whichOne]))
+   }
+
+   found <- as.matrix(sapply(origData,checkNewItem))
+   # description of 'found':
+   # found is of dimensions 2 by number of users in training set
+   # found[1,i] = j means origData[[i]]$itms[j] = newItem;
+   # found[1,i] = NA means newItem wasn't rated by user i
+   # found[2,i] = rating in the non-NA case
+
+   # we need to get rid of the users who didn't rate newItem
+   whoHasIt <- which(!is.na(found[1,]))
+   origDataRatedNI <- origData[whoHasIt]
+   # now origDataRatedNI only has the relevant users, the ones who 
+   # have rated newItem, so select only those columns of the found matrix
+   found <- found[,whoHasIt,drop=FALSE]
+
+   # find the distance from newData to one user y of origData; defined for
+   # use in sapply() below
+   onecos <- function(y) cosDist(newData,y,wtcovs,wtcats)
+   cosines <- sapply(origDataRatedNI,onecos)
+   # the vector cosines contains the distances from newData to all the
+   # original data points who rated newItem
+
+   # action of findKnghbourRtng(): find the mean rating of newItem in
+   # origDataRatedNI, for ki (= k[i]) neighbors
+   #
+   # if ki > neighbours present in the dataset, then the 
+   # number of neighbours is used
+   findKnghbourRtng <- function(ki){
+     ki <- min(ki, length(cosines))
+     # nearby is a vector containing the indices of the ki closest neighbours
+     nearby <- order(cosines,decreasing=FALSE)[1:ki]
+     mean(as.numeric(found[2, nearby]))
+   }
+   sapply(k, findKnghbourRtng)
+}
+\end{lstlisting}
+
+Note that the distances were computed by the function
+\textbf{cosDist()}, which computes a ``cosine'' similarity (not really a
+distance).  It could be replaced by a function of the analyst's choice.
+More on this below.
+
+\section{Regression Analog}
+
+Recall the method of k-nearest neighbor (kNN) regression estimation from
+Chapter \ref{chap:infra2}, involving prediction of weight from height
+and age:
+
+\begin{quote}
+To estimate $E(W ~| H=70, A=28)$, we could find, say, the 25 people in our
+sample for whom $(H,A)$ is closest to (70,28), and average their weights
+to produce our estimate of $E(W ~| H=70, A=28)$.
+\end{quote}
+
+So kNN RS is really the same as kNN regression
+
+\section{Choosing k}
+
+As we have already seen with RS, regression and machine learning methods, 
+the typical way to choose a model is to use cross-validation.  This is
+true for kNN RS as well; we can choose the value of $k$ via
+cross-validation.  However, a curious property may streamline the
+process, as follows.
+
+Note this line in \textbf{predict.usrData()}:
+
+\begin{lstlisting}
+ki <- min(ki, length(cosines))
+\end{lstlisting}
+
+What is happeing here?  Say for a particular situation, there are 52
+rows in $A$ having ratings for the item specified in NC.  Then of course
+as we increase our number of nearest neighbors beyond 52, we will get
+identical results.  Such a situation will occur if the $A$ matrix is not
+too \textit{dense}, i.e.\ does not have a high proportion of non-NA
+values.  
+
+\section{Defining Distance}
+
+\section{Item-Based Filtering}
+
+\section{Covariates}
+
+\section{Edge Bias}
+
+
+\iffalse
+
+idxs <- sample(1:nrow(ml),1000)
+ml <- ml[,1:3]
+mltrn <- ml[-idxs,]
+mltst <- ml[idxs,]
+library(rectools)
+ud <- formUserData(mltrn)
+
+k <- 5
+z <- apply(mltst[,-3],1,pn); mean(abs(z-mltst[,3]),na.rm=T)
+
+predname <- function(userData,oneInputRow,k)
+{
+   usr <- oneInputRow[1]
+   itm <- oneInputRow[2]
+   udElement <- userData[[as.character(usr)]]
+   predict(userData,udElement,itm,k)
+}
+
+pn <- function(oneInputRow) predname(ud,oneInputRow,k)
+
+
+\fi
+

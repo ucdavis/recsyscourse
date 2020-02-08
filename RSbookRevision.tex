@@ -1,0 +1,34 @@
+\documentclass[11pt]{book}
+
+\include{Includes/Includes}
+
+\begin{document} 
+
+\thispagestyle{empty}
+\input Cover 
+\pagecolor{white}
+
+\frontmatter
+% \addcontentsline{toc}{chapter}{Preface}
+% \input Preface
+% \input ListOfSymbols
+\input AuthorBio
+
+\mainmatter
+\tableofcontents
+\input Prologue
+\input Infra1Revision
+\input Infra2Revision
+\input SVDRevision
+\input kNN
+\input Mixed
+\input Covars
+
+\appendix
+\input R5MinIntro
+
+\bibliographystyle{acm}
+\bibliography{RSbook}
+
+\end{document}
+
