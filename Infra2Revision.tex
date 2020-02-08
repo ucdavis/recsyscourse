@@ -890,6 +890,8 @@ of \textit{overfitting}.
 \subsection{What Is Overfitting?}
 \label{norelation}
 
+\subsubsection{Toy Example}
+
 Suppose we have just one predictor, and $n$ data points.  If we fit a
 polynomial model of degree $n-1$, the resulting curve will pass through
 all $n$ points, a ``perfect'' fit.  For instance:
@@ -944,6 +946,91 @@ Clearly that ``perfect fit'' is illusory, ``noise fitting.''  Our
 ability to predict future cases would not be good.  This is
 \textit{overfitting}.
 
+\subsubsection{Real Example}
+\label{prgengex}
+
+\iffalse
+library(regtools)
+library(polyreg)
+data(prgeng)
+pe <- prgeng[,c(1:4,6,5)]
+head(pe)
+tstidxs <- sample(1:nrow(prgeng),1000) 
+petrn <- pe[-tstidxs,]
+petst <- pe[tstidxs,]
+for (i in 1:10) {
+   pfout <- polyFit(petrn,deg=i)
+   preds <- predict(pfout,petst)
+   print(mean(abs(preds-petst$wageinc)))
+}
+\fi
+
+Let's illustrate this on the dataset \textbf{prgeng}, assembled from the
+2000 US census.  It consists of wage and other information on
+20090 programmers and engineers in Silicon Valley.  This dataset is
+included in the R \textbf{polyreg} package, which fits polynomial models
+as we saw in Section \ref{poly} above.\footnote{Available from
+\url{github.com/matloff}.}  
+
+As usual, let's take a glance at the data:
+
+\begin{lstlisting}
+> head(prgeng)
+       age educ occ sex wageinc wkswrkd
+1 50.30082   13 102   2   75000      52
+2 41.10139    9 101   1   12300      20
+3 24.67374    9 102   2   15400      52
+4 50.19951   11 100   1       0      52
+5 51.18112   11 100   2     160       1
+6 57.70413   11 100   1       0       0
+\end{lstlisting}
+
+Note that age, education, occupation and sex are categorical variables,
+which R will convert to dummies for us.  Here is the code:
+
+\begin{lstlisting}
+library(regtools)
+library(polyreg)
+data(prgeng)
+pe <- prgeng[,c(1:4,6,5)]
+head(pe)
+tstidxs <- sample(1:nrow(prgeng),1000) 
+petrn <- pe[-tstidxs,]
+petst <- pe[tstidxs,]
+for (i in 1:4) {
+   pfout <- polyFit(petrn,deg=i)
+   preds <- predict(pfout,petst)
+   print(mean(abs(preds-petst$wageinc)))
+   print(length(pfout$fit$coefficients))
+}
+\end{lstlisting}
+
+And the resulting Mean Absolute Prediction Errors and p Values :
+
+\bigskip
+
+\begin{tabular}{|r|r|r|}
+\hline
+degre & MAPE & p \\
+\hline
+1 & 24248.43 & 24 \\
+\hline
+2 & 23468.56 & 164 \\
+\hline
+3 & 24367.16 & 496 \\  
+\hline
+4 & 818934.9 & 1020 \\
+\hline
+\end{tabular}
+
+Remember, $p$ is the number of predictors, including all the dummies.
+When we have a degree 2 model, we have all the squared terms (except for
+the dummies), and the cross-product terms, e.g. interaction between age
+and gender.  So $p$ increase pretty rapidly with degree.
+
+In any event, though, the effects of overfitting are clear.
+
+\subsection{Bias vs.\ Variance}
 
 Let's take a closer look, in an RS context.  Say we believe
 (\ref{mfinteraction}) is a good model for the setting described in that
@@ -1180,88 +1267,140 @@ This also implies that cross-validation is no panacea either.  If we
 compare a large number of models, there is a danger that one looks
 really good when it is not.
 
-\section{Extended Example}
-\label{prgengex}
+\section{Appendix:  Mathematical Analysis of the Bias vs.\ Variance
+Tradeoff}
 
-\iffalse
-library(regtools)
-library(polyreg)
-data(prgeng)
-pe <- prgeng[,c(1:4,6,5)]
-head(pe)
-tstidxs <- sample(1:nrow(prgeng),1000) 
-petrn <- pe[-tstidxs,]
-petst <- pe[tstidxs,]
-for (i in 1:10) {
-   pfout <- polyFit(petrn,deg=i)
-   preds <- predict(pfout,petst)
-   print(mean(abs(preds-petst$wageinc)))
-}
-\fi
+Suppose we have the samples of men's and women's heights, $X_1,...,X_n$
+and $Y_1,...,Y_n$.  Assume for simplicity that the population variance
+of height is the same for each gender, $\sigma^2$.  The means of the two
+populations are designated by $\mu_1$ and $\mu_2$.
 
-Let's illustrate this on the dataset \textbf{prgeng}, assembled from the
-2000 US census.  It consists of wage and other information on
-20090 programmers and engineers in Silicon Valley.  This dataset is
-included in the R \textbf{polyreg} package, which fits polynomial models
-as we saw in Section \ref{poly} above.\footnote{Available from
-\url{github.com/matloff}.}  
+Say we wish to guess the height of a new person who we know to be a man
+but for whom we know nothing else.  We do not see him, etc.
 
-As usual, let's take a glance at the data:
+Suppose for just a moment that we actually know the distribution of X,
+i.e. the {\it population} distribution of male heights.  What would be
+the best constant g to use as our guess for a person about whom we know
+nothing other than gender?
 
-\begin{lstlisting}
-> head(prgeng)
-       age educ occ sex wageinc wkswrkd
-1 50.30082   13 102   2   75000      52
-2 41.10139    9 101   1   12300      20
-3 24.67374    9 102   2   15400      52
-4 50.19951   11 100   1       0      52
-5 51.18112   11 100   2     160       1
-6 57.70413   11 100   1       0       0
-\end{lstlisting}
+It can be shown that the mean squared error MSE 
 
-Note that age, education, occupation and sex are categorical variables,
-which R will convert to dummies for us.  Here is the code:
+\begin{equation}
+E[(g-X)^2]
+\end{equation}
 
-\begin{lstlisting}
-library(regtools)
-library(polyreg)
-data(prgeng)
-pe <- prgeng[,c(1:4,6,5)]
-head(pe)
-tstidxs <- sample(1:nrow(prgeng),1000) 
-petrn <- pe[-tstidxs,]
-petst <- pe[tstidxs,]
-for (i in 1:4) {
-   pfout <- polyFit(petrn,deg=i)
-   preds <- predict(pfout,petst)
-   print(mean(abs(preds-petst$wageinc)))
-   print(length(pfout$fit$coefficients))
-}
-\end{lstlisting}
+is minimized by setting $g = \mu_1$.  Our best guess for this unseen
+man's height is the mean height of all men in the population.
 
-And the resulting Mean Absolute Prediction Errors and p Values :
+(Note that ``mean'' above and in the following material  means, averaged
+over all possible samples), 
 
-\bigskip
+Of course, we don't know $\mu_1$, but we can do the next-best thing,
+i.e.\ use an estimate of it from our sample.  The natural choice for
+that estimator would be
 
-\begin{tabular}{|r|r|r|}
-\hline
-degre & MAPE & p \\
-\hline
-1 & 24248.43 & 24 \\
-\hline
-2 & 23468.56 & 164 \\
-\hline
-3 & 24367.16 & 496 \\  
-\hline
-4 & 818934.9 & 1020 \\
-\hline
-\end{tabular}
+\begin{equation}
+T_1 = \overline{X},
+\end{equation}
 
-Remember, $p$ is the number of predictors, including all the dummies.
-When we have a degree 2 model, we have all the squared terms (except for
-the dummies), and the cross-product terms, e.g. interaction between age
-and gender.  So $p$ increase pretty rapidly with degree.
+the mean height of men in our sample.
 
-In any event, though, the effects of overfitting are clear.
+But what if our sample size $n$ is really small, say $n = 5$?  That's
+awfully small.  We may wish to consider pooling the women's heights into
+our estimate, in order to get a larger sample.  Then we would estimate
+$\mu_1$ by incorporating the sample mean of women's heights,
+$\overline{Y}$:
+
+\begin{equation}
+T_2 = \frac{\overline{X}+\overline{Y}}{2}, 
+\end{equation}
+
+It may at first seem obvious that $T_1$ is the better estimator.  Women
+tend to be shorter, after all, so pooling the data from the two genders
+would induce a \underline{bias}, defined as  
+
+\begin{equation}
+\textrm{bias = mean of the estimator - true population value}
+\end{equation}
+
+In our context here, $T_2$ would have a negative bias.  On the other
+hand, it can be shown that for any estimator,
+
+\begin{equation}
+\textrm{MSE = variance of the estimator} + \textrm{bias of the
+estimator} ^2
+\end{equation}
+
+In other words, {\it some amount of bias may be tolerable}, if it will
+buy us a subtantial reduction in variance.  After all, women are not
+that much shorter than men, so the bias might not be too bad.
+Meanwhile, the pooled estimate should have lower variance, as it is
+based on $2n$ data points, rather than $n$.
+
+Before continuing, note first that $T_2$ is based on a simpler model
+than is $T_1$, as $T_2$ ignores gender.  We thus refer to $T_1$ as being
+based on the more complex model.
+
+So, the question becomes, which has the smaller MSE, $T_1$ or
+$T_2$?  In other words:
+
+\begin{quote}
+Which is smaller, $E[(T_1 - \mu_1)^2]$ or $E[(T_2 - \mu_1)^2]$?
+\end{quote}
+
+After some elementary math stat operations, one can show that
+$T_1$ is a better predictor than $T_2$ if 
+
+\begin{equation}
+\label{betteriff}
+\left ( \frac{\mu_2-\mu_1}{2} \right)^2 >
+\frac{\sigma^2}{2n}
+\end{equation}
+
+Granted, we don't know the values of the $\mu_1$ and $\sigma^2$, so in a
+real situation, we won't really know whether to use $T_1$ or $T_2$.  But
+the above analysis makes the point that under some circumstances, it
+really is better to pool the data in spite of bias.
+
+So you can see that $T_1$ is better only if either
+
+\begin{itemize}
+
+\item n is large enough, or
+
+\item the difference in population mean heights between men and women is
+large enough, or
+
+\item there is not much variation within each population, e.g. most men
+have very similar heights
+
+\end{itemize}
+
+In other words:
+
+\begin{quote}
+A more complex model is more accurate than a simpler one only if either 
+
+\begin{itemize}
+
+\item [(a)] we have enough data to support it, or
+
+\item [(b)] the complex model is sufficiently different from the simpler one
+
+\end{itemize}
+
+\end{quote}
+
+A very rough, intuitive way to view (a) is that our data is being
+``shared'' by all the parameters to be estimated.  In our example above,
+the simple model had one parameter, $\mu$ while the complex one had two,
+$\mu_1$ and $\mu_2$.  Due to this ``sharing,'' each parameter in the
+complex version has ``a smaller piece of the pie.''
+
+In Section \ref{lmex}, we ran an \textbf{lm()} model with 2624
+parameters, definitely a complex model.  Was $n = 100000$ large enough
+to satisfy (a) above?  We don't know, but again, it raises the issue of
+possible overfitting.
+
 
 
