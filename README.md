@@ -1,2 +1,2 @@
 # recsyscourse
-Textbook on recommender systems.
+Textbook on recommender systems. 
