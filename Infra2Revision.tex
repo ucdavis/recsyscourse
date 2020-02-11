@@ -951,9 +951,11 @@ ability to predict future cases would not be good.  This is
 
 \iffalse
 library(regtools)
-library(polyreg)
+# polyreg does polynomial regression, forming the powers, 
+# cross products etc. and then calling lm()
+library(polyreg)  
 data(prgeng)
-pe <- prgeng[,c(1:4,6,5)]
+pe <- prgeng[,c(1:4,6,5)]  # "Y" variable is assumed last column in polyFit()
 head(pe)
 tstidxs <- sample(1:nrow(prgeng),1000) 
 petrn <- pe[-tstidxs,]
@@ -990,9 +992,11 @@ which R will convert to dummies for us.  Here is the code:
 
 \begin{lstlisting}
 library(regtools)
+# polyreg does polynomial regression, forming the powers, 
+# cross products etc. and then calling lm()
 library(polyreg)
 data(prgeng)
-pe <- prgeng[,c(1:4,6,5)]
+pe <- prgeng[,c(1:4,6,5)]  # "Y" variable is assumed last column in polyFit()
 head(pe)
 tstidxs <- sample(1:nrow(prgeng),1000) 
 petrn <- pe[-tstidxs,]
@@ -1070,8 +1074,11 @@ will increase.  Once we get to the point at which it increases, we are
 \textit{overfitting}.
 
 This is particularly a problem when one has many dummy variables. For
-instance, there are more than 42,000 ZIP Codes in the US; to have a
-dummy for each would almost certainly be overfitting.
+instance, there are more than 42,000 ZIP (postal) codes in the US; to
+have a dummy for each would almost certainly be overfitting.  If we have
+only, say, 100,000 rows in our data, on average each ZIP code would have
+only about 2 rows, hardly enough for a good estimate of the effect of
+that code.
 
 \subsection{Can Anything Be Done about It?}
 \label{dosomething}
