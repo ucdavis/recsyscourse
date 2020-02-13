@@ -356,6 +356,41 @@ average of various pixels in the first picture.  Some of the latter may
 be in locations within the picture that are somewhat far away from the
 3rd row and 52nd column.  This biases the pixel in the second picture.
 
+On the other hand, there definitely is a variance issue.  Let's review
+what this entails.
+
+Recall from Chapter \ref{chap:overfit} that an intuitive way to view the
+variance issue in overfitting is that our data are being ``shared'' by
+the various things we're estimating, so that in a rough sense, each of
+these things has less data to itself.  Less data means more
+sample-to-sample variability, i.e.\ higher variance.  In linear
+regression with $p$ features, we are estimating $p+1$ parameters
+(including $\beta_0$); the larger $p$ is, the larger the variance of the
+estimated $\beta_i$.  Thus in turn we get larger variance to our
+predicted values.  For predicting a new case, different samples will
+give us different predictions, and larger $p$ will give us higher
+variance in our predicted value for that case.
+
+Let $n$ and $m$ denote the number of rows and columns in $A$.  Then $W$
+and $H$ will be of dimensions $n \times k$ and $k \times m$.  Well,
+then, how many parameters are we estimating?  It's
+
+\begin{equation}
+nk + km = k(n+m)
+\end{equation}
+
+So, the larger we make $k$, the larger the variance.
+
+In other words, in predicting a specific $A_{ij}$, our predicted value
+$\widehat{A}_{ij}$ will experience this tradeoff:
+
+\begin{itemize}
+
+\item Larger $k$ means lesser bias in our estimate of $\widehat{A}_{ij}$.
+
+\item Larger $k$ means greater variance in $\widehat{A}_{ij}$.
+
+\end{itemize} 
 
 \section{Computation}
 
