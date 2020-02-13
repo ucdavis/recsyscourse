@@ -325,9 +325,14 @@ r =
 \end{equation}
 
 where $W_i$ is the weight of the i$^{th}$ person in our sample data and
-so on. This is the sum of squared prediction errors.  We take derivatives
-with respect to the $b_k$ to minimize, then set $\widehat{\beta}_k$ to
-the minimizing $b_k$.  
+so on. This is the sum of squared prediction errors.  We take
+derivatives with respect to the $b_k$, set them to 0, then set
+$\widehat{\beta}_k$ to the minimizing $b_k$.  For example, we set
+
+\begin{equation}
+0 = \frac{\partial{r}}{\partial{b_1}} =
+-2 \sum_{i=1}^n [W_i - (b_0 + b_1 H_i + b_2 A_i)] (-H_i)
+\end{equation}
 
 Though R will do the minimizing for us, it is worth having an idea how
 it works, especially as more practice in following matrix-centric
@@ -408,8 +413,9 @@ b = (A'A)^{-1} A'D
 This famous formula is what \textbf{lm()} computes in finding the
 $\widehat{\beta}_k$.
 
-Note that we cannot simply multiply both sides of (\ref{adaab}) by
-$(A')^{-1}$, as $A'$ is nonsquare and thus noninvertible.
+Note that the solution exists and is unique, providing we do not have
+linearly dependent rows in our data, which would cause $A$ to be
+noninvertible.
 
 Note too that in our age/gender MovieLens example above, we should not
 have variables for both male and female.  If we did, we have
@@ -436,7 +442,7 @@ instead of 4.  The same will then be true for $A'A$, so that $(A'A)^{-1}$
 will not exist in (\ref{famouslm}).
 
 In other words, not only would the F column be unnecessary, it would be
-prolematic.
+problematic.
 
 \subsubsection{Polynomial Terms}
 \label{poly}
