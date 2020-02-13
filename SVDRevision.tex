@@ -1,7 +1,10 @@
 \chapter{Matrix Factorization Methods}  
 \label{chap:svd}
 
-% \section{The Goal}
+This chapter covers one of the more popular methods for handling matrix
+factorization problems.
+
+\section{The Setting}
 
 Recall the brief introduction in Chapter \ref{chap:prologue}:  Let $A$
 denote the ratings matrix, with the element in row $i$, column $j$
@@ -16,10 +19,17 @@ matrices $W$ ($u \times k$) and $H$ ($k \times v$) such that
 A \approx W H
 \end{equation}
 
-Again, most of the elements of $A$ are unknown.  But because
-it is typically the case that similar users have similar ratings
-patterns, we hope to obtain good estimates of all of $A$ even though
-only a small part of it is known.
+Note that the $W$ and $H$ that we find will be \textit{fully known},
+with values that will be derived somehow from the known elements of $A$.
+
+Again, most of the elements of $A$ are unknown.  But it is typically the
+case that similar users have similar ratings patterns, and the matrix
+factorization will hopefully exploit that.  We thus hope to obtain good
+estimates of all of $A$ even though only a small part of it is known.  
+
+\textbf{Note that k is a tuning parameter, chosen by the user.}  One
+might use cross-validation in making this choice, comparing performance
+of various values of $k$.
 
 This is a form of dimension reduction, with the rank $k$ controlling the
 bias-variance tradeoff.  Typically a good approximation can be achieved with
@@ -27,6 +37,8 @@ bias-variance tradeoff.  Typically a good approximation can be achieved with
 \begin{equation}
 k \ll \textrm{ rank}(A)
 \end{equation}
+
+\section{Finding W and H}
 
 There are two main approaches to matrix factorization in recommender
 systems and general machine learning:
@@ -101,19 +113,22 @@ e.g.\ representative movies in the MovieLens data.
 
 \section{The Case of Entirely Known A}
 
-This notion of {\it nonnegative matrix factorization} has become widely
-used in a variety of ML applications in which the matrix $A$ entirely
-known. 
+In RS applications, the matrix $A$ is only partially known.  But it will
+be easier to understand the methods for finding the $W$ and $H$ matrices
+by looking at another class of applications.  In fact, NMF has become
+widely used in a variety of ML applications in which the matrix $A$
+entirely known. 
 
 \subsection{Image Classification}
 
 Say we have $n$ image files, each of which has brightness data for $r$
 rows and $c$ columns of pixels.  We also know the class, i.e.\ the
 subject, of each image.  The famous MNIST dataset, for instance,
-consists of 70,000 28x28 images of hand-drawn digits.  Thus the data for
-an image consists of $28^2 = 784$ pixel intensities, each in the range
-0,1,2,...,255.  (255 is fully black, 0 is fully white and the others are
-shades of gray.) We have 10 classes, '0' through '9'.
+consists of 70,000 28x28 images of hand-drawn digits; here $n = 70000$
+and $r = c = 28$.  Thus the data for an image consists of $28^2 = 784$
+pixel intensities, each in the range 0,1,2,...,255.  (255 is fully
+black, 0 is fully white and the others are shades of gray.) We have 10
+classes, '0' through '9'.
 
 We wish to predict the classses of new images. Denote the class of
 image $j$ in our original data by $C_j$.
@@ -121,7 +136,8 @@ image $j$ in our original data by $C_j$.
 We form a matrix $A$ with $n$ rows and $w = rc$ columns, where the
 $i^{th}$ row, $A_{i \cdot}$ stores the data for the $i^{th}$ image, say
 in row-major order:\footnote{Make sure not to confuse the rows of $A$
-with the rows of an image.} $A_{i \cdot}$ would first store row 1 of
+with the rows of an image.  One row of $A$ contains the totality of rows
+and columns of one image.} $A_{i \cdot}$ would first store row 1 of
 that image, then store row 2 of the image, and so on.\footnote{For
 simplicity here we will assume greyscale.  For color, each row of $A$
 will consist of three pixel vectors, one for each primary color.}
@@ -138,9 +154,10 @@ $H$, with the coordinates being the elements of row $i$ of $W$.
 % variants of this.}
 
 So, just as in the PCA case, we transform our training data, via $A
-\rightarrow W$.  We apply our favorite classification method, say the
-logistic, to this new training data (together with the class vector for
-that data), then use it to classify new data vectors $S$.  
+\rightarrow W$.  We apply our favorite classification method --- for
+concreteness, let's assume here that it is the logistic --- to this new
+training data (together with the class vector for that data), then use
+it to classify new data vectors $S$.  
 
 To do the latter, we must find the coordinates of $S$ with respect to the
 rows of $H$.  This means finding the linear combination of rows of $H$
@@ -148,11 +165,12 @@ that is closest to $S, i.e.$
 
 \begin{equation}
 \label{slh}
-\arg\min_l || S - l'H ||
+\lambda = \arg\min_l || S - l'H ||
 \end{equation}
 
-When then set $\lambda$ to the minimizing $l$ (we'll see how, shortly),
-and this is the coordinate vector for the new case.
+(We'll see how to do the minimization shortly.) Then $\lambda$ will be
+the coordinate vector for the new case.  This is then plugged into our
+logit model, to predict the new case.
 
 
 
@@ -177,18 +195,18 @@ Row $i$ of $A$ contains the counts of the various keywords (or maybe
 just a binary variable indicating presence or absence of the word).
 Otherwise, the situation is the same as for image recognition above.
 
-\subsection{Relation to Recommender Systems}
+% \subsection{Relation to Recommender Systems}
+% 
+% Many RS methods are text-based or even image-based.  Say there is a new
+% movie, not user ratings yet at all.  One might compare the movie
+% studio's synopsis of the film with those of flims for which we have
+% ratings data, and try to predict how well each user would like this
+% film.
+% 
+% A more ambiitious approach would be to do the same for images in the film's
+% ad trailer.
 
-Many RS methods are text-based or even image-based.  Say there is a new
-movie, not user ratings yet at all.  One might compare the movie
-studio's synopsis of the film with those of flims for which we have
-ratings data, and try to predict how well each user would like this
-film.
-
-A more ambiitious approach would be to do the same for images in the film's
-ad trailer.
-
-\subsection{How Do We Minimize (\ref{slh})?}
+\section{How Do We Minimize (\ref{slh})?}
 \label{howmin}
 
 To answer this question, it will be helpful to keep some concrete
@@ -328,6 +346,16 @@ MNIST, further heightens this approximate nature of the process.
 of dimension reduction, and finding a low-rank approximation does that.
 
 \end{itemize} 
+
+\section{The Bias vs.\ Variance Tradeoff}
+
+The blurriness in that second picture is really an issue of bias, as
+follows.  Consider a given pixel, say in the 3rd row and 52nd column. 
+That pixel's intensity in the second picture will be a weighted
+average of various pixels in the first picture.  Some of the latter may
+be in locations within the picture that are somewhat far away from the
+3rd row and 52nd column.  This biases the pixel in the second picture.
+
 
 \section{Computation}
 
