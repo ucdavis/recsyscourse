@@ -31,8 +31,9 @@ estimates of all of $A$ even though only a small part of it is known.
 might use cross-validation in making this choice, comparing performance
 of various values of $k$.
 
-This is a form of dimension reduction, with the rank $k$ controlling the
-bias-variance tradeoff.  Typically a good approximation can be achieved with
+\textit{This is a form of dimension reduction}, with the rank $k$
+controlling the bias-variance tradeoff.  Typically a good approximation
+can be achieved with
 
 \begin{equation}
 k \ll \textrm{ rank}(A)
@@ -73,7 +74,7 @@ We'll use the following notation for a matrix $Q$
 
 \end{itemize}
 
-\section{Synthetic, Representative RS Users}
+\section{Synthetic, Representative Recommender Systems Users}
 
 Note the key relation, which we showed in Section \ref{partmat}:
 
@@ -85,16 +86,11 @@ In other words, in (\ref{awh}), we have that:
 
 \begin{itemize}
 
-\item [(a)] The entire vector of predicted ratings by user $i$ can be
+\item The entire vector of predicted ratings by user $i$ can be
 expressed as a linear combination of the rows of $H$.
 
-\item [(b)] Thus the rows of $H$ can be thought of as an ``approximate
-basis'' for the rows of $A$.\footnote{Recall that the term
-\textit{basis} in linear algebra means a linearly independent set of
-vectors that spans the given subspace, i.e.\ any vector in the subspace
-can be expressed as a linear combinations of the basis vectors.} 
 
-\item [(c)] The rows of $H$ can thus be thought of as synthetic
+\item The rows of $H$ can thus be thought of as synthetic
 ``users'' who are representative of users in general.  $H_{rs}$ is the
 rating that synthetic user $r$ gives item $s$.
 
@@ -111,6 +107,17 @@ that the columns of $W$ serve as an approximate basis for the columns of
 $A$.  In other words, the latter become synthetic, representative items,
 e.g.\ representative movies in the MovieLens data.
 
+\section{Vector Space View}
+
+Recall that the \textit{span} of a set of vectors in a vector space is
+the set of all linear combinations of those vectors.  The term
+\textit{basis} in means a linearly independent set of vectors that spans
+the given subspace, i.e.\ any vector in the subspace can be expressed as
+a linear combinations of the basis vectors.
+
+Thus the rows of $H$ can be thought of as an ``approximate
+basis'' for the span of the rows of $A$.
+
 \section{The Case of Entirely Known A}
 
 In RS applications, the matrix $A$ is only partially known.  But it will
@@ -120,6 +127,8 @@ widely used in a variety of ML applications in which the matrix $A$
 entirely known. 
 
 \subsection{Image Classification}
+:
+\textbf{The setting:}
 
 Say we have $n$ image files, each of which has brightness data for $r$
 rows and $c$ columns of pixels.  We also know the class, i.e.\ the
@@ -130,7 +139,7 @@ pixel intensities, each in the range 0,1,2,...,255.  (255 is fully
 black, 0 is fully white and the others are shades of gray.) We have 10
 classes, '0' through '9'.
 
-We wish to predict the classses of new images. Denote the class of
+We wish to predict the classes of new images. Denote the class of
 image $j$ in our original data by $C_j$.
 
 We form a matrix $A$ with $n$ rows and $w = rc$ columns, where the
@@ -142,7 +151,22 @@ that image, then store row 2 of the image, and so on.\footnote{For
 simplicity here we will assume greyscale.  For color, each row of $A$
 will consist of three pixel vectors, one for each primary color.}
 
-In the sense stated above, the rows of $H$ serve as synthetic,
+\textbf{Dimension reduction:}
+
+Say we wish to use the logit approach to the MNIST data.  That would
+mean that the features portion of our data is a $70000 \times 784$
+matrix.  With that many columns, computation may be extremely long, and
+since $\sqrt{70000} \approx 265$, we'd run a big risk of overfitting
+with 784 features.  So, dimension reduction is imperative.
+
+One form of dimension reduction would be PCA.\footnote{\textit{The ``C''
+part of \textit{Convolutional Neural Networks} also does dimension
+reduction, but that approach is not relevant to the discussion here.}}
+We could apply PCA to that $70000 \times 784$ matrix, and then use, say,
+the first 50 principal components.  Our features matrix would now be of
+size $70000 \times 50$, much more manageable.
+
+Approach is NMF.  In the sense stated above, the rows of $H$ serve as synthetic,
 representative images.  Row $i$ of $A$, i.e.\ the $i^{th}$ image in our
 training data, is then approximately a linear combination of the rows of
 $H$, with the coordinates being the elements of row $i$ of $W$.
@@ -153,15 +177,17 @@ $H$, with the coordinates being the elements of row $i$ of $W$.
 % the new image to be that of image $s$.\footnote{There are lots of
 % variants of this.}
 
+\textbf{Predicting new, unlabeled images:}
+
 So, just as in the PCA case, we transform our training data, via $A
 \rightarrow W$.  We apply our favorite classification method --- for
 concreteness, let's assume here that it is the logistic --- to this new
 training data (together with the class vector for that data), then use
 it to classify new data vectors $S$.  
 
-To do the latter, we must find the coordinates of $S$ with respect to the
-rows of $H$.  This means finding the linear combination of rows of $H$
-that is closest to $S, i.e.$
+To do the latter, we must find the coordinates of $S$ with respect to
+the rows of $H$.  This means finding the linear combination of rows of
+$H$ that is closest to $S, i.e.$
 
 \begin{equation}
 \label{slh}
