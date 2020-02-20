@@ -75,6 +75,7 @@ We'll use the following notation for a matrix $Q$
 \end{itemize}
 
 \section{Synthetic, Representative Recommender Systems Users}
+\label{synth}
 
 Note the key relation, which we showed in Section \ref{partmat}:
 
@@ -232,63 +233,6 @@ Otherwise, the situation is the same as for image recognition above.
 % A more ambiitious approach would be to do the same for images in the film's
 % ad trailer.
 
-\section{How Do We Minimize (\ref{slh})?}
-\label{howmin}
-
-To answer this question, it will be helpful to keep some concrete
-numbers in mind, say with the MNIST data.  Say we wish a rank of 50.
-Then
-
-\begin{itemize}
-
-\item $A$ is 70000x784;
-
-\item $W$ is 70000x50;
-
-\item $H$ is 50x784;
-
-\item $S$ is 1x784; and
-
-\item $l$ is 50x1.
-
-\end{itemize} 
-
-Keeping these numbers in mind as concrete examples,
-now note that in (\ref{slh}),
-
-\begin{equation}
-\label{slh1}
-|| S - l'H ||^2 = (S - l'H)(S - l'H)'
-\end{equation}
-
-This looks pretty close to (\ref{dab}).  But recall that $S$ and $l'H$
-are row vectors, so (\ref{slh1}) looks slightly different.  Now, using
-the fact from linear algebra that $(UV)' = V'U'$, (\ref{slh1}) says
-
-\begin{equation}
-\label{slh2}
-|| S - l'H ||^2 = (S' - H'l)(S' - H'l)
-\end{equation}
-
-Now it's in the form of (\ref{dab}), so our minimization problem is
-solved!  In (\ref{famouslm}), just set $D$, $A$ and $b$ to $S'$, $H'$
-and $l$, respectively.  This gives us
-
-\begin{equation}
-\lambda = (HH')^{-1} HS'
-\end{equation}
-
-We could compute this directly, using R's matrix operations (for matrix
-inversion, we can use \textbf{solve()}, or for better numerical
-accuracy, \textbf{solve.qr()}), but it's easier to send it to
-\textbf{lm()}, e.g.
-
-\begin{lstlisting}
-lm(s ~ t(h) - 1)$coef
-\end{lstlisting}
-
-The `-1'' tells \textbf{lm()}, ``Don't add a column of 1s to $H'$.''
-
 \section{The R Package NMF}
 
 The R package {\bf NMF} is quite extensive, with many, many options.  In
@@ -419,6 +363,7 @@ $\widehat{A}_{ij}$ will experience this tradeoff:
 \end{itemize} 
 
 \section{Computation}
+\label{nmfcomp}
 
 How are the NMF solutions found?  What is {\bf nmf()} doing internally?
 
@@ -459,8 +404,28 @@ So our criterion for error of approximation will be
 \|A - WH\|_2
 \end{equation}
 
+So, we choose $W$ and $H$ to be 
+
+\begin{equation}
+\arg \min_{w,h} \|A - wh\|_2
+\end{equation}
+
 This measure is specified in {\bf nmf()} by setting {\bf objective =
 'euclidean'}.
+
+Note that we can write (\ref{froben}) as
+
+\begin{equation}
+\label{wholething}
+\|Q\|_2 = 
+\sqrt{
+\sum_j \left ( \sum_i Q_{ij}^2 \right )
+}
+\end{equation}
+
+This mean that if we can separately minimize that inner sum, for each
+$j$, we will have minimized the entire expression (\ref{wholething}).
+Our strategy will depend on this.
 
 \subsection{Alternating Least Squares}
 
@@ -612,29 +577,35 @@ give us crisper distinction among the various synthetic users.  This may
 reveal clusters of user behavior, which could be quite helpful to the
 analyst.
 
-\section{Functions in rectools}
+Another point is that the nonnegativity allows us to better fulfill the
+``synthetic users'' idea from Section \ref{synth}.  To make these more
+realistic, they should be on the same level as real user ratings.  We
+can arrange this by simply scaling down each $H_{i.}$ to the ratings
+scale, e.g. 1 to 5 for the MovieLens data.  
 
-The \textbf{recoSystem} package by Chih-Jen Li \textit{et al} has a good
-implementation of NMF for recommender systems (i.e.\ it handles the
-missing values).  However, it uses R6 classes (and is complicated in
-other ways), which are unfamiliar to many R users, so the
-\textbf{rectools} package provides wrappers.  Basic call forms are:
-
-\begin{lstlisting}
-trainReco(ratingsIn,rnk=10,nmf=FALSE)
-predict.RecoS3(recoObj,testSet)
-\end{lstlisting}
-
-Here \textbf{ratingsIn} is the usual three-column (userID,itemID,rating)
-(plus covariates, if any) data frame; \textbf{rnk} is the desired rank;
-\textbf{nmf} is false for SVD, true for NMF; \textbf{recoObj} is the 
-return value from \textbf{trainReco()}; and \textbf{testSet} is the test
-set, in the same format as \textbf{ratingsIn}, minus the ratings column.
-
-The return value from \textbf{trainReco()} is an R S3 object of class
-'RecoS3', with components $P$ and $Q$, corresponding to $W$ and $H'$ in
-our notation.  In the case of covariates (see below), some R
-\textbf{attributes} are also included.
+% \section{Functions in rectools}
+% 
+% The \textbf{recoSystem} package by Chih-Jen Li \textit{et al} has a good
+% implementation of NMF for recommender systems (i.e.\ it handles the
+% missing values).  However, it uses R6 classes (and is complicated in
+% other ways), which are unfamiliar to many R users, so the
+% \textbf{rectools} package provides wrappers.  Basic call forms are:
+% 
+% \begin{lstlisting}
+% trainReco(ratingsIn,rnk=10,nmf=FALSE)
+% predict.RecoS3(recoObj,testSet)
+% \end{lstlisting}
+% 
+% Here \textbf{ratingsIn} is the usual three-column (userID,itemID,rating)
+% (plus covariates, if any) data frame; \textbf{rnk} is the desired rank;
+% \textbf{nmf} is false for SVD, true for NMF; \textbf{recoObj} is the 
+% return value from \textbf{trainReco()}; and \textbf{testSet} is the test
+% set, in the same format as \textbf{ratingsIn}, minus the ratings column.
+% 
+% The return value from \textbf{trainReco()} is an R S3 object of class
+% 'RecoS3', with components $P$ and $Q$, corresponding to $W$ and $H'$ in
+% our notation.  In the case of covariates (see below), some R
+% \textbf{attributes} are also included.
 
 \section{Dealing with Covariates}
 
@@ -803,3 +774,62 @@ List of 2
 > head(preds)
 [1] 3.979107 4.212397 2.196976 3.601082 3.900878 4.467487
 \end{lstlisting}
+
+\section{How Do We Minimize (\ref{slh})?}
+\label{howmin}
+
+The answer, as it was in Section \ref{nmfcomp}, is to convert the
+question to one of linear regresson.
+
+It will be helpful to keep some concrete numbers in mind, say with the
+MNIST data.  Say we wish a rank of 50.  Then
+
+\begin{itemize}
+
+\item $A$ is 70000x784;
+
+\item $W$ is 70000x50;
+
+\item $H$ is 50x784;
+
+\item $S$ is 1x784; and
+
+\item $l$ is 50x1.
+
+\end{itemize} 
+
+Keeping these numbers in mind as concrete examples,
+now note that in (\ref{slh}),
+
+\begin{equation}
+\label{slh1}
+|| S - l'H ||^2 = (S - l'H)(S - l'H)'
+\end{equation}
+
+This looks pretty close to (\ref{dab}).  But recall that $S$ and $l'H$
+are row vectors, so (\ref{slh1}) looks slightly different.  Now, using
+the fact from linear algebra that $(UV)' = V'U'$, (\ref{slh1}) says
+
+\begin{equation}
+\label{slh2}
+|| S - l'H ||^2 = (S' - H'l)(S' - H'l)
+\end{equation}
+
+Now it's in the form of (\ref{dab}), so our minimization problem is
+solved!  In (\ref{famouslm}), just set $D$, $A$ and $b$ to $S'$, $H'$
+and $l$, respectively.  This gives us
+
+\begin{equation}
+\lambda = (HH')^{-1} HS'
+\end{equation}
+
+We could compute this directly, using R's matrix operations (for matrix
+inversion, we can use \textbf{solve()}, or for better numerical
+accuracy, \textbf{solve.qr()}), but it's easier to send it to
+\textbf{lm()}, e.g.
+
+\begin{lstlisting}
+lm(s ~ t(h) - 1)$coef
+\end{lstlisting}
+
+Again, the `-1'' tells \textbf{lm()}, ``Don't add a column of 1s to $H'$.''
