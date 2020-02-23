@@ -884,8 +884,8 @@ Weight -0.99822908 -0.05948695
 \end{lstlisting}
 
 If we were to plot \textbf{hw}, we would put \textbf{hw[1,]} at the
-point (74,1.0) on our graph.  Recall from high school math that 74 and
-180 are called the \textit{coordinates} of \textbf{co2[1,]}, with
+point (74,180) on our graph.  Recall from high school math that 74 and
+180 are called the \textit{coordinates} of \textbf{hw2[1,]}, with
 respect to our ``H axis'' and ``W axis.''
 
 But in doing PCA, we are creating new axes, PC1 and PC2, which are
@@ -917,7 +917,7 @@ Almost 90 degrees clockwise.
 \subsection{Scaling}
 
 Some analysts prefer to \textit{scale} the data before applying PCA.
-For each column, we would subtract the column mean and divide by hte
+For each column, we would subtract the column mean and divide by the
 column standard deviation.  The column would now have mean 0.0 and
 variance 1.0.
 
@@ -927,9 +927,9 @@ play a role; e.g.\ a distance variable would have more impact if it were
 measured in kilometers than miles.
 
 Scaling does solve this problem, but its propriety is questionable.
-Consider a setting with two features, $A$ and $B$, with variances 500 and
-2, respectively.  Let $A'$ and $B'$ denote these features after centering
-and scaling.
+Consider a setting with two features, $A$ and $B$, with variances 500
+and 2, respectively, and with mean 100 for both.  Let $A'$ and $B'$
+denote these features after centering and scaling.
 
 As noted, PCA is all about removing features with small variance, as
 they are essentially constant. If we work with $A$ and $B$, we would of
