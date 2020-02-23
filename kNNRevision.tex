@@ -5,11 +5,16 @@ One of the simplest and yet often most effective recommender system
 methods is based on this natural principle: 
 
 \begin{quote}
-Say we have a new user N, for whom we want to predict an item rating I.
-We find the users in our existing data D who are most similar to N and who
+
+Say we have a user U, for whom we want to predict the rating of an item I.
+We find the users in our existing data D who are most similar to U and who
 have seen rating I, and take our predicted value to be the average of
 those users' ratings of I.  
+
 \end{quote}
+
+Note that here the user U might be in D or might be new.  As long as I
+is in D, we are in business.
 
 Of course, we must define ``similar.''  There are two common ways to do
 this.  Recall our notation $p$ denoting our number of
@@ -26,20 +31,24 @@ $p$-dimensional space --- and determine which one U falls in.
 
 \end{itemize} 
 
-The first is basically \textit{k-Nearest Neighbor regression}, a
+The first is basically \textit{k-Nearest Neighbor regression} (kNN), a
 classic statistics/machine learning technique, though note that a major
 difference here is that we only consider users in D who have rated the
-same products as N.
+same products as N.  
 
 The second can be viewed as something called \textit{kernel regression}, 
 but we will add a tree-based structure, with the result termed
 \textit{Classification and Regression Analysis} (CART) for a single
 tree and \textit{random forests} for a collection of trees.  In the
-latter, we create a collection of sets of rectangles and average over
+latter, we create a collection of systems of rectangles and average over
 them.\footnote{The terms ``CART'' and ``random forests'' have 
 many variations, but we take the terms as generic.}
 
-\section{Notation}
+\section{kNN}
+
+Let's see how kNN works.
+
+\subsection{Notation}
 
 As before, let $A$ denote the ratings matrix.  The element $a_{ij}$ in
 row $i$, column $j$, is the rating that user $i$ has given/would give to
@@ -51,35 +60,38 @@ Note that for large applications, the matrix $A$ is far too large to
 store in memory.  One could resort to storage schemes for
 \textit{sparse} matrices, e.g.\ \textit{Compresed Row Storage}, but here
 we will simply use $A$ to help explain concepts.  In the
-\textbf{rectools} package, the input data is run through
+\textbf{rectools} package,\footnote{https://github.com/matloff/rectools}
+the input data is run through
 \textbf{formUserData()} and algorithms use that instead of $A$.  This
-function orgamizes the data into an R list, one element per user.  Each
+function organizes the data into an R list, one element per user.  Each
 such element records the ratings made by that user. 
 
-Let's refer to a new case to be predicted as NC.
+Let's refer to a new case to be predicted as NC, i.e. from above,
+predicting how a user U would rate an item I.
 
-\section{User-Based Filtering}
+\subsection{User-Based Filtering}
 
 In predicting how a given user would rate a given item, we first find
 all users that have rated the given item, then determine which of those
 users are most similar to the given user.  Our prediction is then the
 average of the ratings of the given item among such ``similar'' users.
-A corresponding approach based on items is used as well.  We focus on
-such methods in this chapter.
+A corresponding approach based on similar items, \textit{item-based
+filtering}, is used as well.  We focus on such methods in this chapter.
 
-\subsection{Matrix View}
-
-In terms of the matrix $A$ above, we first look at column $j$.  We cull
-the rows having non-NA values in this column, and for each of those
-rows, find the distance of that row to the NC.  Take the $k$ closest
-rows, and finally, average the value of $a_{mj}$ to get
-$\widehat{a}_{ij}$ (with $m$ ranging over the row numbers of the
-selected rows).
+% \subsubsection{Matrix View}
+% 
+% In terms of the matrix $A$ above, we first look at column $j$.  We cull
+% the rows having non-NA values in this column, and for each of those
+% rows, find the distance of that row to the NC.  Take the $k$ closest
+% rows, and finally, average the value of $a_{mj}$ to get
+% $\widehat{a}_{ij}$ (with $m$ ranging over the row numbers of the
+% selected rows).
 
 \subsection{(One) Implementation}
 
-Below is code from \textbf{rectools} (somewhat simplified).  The
-arguments are:
+Below is code from \textbf{rectools} (somewhat
+simplified).\footnote{This function was written largely by Vishal
+Chakraborti.} The arguments are:
 
 \begin{itemize}
 
@@ -96,6 +108,48 @@ item.}
 \item k:  The number(s) of nearest neighbors.  Can be a vector.
 
 \end{itemize} 
+
+Here is an example of using \textbf{formUserData()} on the MovieLens
+data:\footnote{The data have been read from disk without converting to R
+factors.}
+
+\begin{lstlisting}
+> head(ml)
+   V1  V2 V3
+1 196 242  3
+2 186 302  3
+3  22 377  1
+4 244  51  2
+5 166 346  1
+6 298 474  4
+> mlud <- formUserData(ml)
+> mlud[[3]]
+$userID
+[1] "3"
+
+$itms
+ [1] 335 245 337 343 323 331 294 332 328 334 350 341 318 300
+[15] 345 299 324 348 351 330 327 307 272 354 264 349 321 260
+[29] 268 288 355 320 258 339 342 303 329 317 181 338 302 322
+[43] 352 271 333 344 326 319 325 347 336 353 340 346
+
+$ratings
+335 245 337 343 323 331 294 332 328 334 350 341 318 300 345 
+  1   1   1   3   2   4   2   1   5   3   3   1   4   2   3 
+299 324 348 351 330 327 307 272 354 264 349 321 260 268 288 
+  3   2   4   3   2   4   3   2   3   2   3   5   4   3   2 
+355 320 258 339 342 303 329 317 181 338 302 322 352 271 333 
+  3   5   2   3   4   3   4   2   4   2   2   3   2   3   2 
+344 326 319 325 347 336 353 340 346 
+  4   2   2   1   5   1   1   5   5 
+
+attr(,"class")
+[1] "usrDatum"
+\end{lstlisting}
+
+So, for any given user, \textbf{mlud} will show the items rating by this
+user and the ratings the user has given to those items.  Here we see
+that user 3 has rated items 335, 245,, 337, 343,..., with ratings 1,1,1,3,...
 
 \begin{lstlisting}[numbers=left]
 predict.usrData <- function(origData,newData,newItem,k)
@@ -150,12 +204,63 @@ predict.usrData <- function(origData,newData,newItem,k)
 }
 \end{lstlisting}
 
-Note that the distances were computed by the function
-\textbf{cosDist()}, which computes a ``cosine'' similarity (not really a
-distance).  It could be replaced by a function of the analyst's choice.
-More on this below.
+\subsection{Not Really a Distance}
 
-\section{Regression Analog}
+Note that the distances were computed by the function
+\textbf{cosDist()}, which computes a ``cosine'' similarity:
+
+\begin{lstlisting}
+ find cosine distance between x and y, objects 
+# of 'usrData' class 
+# 
+# only items rated in both x and y are used; if none 
+# exist, then return NaN 
+# 
+#  wtcovs: weight to put on covariates; NULL if no covs 
+#  wtcats: weight to put on item categories; NULL if no cats 
+ 
+cosDist <- function(x,y,wtcovs=NULL,wtcats=NULL) 
+{ 
+   # rated items in common 
+   commItms <- intersect(x$itms,y$itms) 
+   if (length(commItms)==0) return(NaN) 
+   # where are those common items in x and y? 
+   xwhere <- which(!is.na(match(x$itms,commItms))) 
+   ywhere <- which(!is.na(match(y$itms,commItms))) 
+   xvec <- x$ratings[xwhere] 
+   yvec <- y$ratings[ywhere] 
+   if (!is.null(wtcovs)) { 
+      xvec <- c(xvec,wtcovs*x$cvrs) 
+      yvec <- c(yvec,wtcovs*y$cvrs) 
+   } 
+   if (!is.null(wtcats)) { 
+      xvec <- c(xvec,wtcats*x$cats) 
+      yvec <- c(yvec,wtcats*y$cats) 
+   } 
+ 
+   xvec %*% yvec / (l2a(xvec) * l2a(yvec)) 
+}
+
+l2a <- function(x) sqrt(x %*% x) 
+\end{lstlisting}
+
+Basically, the ``distance'' between two rows $u$ and $v$
+of $A$ is defined by
+
+\begin{equation}
+\frac{u'v}{||u||_2 ~ ||v||_2}
+\end{equation}
+
+This not really a distance,\footnote{IN math terms, it's not a
+\textit{metric}.} but it is a common measure of similarity between two
+vectors in machine learning.  In two or three dimensions, it really is
+the cosine of the angle between $u$ and $v$.  
+
+Note that larger cosines mean the vectors are more similar.  We find the
+$k$ most similar rows in D to U, and average their ratings of the given
+item.
+
+\subsection{Regression Analog}
 
 Recall the method of k-nearest neighbor (kNN) regression estimation from
 Chapter \ref{chap:infra2}, involving prediction of weight from height
@@ -169,37 +274,72 @@ to produce our estimate of $E(W ~| H=70, A=28)$.
 
 So kNN RS is really the same as kNN regression
 
-\section{Choosing k}
+\subsection{Choosing k}
 
 As we have already seen with RS, regression and machine learning methods, 
 the typical way to choose a model is to use cross-validation.  This is
 true for kNN RS as well; we can choose the value of $k$ via
-cross-validation.  However, a curious property may streamline the
-process, as follows.
+cross-validation.  
 
-Note this line in \textbf{predict.usrData()}:
+% However, a curious property may streamline the process, as follows.
+% 
+% Note this line in \textbf{predict.usrData()}:
+% 
+% \begin{lstlisting}
+% ki <- min(ki, length(cosines))
+% \end{lstlisting}
+% 
+% What is happening here?  Say for a particular situation, there are 52
+% rows in $A$ having ratings for the item specified in NC.  Then of course
+% as we increase our number of nearest neighbors beyond 52, we will get
+% identical results.  Such a situation will occur if the $A$ matrix is not
+% too \textit{dense}, i.e.\ does not have a high proportion of non-NA
+% values.  
 
-\begin{lstlisting}
-ki <- min(ki, length(cosines))
-\end{lstlisting}
+\subsection{Item-Based Filtering}
 
-What is happeing here?  Say for a particular situation, there are 52
-rows in $A$ having ratings for the item specified in NC.  Then of course
-as we increase our number of nearest neighbors beyond 52, we will get
-identical results.  Such a situation will occur if the $A$ matrix is not
-too \textit{dense}, i.e.\ does not have a high proportion of non-NA
-values.  
+Consider again our setting in which we wish to predict the rating user U
+would give to item I.  We could switch the above procedure, trading rows
+for columns.  We would find the columns corresponding to items U has
+rated, then find the closest $k$ of those columns to column I.  The
+ratings given by U in those closest column would then be averaged to
+yield our prediction.
 
-\section{Defining Distance}
+\subsection{Covariates}
 
-\section{Item-Based Filtering}
+To accommodate covariates, we simply add covariate columns to the input
+matrix, say now with columns 'userId', 'itemId', 'rating' and age'.
 
-\section{Covariates}
-
-\section{Edge Bias}
-
+\section{CART and Random Forests}
 
 \iffalse
+
+ml <- read.table('u.data')
+userMeans <- tapply(ml$V3,ml$V1,mean)
+itemMeans <- tapply(ml$V3,ml$V2,mean)
+mlemb <- ml
+mlemb$V1 <- userMeans[ml$V2]
+mlemb$V2 <- itemMeans[ml$V2]
+mlemb$V1 <- as.vector(mlemb$V1)
+mlemb$V2 <- itemMeans[ml$V2]
+mlemb$V2 <- as.vector(mlemb$V2)
+library(party)
+ctout <- ctree(V3 ~ .,data=mlemb)
+# how would user 22 like movie 88?
+predict(ctout,data.frame(V1=userMeans[22],V2=itemMeans[88]))
+#            V3
+# [1,] 3.408871
+
+\fi
+
+PICTURE IS WITH maxdepth = 3
+\includegraphics[width=4.2in]{Images/MLmaxdepth3.png}
+
+\subsection{Tuning Parameters}
+
+\subsection{Covariates}
+
+\iffalse 
 
 idxs <- sample(1:nrow(ml),1000)
 ml <- ml[,1:3]
@@ -220,7 +360,6 @@ predname <- function(userData,oneInputRow,k)
 }
 
 pn <- function(oneInputRow) predname(ud,oneInputRow,k)
-
 
 \fi
 
