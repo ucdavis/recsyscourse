@@ -559,3 +559,32 @@ This also implies that cross-validation is no panacea either.  If we
 compare a large number of models, there is a danger that one looks
 really good when it is not.
 
+\section{A Note on Covariates}
+
+Covariates can substantially enhance prediction power for users or items
+for whom we have rather little data, but their impact otherwise may be
+small.\footnote{This rules out the MovieLens data, for instance, as its
+curator omitted users who had rated fewer than 25 movies.}  The
+intuition underlying this is that if we have a lot of ratings from some
+user, they already tell us lots about her.  Covariate information
+about this user may not add much to what we already know.
+
+Consider for instance the House Voting dataset at
+UCI.\footnote{https://archive.ics.uci.edu/ml/datasets/congressional+voting+records}
+For each member of the US House of Representatives, we have their votes,
+Yes or No, on some bills.  One can treat this as a ``recommender
+system,'' with the congresspeople as users and bills as items.  We can
+thus try to predict how a given member of Congress would have voted on
+some bill on which she did not actually vote.
+
+The data also tell us whether the politician is a Democrat or
+Republican, so party affiliation is a covariate.  But if she has voted
+on many bills, that record already gives us a good idea as to her party,
+and thus this covariate may not be very helpful.
+
+On the other hand, another possible covariate would be the congressional
+district that this person represents.  If it is one that is heavily
+agricultural, for instance, she would likely support a farm bill,
+regardless of party.  Note that in that case, the type of bill is a
+covariate for the item, so both covariates could be important.
+
