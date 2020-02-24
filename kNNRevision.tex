@@ -115,7 +115,7 @@ factors.}
 
 \begin{lstlisting}
 > head(ml)
-   V1  V2 V3
+V1  V2 V3
 1 196 242  3
 2 186 302  3
 3  22 377  1
@@ -128,20 +128,20 @@ $userID
 [1] "3"
 
 $itms
- [1] 335 245 337 343 323 331 294 332 328 334 350 341 318 300
+[1] 335 245 337 343 323 331 294 332 328 334 350 341 318 300
 [15] 345 299 324 348 351 330 327 307 272 354 264 349 321 260
 [29] 268 288 355 320 258 339 342 303 329 317 181 338 302 322
 [43] 352 271 333 344 326 319 325 347 336 353 340 346
 
 $ratings
 335 245 337 343 323 331 294 332 328 334 350 341 318 300 345 
-  1   1   1   3   2   4   2   1   5   3   3   1   4   2   3 
+1   1   1   3   2   4   2   1   5   3   3   1   4   2   3 
 299 324 348 351 330 327 307 272 354 264 349 321 260 268 288 
-  3   2   4   3   2   4   3   2   3   2   3   5   4   3   2 
+3   2   4   3   2   4   3   2   3   2   3   5   4   3   2 
 355 320 258 339 342 303 329 317 181 338 302 322 352 271 333 
-  3   5   2   3   4   3   4   2   4   2   2   3   2   3   2 
+3   5   2   3   4   3   4   2   4   2   2   3   2   3   2 
 344 326 319 325 347 336 353 340 346 
-  4   2   2   1   5   1   1   5   5 
+4   2   2   1   5   1   1   5   5 
 
 attr(,"class")
 [1] "usrDatum"
@@ -154,53 +154,53 @@ that user 3 has rated items 335, 245,, 337, 343,..., with ratings 1,1,1,3,...
 \begin{lstlisting}[numbers=left]
 predict.usrData <- function(origData,newData,newItem,k)
 {
-   # we first need to narrow origData down to the users who 
-   # have rated newItem
+# we first need to narrow origData down to the users who 
+# have rated newItem
 
-   # here oneUsr is one user record in origData; the function will look for a 
-   # j such that element j in the items list for this user matches the item 
-   # of interest, newItem; (j,rating) will be returned
+# here oneUsr is one user record in origData; the function will look for a 
+# j such that element j in the items list for this user matches the item 
+# of interest, newItem; (j,rating) will be returned
 
-   checkNewItem <- function(oneUsr) {
-      whichOne <- which(oneUsr$itms == newItem)
-      if (length(whichOne) == 0) {
-         return(c(NA,NA))
-      } else return(c(whichOne,oneUsr$ratings[whichOne]))
-   }
+checkNewItem <- function(oneUsr) {
+   whichOne <- which(oneUsr$itms == newItem)
+   if (length(whichOne) == 0) {
+      return(c(NA,NA))
+   } else return(c(whichOne,oneUsr$ratings[whichOne]))
+}
 
-   found <- as.matrix(sapply(origData,checkNewItem))
-   # description of 'found':
-   # found is of dimensions 2 by number of users in training set
-   # found[1,i] = j means origData[[i]]$itms[j] = newItem;
-   # found[1,i] = NA means newItem wasn't rated by user i
-   # found[2,i] = rating in the non-NA case
+found <- as.matrix(sapply(origData,checkNewItem))
+# description of 'found':
+# found is of dimensions 2 by number of users in training set
+# found[1,i] = j means origData[[i]]$itms[j] = newItem;
+# found[1,i] = NA means newItem wasn't rated by user i
+# found[2,i] = rating in the non-NA case
 
-   # we need to get rid of the users who didn't rate newItem
-   whoHasIt <- which(!is.na(found[1,]))
-   origDataRatedNI <- origData[whoHasIt]
-   # now origDataRatedNI only has the relevant users, the ones who 
-   # have rated newItem, so select only those columns of the found matrix
-   found <- found[,whoHasIt,drop=FALSE]
+# we need to get rid of the users who didn't rate newItem
+whoHasIt <- which(!is.na(found[1,]))
+origDataRatedNI <- origData[whoHasIt]
+# now origDataRatedNI only has the relevant users, the ones who 
+# have rated newItem, so select only those columns of the found matrix
+found <- found[,whoHasIt,drop=FALSE]
 
-   # find the distance from newData to one user y of origData; defined for
-   # use in sapply() below
-   onecos <- function(y) cosDist(newData,y,wtcovs,wtcats)
-   cosines <- sapply(origDataRatedNI,onecos)
-   # the vector cosines contains the distances from newData to all the
-   # original data points who rated newItem
+# find the distance from newData to one user y of origData; defined for
+# use in sapply() below
+onecos <- function(y) cosDist(newData,y,wtcovs,wtcats)
+cosines <- sapply(origDataRatedNI,onecos)
+# the vector cosines contains the distances from newData to all the
+# original data points who rated newItem
 
-   # action of findKnghbourRtng(): find the mean rating of newItem in
-   # origDataRatedNI, for ki (= k[i]) neighbors
-   #
-   # if ki > neighbours present in the dataset, then the 
-   # number of neighbours is used
-   findKnghbourRtng <- function(ki){
-     ki <- min(ki, length(cosines))
-     # nearby is a vector containing the indices of the ki closest neighbours
-     nearby <- order(cosines,decreasing=FALSE)[1:ki]
-     mean(as.numeric(found[2, nearby]))
-   }
-   sapply(k, findKnghbourRtng)
+# action of findKnghbourRtng(): find the mean rating of newItem in
+# origDataRatedNI, for ki (= k[i]) neighbors
+#
+# if ki > neighbours present in the dataset, then the 
+# number of neighbours is used
+findKnghbourRtng <- function(ki){
+  ki <- min(ki, length(cosines))
+  # nearby is a vector containing the indices of the ki closest neighbours
+  nearby <- order(cosines,decreasing=FALSE)[1:ki]
+  mean(as.numeric(found[2, nearby]))
+}
+sapply(k, findKnghbourRtng)
 }
 \end{lstlisting}
 
@@ -210,7 +210,7 @@ Note that the distances were computed by the function
 \textbf{cosDist()}, which computes a ``cosine'' similarity:
 
 \begin{lstlisting}
- find cosine distance between x and y, objects 
+find cosine distance between x and y, objects 
 # of 'usrData' class 
 # 
 # only items rated in both x and y are used; if none 
@@ -218,27 +218,27 @@ Note that the distances were computed by the function
 # 
 #  wtcovs: weight to put on covariates; NULL if no covs 
 #  wtcats: weight to put on item categories; NULL if no cats 
- 
+
 cosDist <- function(x,y,wtcovs=NULL,wtcats=NULL) 
 { 
-   # rated items in common 
-   commItms <- intersect(x$itms,y$itms) 
-   if (length(commItms)==0) return(NaN) 
-   # where are those common items in x and y? 
-   xwhere <- which(!is.na(match(x$itms,commItms))) 
-   ywhere <- which(!is.na(match(y$itms,commItms))) 
-   xvec <- x$ratings[xwhere] 
-   yvec <- y$ratings[ywhere] 
-   if (!is.null(wtcovs)) { 
-      xvec <- c(xvec,wtcovs*x$cvrs) 
-      yvec <- c(yvec,wtcovs*y$cvrs) 
-   } 
-   if (!is.null(wtcats)) { 
-      xvec <- c(xvec,wtcats*x$cats) 
-      yvec <- c(yvec,wtcats*y$cats) 
-   } 
- 
-   xvec %*% yvec / (l2a(xvec) * l2a(yvec)) 
+# rated items in common 
+commItms <- intersect(x$itms,y$itms) 
+if (length(commItms)==0) return(NaN) 
+# where are those common items in x and y? 
+xwhere <- which(!is.na(match(x$itms,commItms))) 
+ywhere <- which(!is.na(match(y$itms,commItms))) 
+xvec <- x$ratings[xwhere] 
+yvec <- y$ratings[ywhere] 
+if (!is.null(wtcovs)) { 
+   xvec <- c(xvec,wtcovs*x$cvrs) 
+   yvec <- c(yvec,wtcovs*y$cvrs) 
+} 
+if (!is.null(wtcats)) { 
+   xvec <- c(xvec,wtcats*x$cats) 
+   yvec <- c(yvec,wtcats*y$cats) 
+} 
+
+xvec %*% yvec / (l2a(xvec) * l2a(yvec)) 
 }
 
 l2a <- function(x) sqrt(x %*% x) 
@@ -323,14 +323,123 @@ mlemb$V2 <- itemMeans[ml$V2]
 mlemb$V1 <- as.vector(mlemb$V1)
 mlemb$V2 <- itemMeans[ml$V2]
 mlemb$V2 <- as.vector(mlemb$V2)
-library(party)
+library(partykit)
 ctout <- ctree(V3 ~ .,data=mlemb)
 # how would user 22 like movie 88?
 predict(ctout,data.frame(V1=userMeans[22],V2=itemMeans[88]))
 #            V3
-# [1,] 3.408871
+# [1,] 3.54066 
 
 \fi
+
+CART is based on forming a \textit{recursive partitioning}
+
+\subsection{Motivating Example}
+
+Let's illustrate CART with the R package \textbf{partykit}.\footnote{The
+name is an allusion to the recursive partioning nature of CART.}  We'll
+predict weight from height and age in the baseball player data.
+
+\begin{lstlisting}
+> library(regtools) 
+> data(mlb) 
+> mlb <- mlb[,c(4:6)] 
+> head(mlb)
+  Height Weight   Age
+1     74    180 22.99
+2     74    215 34.69
+3     72    210 30.78
+4     72    210 35.43
+5     73    188 35.71
+6     69    176 29.39
+> ctout <- ctree(Weight ~ .,data=mlb) 
+\end{lstlisting}
+
+Here is the tree that is produced:
+
+\begin{lstlisting}
+> node_party(ctout) 
+[1] root
+|   [2] V2 <= 73
+|   |   [3] V2 <= 70
+|   |   |   [4] V3 <= 29.56 *
+|   |   |   [5] V3 > 29.56 *
+|   |   [6] V2 > 70
+|   |   |   [7] V3 <= 32.51
+|   |   |   |   [8] V2 <= 72 *
+|   |   |   |   [9] V2 > 72 *
+|   |   |   [10] V3 > 32.51 *
+|   [11] V2 > 73
+|   |   [12] V2 <= 75
+|   |   |   [13] V3 <= 27.55
+|   |   |   |   [14] V2 <= 74 *
+|   |   |   |   [15] V2 > 74 *
+|   |   |   [16] V3 > 27.55 *
+|   |   [17] V2 > 75
+|   |   |   [18] V2 <= 79
+|   |   |   |   [19] V3 <= 26.03 *
+|   |   |   |   [20] V3 > 26.03 *
+|   |   |   [21] V2 > 79 *
+\end{lstlisting}
+
+We'll look more at the tree shortly, but first suppose we wish to
+predict the weight of a player who is 72 inches tall, age 31.
+
+\begin{lstlisting}
+> predict(ctout,data.frame(Height=72,Age=31))
+       1 
+189.9091 
+\end{lstlisting}
+
+Where did that come from?  Look at the tree.  Height $\leq$ 73?  Yes, so
+go to node 3.  Height $\leq$ 70?  No, go to node 6, etc., winding up at
+node 8.  The asterisk indicates a leaf node, so we're done traversing
+the tree.` No, what is the mean weight in that node?
+
+\begin{lstlisting}
+> ht <- mlb$Height
+> age <- mlb$Age
+> mean(mlb[70 < ht & ht <= 72 & age <= 32.51,]$Weight)
+[1] 189.9091
+\end{lstlisting}
+
+\subsection{Use in Recommender Systems}
+
+Clearly, it would be difficult to use CART directly on, say, the
+MovieLens data.  Since the user and item IDs are not \textit{ordinal},
+i.e.\ do not have an inherent underlying ordering, we'd need to form
+dummy variables, and thus test for one of them at a time.  The tree
+would be greatly unbalanced, to the right, and we'd have a computational
+problem, at the least.
+
+But actually, it's a lot worse than that.  Think of a node ``User ID =
+168?''  In cases where we take the left branch, i.e.\ the data point is
+indeed for user 168, the next question might be, say, Item ID = 12''?
+The key point is that \textbf{there will be at most 1 data point
+satisfying both conditions.}   That's not enough to make a good tree.
+And indeed, CART software typically sets a minimum node size as a
+hyperparameter; for \textbf{ctree(), it's \textbf{minsplit}}.
+
+An alternative is to do an \textit{embedding} of the user and item ID
+data, a form of dimension reduction.  What we could do here is replace
+each user ID by the mean rating given by that user, and do the same for
+the movies:
+
+\begin{lstlisting}
+
+> userMeans <- tapply(ml$V3,ml$V1,mean) 
+> itemMeans <- tapply(ml$V3,ml$V2,mean) 
+> mlemb <- mlb
+> mlemb$V1 <- userMeans[ml$V2]
+> mlemb$V2 <- itemMeans[ml$V2]
+> mlemb$V1 <- as.vector(mlemb$V1)
+> mlemb$V2 <- itemMeans[ml$V2]
+> mlemb$V2 <- as.vector(mlemb$V2)
+> ctout <- ctree(V3 ~ .,data=mlemb)
+
+\end{lstlisting}
+
+We could then use \textbf{predict()} as before.
 
 PICTURE IS WITH maxdepth = 3
 \includegraphics[width=4.2in]{Images/MLmaxdepth3.png}
@@ -340,6 +449,9 @@ PICTURE IS WITH maxdepth = 3
 \subsection{Covariates}
 
 \iffalse 
+
+ml <- read.table('~/tmp/ml-100k/u.data')
+ml$V4 <- NULL
 
 idxs <- sample(1:nrow(ml),1000)
 ml <- ml[,1:3]
