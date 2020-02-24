@@ -9,7 +9,7 @@ methods is based on this natural principle:
 Say we have a user U, for whom we want to predict the rating of an item I.
 We find the users in our existing data D who are most similar to U and who
 have seen rating I, and take our predicted value to be the average of
-those users' ratings of I.  
+those users' ratings of I. 
 
 \end{quote}
 
@@ -309,6 +309,8 @@ yield our prediction.
 
 To accommodate covariates, we simply add covariate columns to the input
 matrix, say now with columns 'userId', 'itemId', 'rating' and age'.
+Note that they figure into the distance measure, just like the user and
+item I dummies.
 
 \section{CART and Random Forests}
 
@@ -332,7 +334,10 @@ predict(ctout,data.frame(V1=userMeans[22],V2=itemMeans[88]))
 
 \fi
 
-CART is based on forming a \textit{recursive partitioning}
+CART is based on forming a \textit{recursive partitioning} of the data
+space.  First the space is split in two, then each of the two parts is
+split in two, and so on, forming a binary tree.  Splitting along a
+branch stops when some criterion is no longer met.
 
 \subsection{Motivating Example}
 
@@ -414,7 +419,7 @@ problem, at the least.
 
 But actually, it's a lot worse than that.  Think of a node ``User ID =
 168?''  In cases where we take the left branch, i.e.\ the data point is
-indeed for user 168, the next question might be, say, Item ID = 12''?
+indeed for user 168, the next question might be, say, Item ID = 12?''
 The key point is that \textbf{there will be at most 1 data point
 satisfying both conditions.}   That's not enough to make a good tree.
 And indeed, CART software typically sets a minimum node size as a
@@ -441,12 +446,40 @@ the movies:
 
 We could then use \textbf{predict()} as before.
 
-PICTURE IS WITH maxdepth = 3
-\includegraphics[width=4.2in]{Images/MLmaxdepth3.png}
-
 \subsection{Tuning Parameters}
 
+The \textbf{ctree()} function has various tuning parameters.  We saw one
+of them above, \textbf{minsplit}.  Another is \textbf{maxdepth}, the
+maximum number of levels we wish to allow in the tree.   The default
+value, 0, means no limit.  You can see in the output above the
+\textbf{ctree()} built us a 5-level tree.  The tuning parameters must be
+set via the function \textbf{ctree\_control()}.
+
+The return value of \textbf{ctree()} has class, of course,
+\textbf{'party'}.  It has various generic functions.  We saw
+\textbf{predict()} above; \textbf{print()} gives output similar to, but
+a little more detailed than, \textbf{node\_party()}.  
+
+Another is \textbf{plot()}, which due to screen space issues, is only
+usable for a few levels.  Here we set \textbf{maxdepth} to 3,
+
+\begin{lstlisting}
+> ctout <- ctree(V3 ~ .,data=mlemb,controls = ctree_control(maxdepth=3))
+> plot(ctout)
+\end{lstlisting}l
+
+\includegraphics[width=4.6in]{Images/MLmaxdepth3.png}
+
+Actually, the plotting comes from the fact that \textbf{ctout} is also
+of class \textbf{'BinaryTree'}
+
 \subsection{Covariates}
+
+Covariates are easily handled, e.g.
+
+\begin{lstlisting}
+ctout <- ctree(V3 ~ V1+V2+age+gender,data=mlemb
+\end{lstlisting} 
 
 \iffalse 
 
