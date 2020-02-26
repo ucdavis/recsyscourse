@@ -488,7 +488,73 @@ we simply truncate to 0.
 
 \subsection{Back to Recommender Systems:  Dealing with the Missing Values}
 
-In our recommender systems setting, of course, most of $A$ is missing.  But we can easily adapt to that.  In (\ref{errajwhj}), simply replace $A_{\cdot j}$ by the known elements of that vector, and replace $W$ by the corresponding rows.  Then proceed as before.
+In our recommender systems setting, of course, most of $A$ is missing.
+But we can easily adapt to that.  Roughly speaking, in (\ref{errajwhj}),
+do these replacements:
+
+\begin{itemize}
+
+\item replace $A_{.j}$ by the known portion of $A_{.j}$
+
+\item replace $W$ by the corresponding rows of $W$
+
+\end{itemize} 
+
+Then proceed as before.  
+
+Here is a little example.  Say $A$ ix $5 \times 5$ and we want rank 3.
+Then $W$ and $H$ are of sizes $5 \times 3$ and $3 \times5$.  
+
+Note too that $(WH)_{.j}$, thus column $j$ of our approximation to $A$,
+is a linear combination of the columns of $W$, with coefficients being
+$H_{.j}$.
+
+
+Suppose
+
+\begin{equation}
+A_{.4} = 
+\left (
+\begin{array}{r}
+NA \\
+3 \\
+NA \\
+8 \\
+2
+\end{array}
+\right )
+\end{equation}
+
+Then in (\ref{errajwhj}) we replace $A_{.5}$ by
+
+\begin{equation}
+\label{smalla}
+\left (
+\begin{array}{r}
+3 \\
+8 \\
+2 
+\end{array}
+\right )
+\end{equation}
+
+Also, replace $W$ by
+
+\begin{equation}
+\label{smallw}
+\left (
+\begin{array}{rrr}
+w_{21} & w_{22} & w_{23} \\
+w_{41} & w_{42} & w_{43} \\
+w_{51} & w_{52} & w_{53} \\
+\end{array}
+\right )
+\end{equation}
+
+Remember, at this stage, $W$ is assumed known.  So, we just use
+\textbf{lm()}, ``predicting'' (\ref{smalla}) from (\ref{smallw}) to find
+$h_{.4}$.
+
 
 % \subsubsection{Multiplicative Update}
 % 
@@ -679,6 +745,8 @@ $H$ to minimize (\ref{errawh}), we minimize
 
 Both $\gamma_1$ and $\gamma_2$ are tuning parameters.
 
+The \textbf{NMF} package offers regularization as an option.
+
 \section{``Bias'' Removal}
 
 As noted in Chapter \ref{chap:knn}, some users tend to give more liberal
@@ -715,18 +783,18 @@ predictions.
 
 \begin{lstlisting}
 > library(recosystem)
-# recosystem uses 'R6' R objects; all action will take place within r;
+# all action will take place within r;
 # typically the output of a function will be stored as a new component in r
 > r <- Reco()
 > ml <- read.table('u.data',header=F)
 # need to create an object of class 'DataSource', specifying which
 # columns are user IDs, item IDs and ratings
-> ml.trn <- data_memory(ml[,1],ml[,2],ml[,3],index1=TRUE)
+> ml.dm <- data_memory(ml[,1],ml[,2],ml[,3],index1=TRUE)
 \end{lstlisting}
 
 \begin{lstlisting}
 # do the factorization, with rank 20; do use NMF
-> r$train(ml.trn,opts=list(dim=20,nmf=TRUE))
+> r$train(ml.dm,opts=list(dim=20,nmf=TRUE))
 iter      tr_rmse          obj
    0       2.0381   5.0056e+05
    1       1.0296   1.7402e+05
@@ -770,7 +838,7 @@ List of 2
          [,1]
 [1,] 2.196976
 # or just have recosystem do it for us
-> preds <- r$predict(ml.trn,out_memory())
+> preds <- r$predict(ml.dm,out_memory())
 > head(preds)
 [1] 3.979107 4.212397 2.196976 3.601082 3.900878 4.467487
 \end{lstlisting}
