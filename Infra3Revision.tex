@@ -567,7 +567,9 @@ small.\footnote{This rules out the MovieLens data, for instance, as its
 curator omitted users who had rated fewer than 25 movies.}  The
 intuition underlying this is that if we have a lot of ratings from some
 user, they already tell us lots about her.  Covariate information
-about this user may not add much to what we already know.
+about this user may not add much to what we already know.\footnote{Note
+that with a linear model, we could not use the covariate anyway, as
+explained in Section \ref{lindep}.}
 
 Consider for instance the House Voting dataset at
 UCI.\footnote{https://archive.ics.uci.edu/ml/datasets/congressional+voting+records}
