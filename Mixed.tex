@@ -5,8 +5,33 @@ SHOW THE CODE FOR USING IT IN OUR 3 METHODS
 
 GIVE A SIMPLE MATH DERIVATION OF VALUE OF IT, E.G. FOR SMALL N-I
 
-show that lm() gives the same answer as MM
+SHOW THAT lm() GIVES THE SAME ANSWER AS MM
 
-pros and cons
+PROS AND CONS
 
+Recommender systems is inherently statistical.  Indeed, the very fact
+that we discuss the bias-variance tradeoff recognizes the fact that our
+data are subject to sampling variation, a core statistical notion.  In
+this chapter, we will apply classical statistical estimation methods to
+a certain \textit{latent variables} model.
+
+\section{The Basic Model}
+
+Let $(U,I)$ denote a random (user ID, movie ID) pair.  Denote the user's
+rating by $Y_{IJ}$.  The model is additive, postulating that
+
+\begin{equation}
+Y_{IJ} = \mu + \alpha_I + \beta_J + \epsilon
+\end{equation}
+
+Here $\mu$ is an unknown constant, the overall population mean over all
+users and all movies.  The numbers $\alpha_1, \alpha_2,...$ and
+$\beta_1, \beta_2,...$ are also unknown constants; think of $\alpha_i$
+to be the tendency of user $i$ to give harsher ($\alpha_i < 0$) or more
+generous ($\alpha_i > 0$) ratings, relative to the general population of
+users, with a similar situation for the $\beta_j$ and movies.  The
+$\epsilon$ term is thought of as the combination of all other affects.
+
+Note that what makes, e.g., $\alpha_I$ random above is that $I$ is
+random.
 
