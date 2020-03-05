@@ -49,9 +49,16 @@ fitted on the original data.  For the model to be useful, the new data
 needs to come from the same source as the original --- what
 statisticians call a population.
 
+The data $X_1,...,X_n$ is considered a \textit{random sample} from a
+finite population if (a) each $X_i$ has the same distribution as the
+population, i.e.\ every element of the population has the same chance of
+being chosen and (b) the $X_i$ are independent.  
+
 We will usually think in terms of sample data here.
 
 \section{Probability, Expected Value and Variance}
+
+\subsection{Long-Run View}
 
 We will speak in terms of a \textit{repeatable experiment}, which again
 could be physical or conceptual.
@@ -73,6 +80,8 @@ we toss the coin until we get three consecutive heads, and record $X$;
 and so on.  This would result in infinitely many $X$ values.  Then in
 the long run, 6.25\% of the $X$ values would be 4.
 
+\subsection{Expected Value and Variance}
+
 The \textit{expected value} $E(X)$ of a random variable $X$ is its long-run
 average value over infinitely many repetitions of the experiment.  In
 that 3-consecutive heads game above, it can be shown that $E(X) = 14.7$.
@@ -90,6 +99,42 @@ Say we have a population of people and our our experiment is to
 randomly draw one person from the population, denoting that person's
 height by $H$.  Then intuitively, $EH$ will be the mean height of all
 the people in the population, traditionally written as $\mu$.
+
+\subsection{Important Properties of Expected Value and Variance}
+
+\begin{itemize}
+
+\item For random variables $U$ and $V$,
+
+\begin{equation}
+E(U+V) = EU + EV
+\end{equation}
+
+even if $U$ and $V$ are not independent.
+
+\item If $U$ and $V$ \textit{are} independent, then
+
+\begin{equation}
+Var(U+V) = Var(U) + Var(V)
+\end{equation}
+
+\item For any constant $c$, $E(cU) = cEU$ and $Var(cu) = c^2 Var(U)$.
+
+\item Let $\overline{X} = (X_1+...+X_n) / n$ be the sample mean from a
+random sample from a population having mean $\mu$ and variance
+$\sigma^2$.  Then
+
+\begin{equation}
+E(\overline{X} = \mu
+\end{equation}
+
+and
+
+\begin{equation}
+Var(\overline{X} = \frac{\sigma^2}{n}
+\end{equation}
+
+\end{itemize} 
 
 \section{Regression Models} 
 
@@ -156,7 +201,7 @@ to produce our estimate of $E(W ~| H=70, A=28)$.
 
 This kind of approach is common in ML.  The famous \textit{random
 forests} method is basically a more complex form of kNN, as we will see
-in Chapter \ref{chap:covars}.  
+in Chapter \ref{chap:knn}.  
 
 Statisticians also use methods like kNN.  In fact, kNN and random
 forests were invented by statisticians.  But more commonly, statistics
