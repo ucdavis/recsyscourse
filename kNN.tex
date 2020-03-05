@@ -1,14 +1,15 @@
 \chapter{Neighborhood-Based Methods}  
-\label{chap:knn} 
+\label{chap:knn}  
 
-ADD RANDOM FORESTS HERE
+One of the simplest and yet often most effective recommender system
+methods is based on this natural principle:
 
-Recall our preview in Chapter \ref{chap:prologue}.
-\textit{Collaborative filtering} RS methods are based on known user-item
-ratings, as opposed to, e.g., methods based on textual user evaluations.
-All of the methods in that chapter fall into this category.  The most
-natural, and earliest, such method was \textit{user-based filtering},
-also known as \textit{memory-based filtering}.
+\begin{quote}
+Say we have a new user N, for whom we want to predict an item rating I.
+We find the users in our existing data who are most similar to N and who
+have seen rating I, and take our predicted value to be the average of
+those users' ratings of I.  
+\end{quote}
 
 \section{Notation}
 
@@ -50,7 +51,9 @@ selected rows).
 \subsection{(One) Implementation}
 
 Below is code from \textbf{rectools} (somewhat simplified).  The
-arguments are:
+arguments are:\footnote{This needs to be updated.  Instead of having
+user and item covariates as arguments, they should be subtracted in some
+way from the ratings, as previously with NMF.}
 
 \begin{itemize}
 

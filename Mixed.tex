@@ -1,7 +1,6 @@
 \chapter{Statistical Models}  
 \label{chap:mixed} 
 
-
 SHOW THAT lm() GIVES THE SAME ANSWER AS MM
 
 PROS AND CONS
@@ -14,11 +13,12 @@ a certain \textit{latent variables} model.
 
 \section{The Basic Model}
 
+Again, for concreteness, we'll speak in terms of user ratings of movies.
 Let $(U,I)$ denote a random (user ID, movie ID) pair.  Denote the user's
 rating by $Y_{IJ}$.  The model is additive, postulating that
 
 \begin{equation}
-Y_{IJ} = \mu + \alpha_I + \beta_J + \epsilon
+Y_{IJ} = \mu + \alpha_I + \beta_J + \epsilon_{IJ}
 \end{equation}
 
 Here $\mu$ is an unknown constant, the overall population mean over all
@@ -30,5 +30,62 @@ users, with a similar situation for the $\beta_j$ and movies.  The
 $\epsilon$ term is thought of as the combination of all other affects.
 
 Note that what makes, e.g., $\alpha_I$ random above is that $I$ is
-random.
+random, and similarly for the $\beta_J$ and $\epsilon_{IJ}$.  The
+$\alpha$, $\beta$ and $\epsilon$ terms are assumed to be statistically
+independent, with mean 0.
+
+So, we model a user's rating of a movie as the sum of latent additive
+user and movie terms, plus a catch-all ``everything else''
+term.\footnote{What does the word \textit{latent} here mean?  Why is
+$\mu$ not ``latent''?  The answer is that it is a tangible quantity; we
+all can imagine finding the overall mean for all users and movies, given
+enough data.  By contrast, the $\alpha$ values' existence depend on the
+validity of the model.  It's similar to the NMF situation, where the
+postulate postulates existence of a set of ``typical'' users.}  The
+question then becomes how to estimate $\mu$, and $\alpha_1,
+\alpha_2,...,\alpha_u$ and $\beta_1, \beta_2,...,\beta_m$, where $u$ and
+$m$ are the numbers of users and movies in our data.  We will present
+two methods.
+
+\subsection{Example:  Guessing the Number of Coin Tosses}
+
+To aovid distracting complexity, consider the following game.  I toss a
+coin until I accumulate a total of $r$ heads.  I don't tell you the
+value of $r$ that I used, only informing you of $K$, the number of
+tosses I needed.
+
+It can be shown that
+
+\begin{equation}
+P(K = u) = \binom{u-1}{r-1} 0.5^u,~ u = r, r+1, ...
+\end{equation}
+
+Say I tell you $K = 7$.  What could you do to try to guess  $r$?
+
+\subsubsection{The Method of Maximum Likelihood}
+
+To guess $r$ in the game, you might ask, ``What value of $r$ would make
+it most likely to need 7 tosses to get $r$ heads?''  You would then find
+the value of $r$ that maximizes
+
+\begin{equation}
+\label{negbin7}
+\binom{6}{r-1} 0.5^7
+\end{equation}
+
+In this discrete case you could not use calculus, and simply would use
+trial-and-error to find $r$.
+
+\subsection{The Method of Moments}
+
+The \textit{moments} of a random variable $X$ are the expected values of
+the powers.  E.g. $E(X^{3})$ is called the third moment of $X$.
+
+It can be shown that in the game example,
+
+\begin{equation}
+E(K) = \frac{r}{0.5} = 2r
+\end{equation}
+
+
 

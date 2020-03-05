@@ -673,7 +673,32 @@ scale, e.g. 1 to 5 for the MovieLens data.
 % our notation.  In the case of covariates (see below), some R
 % \textbf{attributes} are also included.
 
+\section{``Bias'' Removal}
+
+As noted in Chapter \ref{chap:knn}, some users tend to give more liberal
+ratings, while others tend to be more cautious.  Similarly, some items
+tend to be rated more highly than others.  One way of dealing with
+that is to adjust our ratings matrix $A$ accordingly:  For each user
+$i$, let $R_i$ denote the average of all known ratings from that user.
+Also, for each item $j$ let $S_j$ denote the average of all known ratings
+for that item.  These are termed \textit{biases}. Then do the replacement
+
+\begin{equation}
+A_{uv} \leftarrow A_{uv} - R_u - S_v
+\end{equation}
+
+and then form the matrix factorization as usual.  In the end, after
+estimating the unknown entries in $A$, restore
+the subtracted quantities:
+
+\begin{equation}
+A_{uv} \leftarrow A_{uv} + R_u + S_v
+\end{equation}
+
 \section{Dealing with Covariates}
+
+Why stop with just removing ``biases''?  We can go a step further and
+account for user or item covariates.
 
 The easiest approach to handling covariates is to simply ``subtract them
 out'' for the data via linear regression, then run NMF/SVD on the
@@ -746,28 +771,6 @@ $H$ to minimize (\ref{errawh}), we minimize
 Both $\gamma_1$ and $\gamma_2$ are tuning parameters.
 
 The \textbf{NMF} package offers regularization as an option.
-
-\section{``Bias'' Removal}
-
-As noted in Chapter \ref{chap:knn}, some users tend to give more liberal
-ratings, while others tend to be more cautious.  Similarly, some items
-tend to be rated more highly than others.  One way of dealing with
-that is to adjust our ratings matrix $A$ accordingly:  For each user
-$i$, let $R_i$ denote the average of all known ratings from that user.
-Also, for each item $j$ let $S_j$ denote the average of all known ratings
-for that item.  These are termed \textit{biases}. Then do the replacement
-
-\begin{equation}
-A_{uv} \leftarrow A_{uv} - R_u - S_v
-\end{equation}
-
-and then form the matrix factorization as usual.  In the end, after
-estimating the unknown entries in $A$, restore
-the subtracted quantities:
-
-\begin{equation}
-A_{uv} \leftarrow A_{uv} + R_u + S_v
-\end{equation}
 
 \section{The recosystem Package}
 
