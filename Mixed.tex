@@ -1,5 +1,5 @@
 \chapter{Statistical Models}  
-\label{chap:mixed} 
+\label{chap:mixed}  
 
 Recommender systems is inherently statistical.  Indeed, the very fact
 that we discuss the bias-variance tradeoff recognizes the fact that our
@@ -43,7 +43,7 @@ postulate postulates existence of a set of ``typical'' users.}  The
 question then becomes how to estimate $\mu$, and $\alpha_1,
 \alpha_2,...,\alpha_u$ and $\beta_1, \beta_2,...,\beta_m$, where $u$ and
 $m$ are the numbers of users and movies in our data.  We will present
-two methods. 
+two methods.
 
 \section{Two General Statistical Methods for Parameter Estimation}
 
@@ -162,829 +162,7 @@ On the other hand:
 \begin{itemize}
 
 \item Often MM makes fewer assumptions than MLE.  That will be the case
-for us in the RS application below, a major point.
-\chapter{Some Infrastructure: Probability, Statistics and Regression
-Analysis}
-\label{chap:infra2}
-
-Many RS methods are probabilistic in nature, so we will lay out some
-infrastructure.  It is assumed the reader has a background in
-calculus-based probability structures, such as expected value and
-density functions.  Background in statistics (as opposed to probability)
-and machine learning is \textit{not} assumed.\footnote{The reader may
-wish to consult my open source book on probability and statistics, N.
-Matloff, \textit{From Algorithms to Z-Scores: Probability and
-Statistical Modeling in Computer Science},
-\url{http://heather.cs.ucdavis.edu/probstatbook}.}
-
-Note that while we will develop some statistical methods here, notably
-regression and classification models, we will not cover
-\textit{inferential} statistical methods such as confidence intervals
-and significance tests.  For readers familiar with such topics,
-occasional footnotes will be provided. 
-
-This chapter will lay some groundwork, after which we will devote the
-following chapter to the crucial concept of \textit{overfitting}.  
-
-\section{Review of Properties of Expected Value and Variance}
-
-\section{Data as a Sample}
-
-In statistics, the data are usually considered a sample from a
-population.  For instance, during an election campaign pollsters will
-take a \underline{sample}, typically of 1200 people, from the
-\underline{population} of all voters.  Say they are interested in $p$,
-the population proportion of voters favoring Candidate Jones. They
-calculate their \underline{estimate} of $p$, denoted $\widehat{p}$, to
-be the proportion of voters in the \underline{sample} who like Jones.
-
-Sometimes the notion of sampling is merely conceptual. Say for instance
-we are studying hypertension, on data involving 1000 patients.  We think
-of them as a sample from the population of all sufferers of
-hypertension, even though we did not go through an actual sampling
-process.
-
-In RS contexts, this means that we treat the users in our dataset as a
-sample from the conceptual population of all potential users.  We may
-even treat the items as a sample from a conceptual population of all
-possible items.
-
-In machine learning circles, it is not customary to think explicitly in
-terms of populations, samples and estimates.  Nevertheless, it's
-implied, as ML people do talk about predicting new data from the model
-fitted on the original data.  For the model to be useful, the new data
-needs to come from the same source as the original --- what
-statisticians call a population.
-
-We will usually think in terms of sample data here.
-
-\section{Probability, Expected Value and Variance}
-
-We will speak in terms of a \textit{repeatable experiment}, which again
-could be physical or conceptual.
-
-We think of probability as the long-run proportion of the time some
-event occurs.  Say we toss a fair coin.  What do we mean by
-$P(\textrm{heads} = 0.5)$?  Here our repeatable experiment is tossing the
-coin.  If we were to perform that experiment many times ---
-ideally, infinitely many times --- then in the long run, 50\% of the
-repetitions would give us heads.
-
-Now suppose our experiment, say a game, is to keep tossing a coin until
-we get three consecutive heads.  Let $X$ denote the number of tosses
-needed.  Then for instance $P(X = 4) = 0.5^4 = 0.0625$ (we get a tail
-then three heads).  Imagine doing this experiment infinitely many times:
-We toss the coin until we get three consecutive heads, and record $X$;
-we toss the coin until we get three consecutive heads, and record $X$;
-we toss the coin until we get three consecutive heads, and record $X$;
-and so on.  This would result in infinitely many $X$ values.  Then in
-the long run, 6.25\% of the $X$ values would be 4.
-
-The \textit{expected value} $E(X)$ of a random variable $X$ is its long-run
-average value over infinitely many repetitions of the experiment.  In
-that 3-consecutive heads game above, it can be shown that $E(X) = 14.7$.
-In other words, if we were to play the game infinitely many times,
-yielding infinitely $X$ values, their long-run average would be 14.7.
-
-If there is no danger of ambiguity, we usually omit the parentheses,
-writing $EX$ instead of $E(X)$.
-
-The \textit{variance} of a random variable is a measure of its
-dispersion, i.e.\ how much it varies from one repetition to the next.
-It is defined as $Var(X) = E[(X - EX)^2]$.
-
-Say we have a population of people and our our experiment is to 
-randomly draw one person from the population, denoting that person's
-height by $H$.  Then intuitively, $EH$ will be the mean height of all
-the people in the population, traditionally written as $\mu$.
-
-\section{Regression Models} 
-
-Regression models, both \textit{parametric} and \textit{nonparametric},
-\textbf{form the very core of statistics and machine learning (ML)}.  Their
-importance cannot be overemphasized.\footnote{For many, the term
-\textit{regression analysis} connotes a linear parametric model.  But
-actually the term is much more general, defined to be the conditional
-mean as discussed below.  Most ML techniques are nonparametric, as
-explained below, but are still regression methods.}
-
-\subsection{Definition}
-
-Suppose we are predicting a variable $Y$ from a vector $X$ of variables,
-say predicting human weight from the vector (height,age).  The
-\textit{regression function} at $t = (t_1,t_2)$ of $Y$ on $X$ is defined
-to be the mean weight of all people in the subpopulation consisting of
-all people of height $t_1$ and age $t_2$.
-
-Let $W$, $H$ and $A$ denote weight, height and age.  We write the
-regression function as the \textit{conditional expectation} of $W$ given
-$H$ and $A$, 
-
-\begin{equation}
-\label{regdef}
-E(W ~| H=t_1, A=t_2)
-\end{equation}
-
-If, say $E(W ~| H=70, A=28) = 162$, it means that the mean weight of all
-people in the subpopulation consisting of 28-year-olds of height 70 is
-162.
-
-Note that in (\ref{regdef}), the expression has a different value for
-each $(t_1,t_2)$ pair.  So it is a \underline{function} of $t_1$ and
-$t_2$.  This is why it is called the \textit{regression function} of $W$ on $H$
-and $A$.
-
-\textit{Terminology:} It is common to refer to $W$ here at the
-\textit{response variable} and $H$ and $A$ as the \textit{predictor
-variables}.  The latter may also be called \textit{explanatory
-variables} (in economics and other social sciences) or \textit{features}
-(in ML).
-
-\subsection{Prediction}
-
-Say we have a person whose height and age are 70 and 28, but with
-unknown weight.  It can be shown that the optimal (under a certain
-criterion) predictor of her weight is the value of the regression
-function at (70,28), $E(W ~|~ H=70, A=28) = 162$.  It is optimal
-in the sense of minimizing expected squared prediction error.
-
-\subsection{Estimation}
-
-The regression function is an attribute of the population.  Yet all we
-have is sample data.  How do we estimate the regression function from
-our data?
-
-\subsubsection{Nonparametric}
-
-Intuitively, we could use a nearest-neighbor approach.  To estimate
-$E(W ~| H=70, A=28)$, we could find, say, the 25 people in our
-sample for whom $(H,A)$ is closest to (70,28), and average their weights
-to produce our estimate of $E(W ~| H=70, A=28)$.  
-
-This kind of approach is common in ML.  The famous \textit{random
-forests} method is basically a more complex form of kNN, as we will see
-in Chapter \ref{chap:knn}.  
-
-Statisticians also use methods like kNN.  In fact, kNN and random
-forests were invented by statisticians.  But more commonly, statistics
-uses \textit{parametric} methods, as follows.
-
-\subsubsection{Parametric}
-
-The basic idea is to assume the regression function is linear in
-\underline{parameters} $\beta_i$, e.g.
-
-\begin{equation}
-\label{wthtage}
-\textrm{mean weight} = \beta_0 + \beta_1 ~ \textrm{height} + \beta_2 ~ \textrm{age}
-\end{equation}
-
-for some unknown values of the $\beta_i$.
-
-Make sure to take careful note of the word ``mean''!  Clearly, the
-weights of \underline{individual} people are not linear functions of
-their height and age.
-
-As noted, the $\beta_i$ are unknown, and need to be estimated
-from our sample data.  The estimates will be denoted
-$\widehat{\beta}_i$.  They are obtained by minimizing a certain sum of
-squares, to be discussed in Section \ref{lmdetails}.
-
-By the way, if the reader is familiar with the ML methodology known as
-\textit{neural networks}, she may be surprised that this technique is
-also parametric.  Again, more in Chapter \ref{chap:covars}.
-
-\subsubsection{Comparison}
-
-Consider (\ref{wthtage}), our model for the function of $t_1$ and $t_2$
-
-\begin{equation}
-E(\textrm{weight} ~|~ \textrm{height} = t_1, \textrm{age} = t_2)
-\end{equation}
-
-
-With the linear assumption (\ref{wthtage}), we will be estimating three
-quantities, the $\beta_i$.  But with a nonparametric approach, we are
-estimating infinitely many quantities, one for each value of the
-$(t_1,t_2)$ pair.
-
-In other words, \textbf{parametric methods are a form of dimension reduction}.
-On the other hand, this reduction comes at the expense of relying on the
-assumption of linearity in (\ref{wthtage}).  However, this is not so
-restrictive as it may seem, because:
-
-\begin{itemize}
-
-\item There are ways to assess the validity of the assumption.  This is
-covered in almost any book on regression, such as mine
-(N. Matloff, \textit{Statistical Regression and Classification: from
-Linear Models to Machine Learning}, CRC, 2017).
-
-\item One can add polynomial terms, as seen in the next section.
-
-\item Assumptions tend to be less important in prediction contexts than
-in estimation.  In the RS context, for instance, a rough model may be
-fine if we wish to take into account gender in predicting ratings, but
-might be insufficient if we want to estimate the actual magnitude of
-gender effect.
-
-\end{itemize} 
-
-\section{The lm() Function in R}
-
-In R, the workhorse regression estimator is the \textbf{lm()} function.
-Let's apply this to the MovieLens data, predicting rating from age and
-gender.  
-
-\textbf{Warning:} There are various different versions of the MovieLens
-data. Your version may yield different results than what you see in this
-book.
-
-\subsection{A First Look}
-
-We'll define gender as 1 for male, 0 for female.  We find (details
-below) that our estimated regression function of rating on age and
-gender is
-
-\begin{equation}
-\textrm{estimated mean rating} = 3.3599 + 0.005311 ~ \textrm{age} 
-- 0.0069 ~ \textrm{gender}
-\end{equation}
-
-(Note the word \textit{estimated}! These are not the true unknown
-population values, just estimates based on sample data.)
-
-Actually, this shows that age and gender are pretty weak predictors of
-movie rating, which you will recall is on a scale of 1 to 5.  A 10-year
-difference in age raises the predicted rating only by about 0.05!  The
-effect of gender is small too.  And while it is interesting to see that
-older people tend to give slighly higher ratings, as do women, we must
-keep in mind that the magnitude of the effect here is
-small.\footnote{You may be familiar with the term \textit{statistically
-significant}.  It is generally recognized today that this term can be
-quite misleading.  This is beyond the scope of this book, but suffice it
-to say that although age and gender are statistically significant above
-(details available via adding the call \textbf{summary(lmout)} to the
-code below), their practical importance as predictors here is
-essentially nil.  See R. Wasserstein and N. Lazar, The ASA's Statement
-on p-Values: Context, Process, and Purpose, \textit{The American
-Statistician}, June 2016.}  Of course, the gender effect may be large in
-other RS datasets.
-
-Here is the annotated code:
-
-\begin{lstlisting}
-
-# read (user,item,rating,transID) data; name the columns
-ratings <- read.table('u.data') 
-names(ratings) <- c('usernum','movienum','rating','transID') 
-# read demographic data
-demog <- read.table('u.user',sep='|') 
-names(demog) <- c('usernum','age','gender','occ','ZIP') 
-# merge (database 'join' op)
-u.big <- merge(ratings,demog,by.x=1,by.y=1) 
-u <- u.big[,c(1,2,3,5,6)] 
-# fit linear model
-lmout <- lm(rating ~ age+gender,data=u) 
-
-\end{lstlisting}
-
-Here's the output:
-
-\begin{lstlisting}
-> lmout
-
-Call:
-lm(formula = rating ~ age + gender, data = u)
-
-Coefficients:
-(Intercept)          age      genderM  
-3.359894        0.005311    -0.006904  
-\end{lstlisting}
-
-Let's take a closer look at that \textbf{genderM}
-coefficient.\footnote{The gender variable had been coded in the data as
-'M' and 'F', and R chose the first one that showed up in the data, 'M',
-as its base.}  Take for instance 28-year-old men and women; what are
-their mean ratings, according to this model?
-
-\begin{lstlisting}
-> lmout$coef %*% c(1,28,1)
-        [,1]
-[1,] 3.50169
-> lmout$coef %*% c(1,28,0)
-         [,1]
-[1,] 3.508593
-\end{lstlisting}
-
-(Note that the first '1' is needed to pick up the 3.359894.)
-
-So, on average, 28-year-old women give ratings 3.508593 - 3.50169 =
-0.006903 higher than men of that age.  And except for roundoff error,
-that is the -0.006904 value was see in the output above.  
-
-\subsection{Polynomial Terms}
-\label{poly}
-
-People tend to gain weight during middle age, but often they lose weight
-when they become elderly.  So (\ref{wthtage}), which is linear in the
-age variable, may be rather unrealistic; we might believe a quadratic
-model for mean weight as a function of age is better:
-
-\begin{equation}
-\label{wthtage2}
-\textrm{mean weight} = \beta_0 + \beta_1 ~ \textrm{height} + 
-\beta_2 ~ \textrm{age} +
-\beta_3 ~ \textrm{age}^2
-\end{equation}
-
-A key point is that this is still a linear model! When we speak of a
-linear model --- the 'l' in ``lm()'' -- we mean linear in the $\beta_i$.
-If in (\ref{wthtage2}) we, say, multiply all the $\beta_i$ by 3, the
-entire sum grows by a factor of 3, hence the linearity in the $\beta_i$.
-
-Of course we may wish to add a quadratic term for height as well, and
-for that matter, a product term height $\times$ age.  And since any
-model is merely an approximation, we might consider using higher and
-higher order polynomials.  We do have to worry about overfitting though;
-see Chapter \ref{chap:overfit}.
-
-We'll have a long example in Section \ref{prgengex}.
-
-\subsection{Dummy Variables}
-
-Ofter our variables will be \textit{categorical}.  Say we have data on
-US residents, including a variable for state of residence.  In R, that
-would be coded as a \textit{factor}.  But in prediction that ID code for
-a state has no numerical meaning.  A state with code 12, say is not
-``twice as good'' as a state with ID 6.  So, we would typically break that
-single variable, State, into 50 \textit{dummy} variables, one for each
-state.\footnote{We'd account for DC etc.\ as well.}  The dummy for
-California, say, would have the value 1 for those living in the state,
-and 0 otherwise.
-
-In many R functios, including \textbf{lm()}, R automatically converts
-factors to dummies.
-
-\subsection{Interaction Terms}
-
-Say we are in some RS context in which age and gender are substantial
-factors in predicting rating.  Suppose also that we suspect men become
-more liberal raters as they age while women become more reserved in
-their ratings.  Then a model like this might work well:
-
-\begin{equation}
-\label{mfinteraction}
-\textrm{mean rating} = \beta_0 + \beta_1 ~ \textrm{age} + 
-\beta_2 ~ \textrm{male} +
-\beta_3 ~ \textrm{age} \times \textrm{male}
-\end{equation}
-
-where \textit{male} is a dummy variable.  To see why this might be
-appropriate, consider what the above equation reduces to for men and
-women:
-
-\textit{men:}
-
-\begin{equation}
-\textrm{mean rating} 
-= (\beta_0+\beta_2) + (\beta_1+\beta_3) ~ \textrm{age} 
-\end{equation}
-
-\textit{women:}
-
-\begin{equation}
-\textrm{mean rating} = \beta_0 + \beta_1 ~ \textrm{age} 
-\end{equation}
-
-So the male and female lines have different slopes (and different
-intercepts), allowing for the differential age effect we surmise.
-Of course, once we compute the $\widehat{\beta}_i$ from the data, it
-may well turn out that our differential aging trends may not be
-confirmed.\footnote{One must take sampling variability into account, say
-by forming confidence intervals for the $\beta_i$.  As noted earlier, do
-not use significance testing for this.  At any rate, these aspects are
-beyond the scope of this book.}
-
-By the way, note \textit{how} we would fit this model to our data.  Our
-data frame has columns for rating, age and gender.  We would then add a
-new column, computed as the product of the age and gender columns.
-
-The term $\textrm{age} \times \textrm{male}$ is called an
-\textit{interaction term}.  Note that interaction terms can be formed
-from any predictor, not just dummy variables.  Also, one can form triple
-products for three-way interactions and so on, though this could greatly
-increase the complexity of the model and thus risk overfitting.
-
-On the other hand, interaction terms don't make sense in some contexts.
-In the MovieLens data, we have a column for User 12 and one for User 39
-(and many others).  How about modeling the interaction between those two
-users?
-
-On one level, one might immediately say No.  Probably these two users
-don't even know each other.  But even more, think of the mechanics.  The
-product of the User 12 and User 39 columns will be all 0s!  Intuitively,
-that would be useless, and mathematically the matrix inversion in
-(\ref{famouslm}) would be impossible.
-
-\subsection{Details of Linear Regression Estimation}
-\label{lmdetails}
-
-In the weight-height-age example, say, we form 
-
-\begin{equation}
-\label{rss}
-r =
-\sum_{i=1}^n [W_i - (b_0 + b_1 H_i + b_2 A_i)]^2
-\end{equation}
-
-where $W_i$ is the weight of the i$^{th}$ person in our sample data and
-so on. This is the sum of squared prediction errors.  We take
-derivatives with respect to the $b_k$, set them to 0, then set
-$\widehat{\beta}_k$ to the minimizing $b_k$.  For example, we set
-
-\begin{equation}
-0 = \frac{\partial{r}}{\partial{b_1}} =
--2 \sum_{i=1}^n [W_i - (b_0 + b_1 H_i + b_2 A_i)] (-H_i)
-\end{equation}
-
-Though R will do the minimizing for us, it is worth having an idea how
-it works, especially as more practice in following matrix-centric
-derivations.  To get a glimpse of this, we look at a matrix formulation, as
-follows.  Let $A$ denote the matrix of predictor values, with a 1s
-column tacked on at the left.  In the above example, row 12, say, of $A$
-would consist of a 1, followed by the height and age of the 12$^{th}$
-person in our sample.  Let $D$ denote the vector of weights, so that
-$D_{12}$ is the weight of the 12$^{th}$ person in our sample.  Finally,
-let $b$ denote the vector of the $b_k$.  Say we have data on 100 people.
-Then $A$ will have 100 rows, and $D$ will have length 100.
-
-Use the above as a concrete guide to your thinking, but keep in mind the
-general case:  If we have $p$ predictors and $n$ data points, then $A$
-and $D$ will have sizes $n \times (p+1)$ and $n$
-
-Then
-
-\begin{equation}
-\label{dab}
-r = (D - A b)' (D - Ab)
-\end{equation}
-
-(Write it out to see this.  Doing so will be crucial to understanding
-the material below and many points in the rest of the book.)
-
-Write the \textit{gradient} of $r$ with respect to $b$,
-
-\begin{equation}
-\frac{\partial r}{\partial b} = (
-\frac{\partial r}{\partial b_0},
-\frac{\partial r}{\partial b_1},
-...,
-\frac{\partial r}{\partial b_p}
-)'
-\end{equation}
-
-where $p+1$ is the number of predictor variables.\footnote{Note the
-representation here of a column vector as the transpose of a row vector.
-We will often do this, in order to save space on the page.  And, any
-reference to a \textit{vector} will be to a column vector unless stated
-otherwise.}
-
-It can be shown that for a vector $u$, 
-
-\begin{equation}
-\frac{\partial u'u}{\partial u} = 2u
-\end{equation}
-
-(analogous to the scalar relations $d (u^2) /du = 2u$; again, this is
-seen by writing the expressions out).
-
-Setting $u = D - Ab$ and applying the Chain Rule (adapted for
-gradients), we get
-
-\begin{equation}
-\frac{\partial r}{\partial b} = 
-\frac{\partial r}{\partial u} 
-\frac{\partial u}{\partial b} =
-2(D - Ab) ~ \frac{\partial (D - Ab)}{\partial b}=
-2 (-A') (D - Ab) 
-\end{equation}
-
-Setting the gradient to 0 and solving for $b$, we have
-
-\begin{equation}
-\label{adaab}
-0 = A'D - A'Ab
-\end{equation}  
-
-so that the minimizing $b$, giving us $\widehat{\beta}$, is
-
-\begin{equation}
-\label{famouslm}
-b = (A'A)^{-1} A'D
-\end{equation}
-
-This famous formula is what \textbf{lm()} computes in finding the
-$\widehat{\beta}_k$.
-
-\subsection{Linear Dependence Issues}
-\label{lindep}
-
-Note that the solution in (\ref{famouslm}) exists and is unique,
-providing we do not have linearly dependent rows in our data, which
-would cause $A$ to be noninvertible.
-
-Note too that in our age/gender MovieLens example above, we should not
-have variables for both male and female.  If we did, we have
-
-\begin{equation}
-A =
-\left(
-\begin{array}{rrrr}
-1 & Age_1 & Male_1 & Female_1 \\
-1 & Age_2 & Male_2 & Female_2 \\
-... \\
-1 & Age_{100000} & Male_{100000} & Female_{100000} \\
-\end{array}
-\right )
-\end{equation}
-
-where $A_i$ is the age of the $i^{th}$ person in our data, and one of
-$M_{i}$ and $F_{i}$ is 1 and the other 0, according to the gender of
-this person.  (Recall that there are 100000 data points in tis dataset.)
-The problem is this:  The third and fourth columns of $A$ would then sum
-to a vector of all 1s, the same as in the first column.  So the columns
-of $A$ will be linearly dependent, and the rank will be 3 instead of 4.
-The same will then be true for $A'A$, so that $(A'A)^{-1}$ will not
-exist in (\ref{famouslm}).  In other words, not only would the Female
-column be unnecessary, it would be problematic.
-
-But in many cases, the columns of $A$ will be \textit{approximately}
-linearly dependent, a situation called \textit{multicollinearity}.  In
-such cases, the computation of $(A'A)^{-1}$ may produce substantial
-roundoff error, causing unreliable answers.  The \textbf{lm()} function
-issues a warning of a ``rank-deficient'' solution.
-
-And in our RS setting, a subtle but vital problem arises, in terms of
-covariates.  Consider for instance the call
-
-\begin{lstlisting}
-lm(rating ~ userID + age)
-\end{lstlisting}
-
-If we know the user's ID, we know her age, so there is a perfect
-dependency.  Consider a small example, with two users, of ages 28.8 an
-39.0, and a dummy variable for the first.  Then we would have
-
-age column = 39.0 $\times$ the 1s column - 10.2 $\times$ user1 column
-
-For \textbf{lm()} and \textbf{glm()} (which solves an equation like
-(\ref{famouslm}), there is not much that can be done here. 
-\chapter{Some Infrastructure: Model Selection and Overfitting}  
-\label{chap:overfit}  
-
-\section{Dummy Variables as Response Variables}
-\label{logit}
-
-In many cases, the response variable may be categorical.  In the RS
-context, for instance, a rating may simply be binary, i.e.\
-like/dislike.  Or even click/not click --- does a user click on a Web page
-location?  Let's use this as our example.
-
-We are generally interested in the probability of a click.  That
-actually fits a regression context, as follows.  Code a click as 1 and
-nonclick as 0.  Since the expected value of a variable of this type is
-the probability of a 1, and since a regression function by definition
-is an expected value, taking Click as our response variables does
-involve a regression function.
-
-So, if our predictors were age and gender, say, we might entertain
-formulating our regression model as
-
-\begin{equation}
-\label{clickagegen}
-\textrm{probability of click} = \beta_0 + \beta_1 ~ \textrm{age} +
-\beta_2 ~ \textrm{gender}
-\end{equation}
-
-One problem, though, is that a probability should be in [0,1] yet the
-right-hand side of (\ref{clickagegen}) can conceivably be anywhere in
-$(-\infty,\infty)$.  For this and other reasons the usual parametric
-model for a binary response $Y$ is the \textit{logistic}:  For $p$
-predictors $X_i$, our model is
-
-\begin{equation}
-P(Y  = 1 ~|~ X_1=t_1,...,X_p=t_p) =
-\frac{1}{1+\exp{-(\beta_0+\beta_1 t_1+...+\beta_p t_p})}
-\end{equation}
-
-This is called a \textit{generalized linear model}, as it has the linear
-form $\beta_0+\beta_1 t_1+...+\beta_p t_p$ embedded inside
-another function, in this case the logistic function $g(s) =
-1/(1+e^{-s})$.
-
-Note that the latter function, often called \textit{logit} for short,
-has values only in [0,1], as desired, and is increasing in $s$, thus
-retaining the monotonic notion of linear models.\footnote{These
-properties form the intuitive motivation for using logit models.
-Another motivation is this: Let $X$ denote the vector of predictor
-variables, and let $Y$ be the response variable, with the two classes 0
-and 1.  If within each class, $X$ has a multivariate normal
-distribution, with the same covariance matrix in each class.}
-
-The $\beta_i$ are estimated by an R function \textbf{glm()}, similar to
-\textbf{lm()}.\footnote{The class of the return value is \textbf{'glm'},
-which is a subclass of \textbf{'lm'.}
-}
-Let's model a user giving a movie a rating of 4 or
-higher:
-
-\begin{lstlisting}
-> r45 <- as.integer(u$rating >= 4)  # a binary value, 1 or 0
-> u$r45 <- r45
-> glmout <- glm(r45 ~ age+gender,data=u,family=binomial)
-> glmout
-
-Call:  glm(formula = r45 ~ age + gender, data = u)
-
-Coefficients:
-(Intercept)          age      genderM  
--0.002510       0.006886    -0.011189  
-...
-\end{lstlisting}
-
-The argument \textbf{family = binomial} tells R that we want the
-logistic model, not some other generalized linear model, such a model
-known as \textit{Poisson regression}.\footnote{By the way, the argument
-\textbf{family} must be an object of class \textbf{'function'}.  Inside
-\textbf{glm()}, there will be a call \textbf{family()}.  R has a
-built-in function \textbf{binomial()}, which is called here.}
-
-\subsection{R's predict(), a Generic Function}
-
-A key aspect to R's object orientation is \textit{generic} functions.
-Take \textbf{plot()}, for instance.  Its action will depend on the class
-of object it is applied to.  If we call the function on a vector, we get
-a histogram.  But if we call it on a two-column matrix, we get a scatter
-diagram.
-
-What happens is that when \textbf{plot()} is called, R will check what
-class of object the caller supplied as an argument.  If the object is of
-class \textbf{"x"}, then the original call will be \textit{dispatched}
-to \textbf{plot.x()}, a plotting function tailored to that class.  (Of
-course, that means one needs to have been written and available.)
-
-R's \textbf{predict()} is another example of a generic function, used to
-predict new cases.  In the MovieLens example above, say we want to
-predict the rating given by a 30-year-old man.  We could simply plug
-30 and 1 into the estimated regression function, say using
-\textbf{coef()} to get the $\widehat{\beta}_i$:
-
-\begin{lstlisting}
-> coef(lmout)
-(Intercept)          age      genderM 
-3.359894442  0.005310673 -0.006903502 
-> coef(lmout) %*% c(1,30,1)  # linear algebra-style matrix multiply
-      [,1]
-[1,] 3.512311
-\end{lstlisting}
-
-Alternatively (and in many settings, more conveniently):
-
-\begin{lstlisting}
-> newdata <- data.frame(age=30,gender='M')
-> predict(lmout,newdata)
-    1 
-3.512311 
-\end{lstlisting}
-
-Recall that we had assigned the output of \textbf{lm()} to
-\textbf{lmout}, which will have class \textbf{'lm'}.  So, the call to
-\textbf{predict()} above was dispatched to \textbf{predict.lm()}.
-
-What about \textbf{glm()}?  There is a function \textbf{predict.glm()},
-which normally should be called with the argument \textbf{type =
-'response'}.  The latter means we want the return values to be the
-estimated values of the regression function, i.e.\ the conditional
-probabilities of response 1, given the values of the predictors.
-
-\subsection{Full Example}
-\label{lmex}
-
-\begin{lstlisting}
-> rats <- read.table('u.data')
-> head(rats)
-   V1  V2 V3        V4
-1 196 242  3 881250949
-2 186 302  3 891717742
-3  22 377  1 878887116
-4 244  51  2 880606923
-5 166 346  1 886397596
-6 298 474  4 884182806
-> class(rats$V1)
-[1] "integer"
-> rats$V1 <- as.factor(rats$V1)
-> rats$V2 <- as.factor(rats$V2)
-> lmout <- lm(V3 ~ V1+V2,data=rats)  # runs about 10 mins
-> coefs <- lmout$coefficients
-> str(coefs)
- Named num [1:2624] 3.913 0.041 -0.529 0.88 -0.457 ...
- - attr(*, "names")= chr [1:2624] "(Intercept)" "V12" "V13" "V14" ...
-# let's try predicting something
-> newx <- rats[5,1:2]
-> newx
-   V1  V2
-5 166 346
-# how would user 166 like movie 8?
-> newx$V2 <- '8'  # character, due to factor
-# R factors are essentially character vectors with named levels
-> newx
-   V1 V2
-5 166  8
-> predict(lmout,newx)
-       5 
-4.399462 
-\end{lstlisting}
-
-A few comments:
-
-\begin{itemize}
-
-\item The V1 and V2 columns were numbers, but those ``numbers'' were
-user and movie IDs.  We need to convert them to dummy variables.  R will
-do that for us, provided we change them to factors.
-
-\item With over 900 users and 1600 movies, that's over 2500 dummies;
-2624, to be exact.
-
-\item The \textbf{predict()} function is really handy, but its second
-argument needs to be a data frame (even if only one row) of the same
-structure as what went into \textbf{lm()}.  The easiest way to do this
-is to start with one row of that data frame, then modify as needed.
-
-\item It's nice that we got a prediction for this user, but is it
-accurate?  More on this later.
-\end{itemize} 
-
-
-\subsection{More Than Two Levels in Categorical Response}
-
-What if our response variable is categorical but with more than two
-levels?  In the click/nonclick setting, suppose the user has a choice of
-five things to click, and must choose one.  Then the response is
-categorical with five levels.  
-
-There are two major approaches.  To explain, we'll use the following
-very simple example. Say there are dogs, cats and foxes on a field, and
-they sometimes step on a sensor, so we know their weights but do not see
-them.  Say we have data on 10000 data points, in which we do know the
-species.  Our data frame, \textbf{df}, has 10000 rows and 4 columns.  In
-the columns, say the names are 'Weight', 'Dog', 'Cat' and 'Fox', with
-the last three being dummies.  Say we have 5000 dogs, 2000 cats and 3000
-foxes.  Then for instance 2000 of the rows in \textbf{df} would be cats.
-
-\textit{One-vs.All (OVA) Method}
-
-One would run run three logistic models:
-
-\begin{lstlisting}
-gdog <- glm(Dog ~ .,data=df[,1:2])  # dog vs. all else
-gcat <- glm(Cat ~ .,data=df[,c(1,3)])  # cat vs. all else
-gfox <- glm(Fox ~ .,data=df[,c(1,4])  # fox vs. all else
-\end{lstlisting}
-
-Then for each new animal we encounter of unknown species, we call
-\textbf{predict()} three times, yielding three estimated conditional
-probabilities.  If the one for cat, say, is largest, we guess Cat.
-
-\textit{All vs. All (AVA) Method}
-
-Here again we'd run multiple logit models, in pairs as follows:
-
-\begin{lstlisting}
-gdogcat <- 
-   glm(Dog ~ .,data=df[df$dog+df$cat==1,1:2])  # dog vs. cat
-gdogfox <- 
-   glm(Dog ~ .,data=df[df$dog+df$fox==1,1:2])  # dog vs. fox
-gcatfox <- 
-   glm(Cat ~ .,data=df[df$cat+df$fox==1,1:3])  # cat vs. fox
-\end{lstlisting}
-
-Then for each new animal we encounter of unknown species, we call
-\textbf{predict()} three times, again yielding three estimated
-conditional probabilities.  Say in the first one, Cat ``wins,'' i.e.\
-the conditional probability is less than 0.5.  Say Dog wins in the
-second, and Cat wins in the third.  Since Cat had the most wins, we
-predict Cat.
-
-\textit{Comparison}
-
-At first, OVA seems much better than AVA.  If we have $m$ levels, that
-means running $C(m,2) = O(m^2)$ parwise logit models, rather than $m$
-for OVA.  However, that is somewhat compensated by the fact that each
-pairwise model will be based on less data, and some analysts contend
-that AVA can have better accuracy.  It remains a bit of a controversy.
-
+for us in the RS application below, a major point.  
 
 \item MM is easier to explain.  MLE has the same ``What if...?'' basis
 that p-values have, rather confusing.
@@ -997,23 +175,28 @@ Method of Moments estimation tool.
 
 \section{MM Applied to (\ref{basicmodel})} 
 
+As you'll see, MM is arguably the more useful of the two methods in this
+particular setting.
+
+\subsection{Derivation of the Estimates}
+
 The expected values in Section \ref{mm} can be conditional.  So, from
 (\ref{basicmodel}), write
 
 \begin{equation}
-E(Y_{IJ} ~|~ I = k) = \mu + \alpha_k + E(\beta_J | I = k) 
+E(Y_{IJ} ~|~ I = k) = \mu + \alpha_k + E(\beta_J | I = k), ~ k=1,2,...,u 
 \end{equation}
 
 But since $I$ and $J$ are independent, we have
 
 \begin{equation}
-E(\beta_J | I = k) = E(\beta_J) = 0
+E(\beta_J | I = k) = E(\beta_J) = 0, ~ k=1,2,...,u
 \end{equation} 
 
 so
 
 \begin{equation}
-E(Y_{IJ} ~|~ I = k) = \mu + \alpha_k 
+E(Y_{IJ} ~|~ I = k) = \mu + \alpha_k, ~ k=1,2,...,u
 \end{equation}
 
 Now we must find our sample estimate of the left-hand side, and equate
@@ -1025,7 +208,49 @@ rating user k gave to all movies she rated.
 Moreover, the natural estimate of $\mu$ is the average rating given to
 all movies in our data.
 
+So we now have our $\widehat{\alpha}_k$.  The derivation of the
+$\widehat{\beta}_l$ is similar.
 
+\subsection{Relation to Linear Model}
 
+For simplicity, consider the call
 
-SHOW THAT lm() GIVES THE SAME ANSWER AS MM
+\begin{lstlisting}
+lm(rating ~ userID-1)
+\end{lstlisting}
+
+omitting the movies.  Think of what will happen with the matrix $A$ and
+the vector $D$ in Section \ref{lmdetails}.  
+
+Recall that the -1 in the above call means we do not want an intercept
+term.  In that case, \textbf{lm()} will produce $u$ dummy variables
+rather than $u-1$.  This will help clarify the situation.
+
+So, in the matrix $A$, column $i$ will be the vector of 1s and 0s in the
+dummy for user $i,~ i=1,...,u$.  Now consider the $(i,i)$ element in
+$A'A$.  It's the dot product of row $i$ in $A'$ and column $i$ in $A$,
+thus the dot product of column $i$ in $A$ and column $i$ in $A$.  That
+will in turn be the sum of some 1s --- actually, $n_i$ 1s, where $n_i$
+is the number of ratings user $i$ has made.
+
+Meanwhile, the same reasoning says that for $i \neq j$, element $(i,j)$
+in $A'A$ is 0, since two dummy vectors coming from the same categorical
+variable will never have a 1 in the same position.
+
+Putting all that together, we have that
+
+\begin{equation}
+(A'A)^{-1} = \textrm{diag}(\frac{1}{n_1},...,(\frac{1}{n_u})
+\end{equation}
+
+a diagonal matrix with the indicated elements.
+
+What about $A'D$ in (\ref{lmdetails})?  Similar reasoning shows that
+its $m^{th}$ element is the sum of all the ratings given by user $m$.
+
+Putting this all together, we find that the $m^{th}$ estimated
+coefficient returned by \textbf{lm()} will be the average rating given
+by user $m$ --- exactly the same as MM gave us!
+
+\section{MLE Applied to (\ref{basicmodel})} 
+
