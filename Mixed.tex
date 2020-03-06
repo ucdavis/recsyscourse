@@ -10,8 +10,9 @@ a certain \textit{latent variables} model.
 \section{The Basic Model}
 
 Again, for concreteness, we'll speak in terms of user ratings of movies.
-Let $(U,I)$ denote a random (user ID, movie ID) pair.  Denote the user's
-rating by $Y_{IJ}$.  The model is additive, postulating that
+Let $(U,I)$ denote a random (user ID, movie ID) pair.  Let $u$ and $m$
+denote the numbers of users and movies.  Denote the user's rating by
+$Y_{IJ}$.  The model is additive, postulating that
 
 \begin{equation}
 \label{basicmodel}
@@ -19,8 +20,8 @@ Y_{IJ} = \mu + \alpha_I + \beta_J + \epsilon_{IJ}
 \end{equation}
 
 Here $\mu$ is an unknown constant, the overall population mean over all
-users and all movies.  The numbers $\alpha_1, \alpha_2,...$ and
-$\beta_1, \beta_2,...$ are also unknown constants; think of $\alpha_i$
+users and all movies.  The numbers $\alpha_1, \alpha_2,...,\alpha_u$ and
+$\beta_1, \beta_2,...,\beta_m$ are also unknown constants; think of $\alpha_i$
 to be the tendency of user $i$ to give harsher ($\alpha_i < 0$) or more
 generous ($\alpha_i > 0$) ratings, relative to the general population of
 users, with a similar situation for the $\beta_j$ and movies.  The
@@ -42,7 +43,7 @@ postulate postulates existence of a set of ``typical'' users.}  The
 question then becomes how to estimate $\mu$, and $\alpha_1,
 \alpha_2,...,\alpha_u$ and $\beta_1, \beta_2,...,\beta_m$, where $u$ and
 $m$ are the numbers of users and movies in our data.  We will present
-two methods.
+two methods. 
 
 \section{Two General Statistical Methods for Parameter Estimation}
 
@@ -1000,8 +1001,31 @@ The expected values in Section \ref{mm} can be conditional.  So, from
 (\ref{basicmodel}), write
 
 \begin{equation}
-E(Y_{IJ} ~|~ I = k = \mu  
+E(Y_{IJ} ~|~ I = k) = \mu + \alpha_k + E(\beta_J | I = k) 
 \end{equation}
+
+But since $I$ and $J$ are independent, we have
+
+\begin{equation}
+E(\beta_J | I = k) = E(\beta_J) = 0
+\end{equation} 
+
+so
+
+\begin{equation}
+E(Y_{IJ} ~|~ I = k) = \mu + \alpha_k 
+\end{equation}
+
+Now we must find our sample estimate of the left-hand side, and equate
+it to $\mu + \alpha_k$.
+
+But the natural estimate of $E(Y_{IJ} ~|~ I = k)$ is simply the mean
+rating user k gave to all movies she rated.
+
+Moreover, the natural estimate of $\mu$ is the average rating given to
+all movies in our data.
+
+
 
 
 SHOW THAT lm() GIVES THE SAME ANSWER AS MM
