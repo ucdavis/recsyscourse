@@ -1,0 +1,170 @@
+\chapter{PageRank}  
+\label{chap:page}
+
+Many attribute the early success of Google to its superior search
+engine, based on an algorithm they called PageRank.  It was assigned US
+Patent US6285999B1, with the sole inventor listed as Larry Page, one of
+the two founders of the firm.  However, Page credited co-founder Sergei
+Brin as contributing in conversations about the idea, as well as some
+Stanford University faculty and some previous researchers who had done
+related work.  The patent belongs to Stanford.  The name,
+\textit{PageRank}, is a pun on both the inventor's surname and the fact
+that it indexes Web \textit{pages}.
+
+The goal is to rank all the pages of thw World Wide Web in order of
+importance.  The key is defining that latter term.
+
+\section{Markov Model}
+
+The method models Web ``surfing'' as following a \textit{Markov chain}, a
+very popular approach to stochastic modeling in many fields.
+Its main assumption is rather strict, but in this case that is not very
+important, as we are merely putting together a rough measure of the
+importance of each Web page.
+
+\subsection{Structure}
+
+One observes some process at times 1,2,3,...  The \textit{state} at time
+\textit{m}, a random variable, is denoted by $X_m$.  Different
+applications have different state spaces; it could be queue length in a
+network buffer, for instance.
+
+The main assumption is that the system is the \textit{Markov property},
+which in rough terms can be described as:
+
+\begin{quote}
+The probabilities of future states, given the present state and the past
+states, depends only on the present state; the past is irrelevant.
+\end{quote}
+
+We sometimes say the system is ``memoryless'' --- in looking to the
+future, knowing the present, the past is ``forgotten.''
+
+A famous example is \textit{random walk}.  Say at time 0 we are at
+position 0 on the real number line.  We flip a coin, then go 1 step left
+or right, depending on whether the outcome is head or tails.  Then we do
+that again, repeatedly.  $X_m$ is our position at time $m$.  Clearly
+this system is Markovian.
+
+In formal terms:
+
+\begin{equation}
+\label{containshidden}
+P(X_{t+1}=s_{t+1}|X_{t}=s_{t},X_{t-1}=s_{t-1},\ldots ,X_{0}=s_{0})=P(X_{t+1}=s_{t+1}|X_{t}=s_{t})
+\end{equation}
+
+\subsection{Matrix Formulation}
+
+We define $p_{ij}$ to be the probability of going from state i to state
+j in one time step; note that this is a {\it conditional} probability,
+i.e. $P(X_{n+1} = j ~|~ X_n = i)$.  These quantities form a matrix,
+denoted by $P$.
+
+So, this matrix gives the probabilites of going from state $i$ to state
+$j$ in one time step:
+
+\begin{equation}
+P(X_{n+1} = s ~|~ X_n = r) = P_{rs} = p_{rs}
+\end{equation}
+
+And the Markov property can be used to show that $P^2$ gives the
+probabilities of the various 2-time step transitions, i.e.
+
+\begin{equation}
+P(X_{n+2} = s ~|~ X_n = r) = P^2_{rs}
+\end{equation}
+
+Similarly, $P^k$ gives the k-step probabilities,
+
+\begin{equation}
+\label{kstep}
+P(X_{n+k} = s ~|~ X_n = r) = P^k_{rs}
+\end{equation}
+
+\subsection{Long-Run Behavior}
+
+Suppose the chain is \textit{irreducible}, meaning that one can reach
+every state from every other, in a finite number of
+steps.\footnote{Computer scientists, true to form, have their own
+separate term for this, \textit{strongly connected}.}  Suppose also that
+the state space is finite, and \textit{aperiodic}.  The latter term
+means that the GCD of return times to any state is 1; the random walk is
+periodic, since that number is 2.  Then 
+
+\begin{equation}
+\label{limpi}
+\pi_r = \lim_{m \rightarrow \infty} P(X_m = r)
+\end{equation}
+
+exists, and is independent of the starting position $X_0$.
+
+\subsection{Finding $\pi$}
+
+(\ref{limpi}) and (\ref{kstep}), and our by-now well-honed skill at
+using partitioned matrices imply that 
+
+\begin{equation}
+\lim_{m \rightarrow \infty} P^m = 
+\left (
+\begin{array}{r}
+\pi \\
+\pi \\
+... \\
+\pi \\
+\end{array}
+\right )
+\end{equation}
+
+This gives us a way to find $\pi$:  Simply raise $P$ to a high power,
+and then each row is approximately $\pi$.  In fact, we could the get an
+even better approximation by averaging those rows.  (Of course, this is
+for chains with finite state spaces.)
+
+Alternatively, one can view the whole thing as an eigenvalue problem.
+The above material can be used to show that
+
+\begin{equation}
+\pi' = \pi P
+\end{equation}
+
+so that 
+
+\begin{equation}
+\pi' = P' \pi' 
+\end{equation}
+
+which makes $\pi$ and eigenvector of $P'$ with eigenvalue 1.  It's also
+possible to show that the other eigenvalues are between 0 and 1.  So one
+can use the famous Power Method for finding the eigenvector
+corresponding to the largest eigenvalue of a matrix, so we could
+find $\pi$ with this method.  That method involves powers of
+$P$ as well, so in the end it's similar to the above.
+
+\section{The PageRank Model}
+
+Here the state space consists of one state for every page on the Web,
+and ``time'' is hops from one page to another.  $X_3$, say, is the third
+page you visit during a Web surfing session.
+
+\subsection{Details}
+
+The Markov property is questionable here, but again, we don't care much
+about that.  It's just a mechanism for devising an importance measure.
+
+Now, what is the matrix $P$ here?  For each Web page $i$, let $n_i$
+denote the number of outlinks from that page.  The model is that after a
+visit to that page, the Web surfer will choose one of those links, with
+uniform probability among them, i.e.\ $1/n_i$ each.  The $\pi$ vector
+then becomes the vector of importance scores for the various pages.
+
+Google also adds a \textit{damping} factor to the model, which we will
+not go into here.
+
+\subsection{Computation of $\pi$}
+
+All of the above is fine, but there are literally billions of Web pages.
+Thus the matrix $P$ has billions of rows and columns.  Fortunately,
+though, it is a very sparse matrix, lots of 0s, so we can exploit that
+property to reduce computation.  There are many refinements of all this,
+of course.
+
