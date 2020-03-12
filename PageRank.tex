@@ -17,7 +17,7 @@ importance.  The key is defining that latter term.
 \section{Markov Model}
 
 The method models Web ``surfing'' as following a \textit{Markov chain}, a
-very popular approach to stochastic modeling in many fields.
+very widely-used approach to stochastic modeling in many fields.
 Its main assumption is rather strict, but in this case that is not very
 important, as we are merely putting together a rough measure of the
 importance of each Web page.
@@ -29,7 +29,7 @@ One observes some process at times 1,2,3,...  The \textit{state} at time
 applications have different state spaces; it could be queue length in a
 network buffer, for instance.
 
-The main assumption is that the system is the \textit{Markov property},
+The main assumption is that the system follows the \textit{Markov property},
 which in rough terms can be described as:
 
 \begin{quote}
@@ -71,14 +71,14 @@ And the Markov property can be used to show that $P^2$ gives the
 probabilities of the various 2-time step transitions, i.e.
 
 \begin{equation}
-P(X_{n+2} = s ~|~ X_n = r) = P^2_{rs}
+P(X_{n+2} = s ~|~ X_n = r) = (P^2)_{rs}
 \end{equation}
 
 Similarly, $P^k$ gives the k-step probabilities,
 
 \begin{equation}
 \label{kstep}
-P(X_{n+k} = s ~|~ X_n = r) = P^k_{rs}
+P(X_{n+k} = s ~|~ X_n = r) = (P^k)_{rs}
 \end{equation}
 
 \subsection{Long-Run Behavior}
@@ -98,6 +98,8 @@ periodic, since that number is 2.  Then
 
 exists, and is independent of the starting position $X_0$.
 
+Note that $\pi$ is a vector, with element $r$ defined as above.
+
 \subsection{Finding $\pi$}
 
 (\ref{limpi}) and (\ref{kstep}), and our by-now well-honed skill at
@@ -107,16 +109,19 @@ using partitioned matrices imply that
 \lim_{m \rightarrow \infty} P^m = 
 \left (
 \begin{array}{r}
-\pi \\
-\pi \\
+\pi' \\
+\pi' \\
 ... \\
-\pi \\
+\pi' \\
 \end{array}
 \right )
 \end{equation}
 
+Note that the fact the rows are identical here reflects the independence
+of (\ref{limpi}) of the starting position $X_0$.
+
 This gives us a way to find $\pi$:  Simply raise $P$ to a high power,
-and then each row is approximately $\pi$.  In fact, we could the get an
+and then each row is approximately $\pi'$.  In fact, we could the get an
 even better approximation by averaging those rows.  (Of course, this is
 for chains with finite state spaces.)
 
@@ -133,18 +138,21 @@ so that
 \pi' = P' \pi' 
 \end{equation}
 
-which makes $\pi$ and eigenvector of $P'$ with eigenvalue 1.  It's also
-possible to show that the other eigenvalues are between 0 and 1.  So one
-can use the famous Power Method for finding the eigenvector
-corresponding to the largest eigenvalue of a matrix, so we could
-find $\pi$ with this method.  That method involves powers of
-$P$ as well, so in the end it's similar to the above.
+which makes $\pi'$ an eigenvector of $P'$ with eigenvalue 1.  It's also
+possible to show that the other eigenvalues are between 0 and 1.  So an
+alternate way to find $\pi$ is to find the eigenvectors of $P'$.  And in
+turn one way to do that is to use the famous Power Method for finding
+the eigenvector corresponding to the largest eigenvalue of a matrix.
+That method involves powers of $P$ as well, so in the end it's similar
+to the above.
 
 \section{The PageRank Model}
 
 Here the state space consists of one state for every page on the Web,
 and ``time'' is hops from one page to another.  $X_3$, say, is the third
-page you visit during a Web surfing session.
+page you visit during a Web surfing session.  What Page had to do was
+devise some clever formulation of the matrix $P$ that would reasonably
+model Web surfing.
 
 \subsection{Details}
 
@@ -165,6 +173,15 @@ not go into here.
 All of the above is fine, but there are literally billions of Web pages.
 Thus the matrix $P$ has billions of rows and columns.  Fortunately,
 though, it is a very sparse matrix, lots of 0s, so we can exploit that
-property to reduce computation.  There are many refinements of all this,
-of course.
+property to reduce computation.  
 
+Note too that there is a shortcut to find the matrix powers:  We first
+square $P$, then square the result, yielding $P^4$, then square
+\textit{that} result, yielding $P^8$ and so on.
+
+There are many refinements of all this, of course.
+
+\section{Then What?}
+
+Clearly there is a lot more to what Google does to provide users with
+recommended Web page.  What we saw here is only a first step.
