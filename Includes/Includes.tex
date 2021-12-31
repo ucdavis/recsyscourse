@@ -11,35 +11,35 @@
 \setlength{\parskip}{0.1in}
 
 \setcounter{secnumdepth}{4}
-\setcounter{tocdepth}{4}
+\setcounter{tocdepth}{3}
 
 % \usepackage{times}
 \usepackage{fancyvrb}
 \usepackage{relsize}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage{graphicx}
 \usepackage{color}
 \usepackage{listings}
 
-% theorems, etc.
+%% % theorems, etc.
 \usepackage{amsmath}
-\newtheorem{theorem}{Theorem}
-\newcommand{\BlackBox}{\rule{1.5ex}{1.5ex}}  % end of proof
-\newenvironment{proof}{\par\noindent{\bf Proof\ }}{\hfill\BlackBox\\[2mm]}
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{proposition}[theorem]{Proposition}
-\newtheorem{remark}[theorem]{Remark}
-\newtheorem{corollary}[theorem]{Corollary}
-\newtheorem{definition}[theorem]{Definition}
-\newtheorem{conjecture}[theorem]{Conjecture}
-\newtheorem{axiom}[theorem]{Axiom}
+%% \newtheorem{theorem}{Theorem}
+%% \newcommand{\BlackBox}{\rule{1.5ex}{1.5ex}}  % end of proof
+%% \newenvironment{proof}{\par\noindent{\bf Proof\ }}{\hfill\BlackBox\\[2mm]}
+%% \newtheorem{lemma}[theorem]{Lemma}
+%% \newtheorem{proposition}[theorem]{Proposition}
+%% \newtheorem{remark}[theorem]{Remark}
+%% \newtheorem{corollary}[theorem]{Corollary}
+%% \newtheorem{definition}[theorem]{Definition}
+%% \newtheorem{conjecture}[theorem]{Conjecture}
+%% \newtheorem{axiom}[theorem]{Axiom}
 
-% for problem sets, each problem automatically numbered
-\newcounter{problemnum}
-\newcommand{\oneproblem}
-   { \stepcounter{problemnum} {\bf \arabic{problemnum}}. } 
-\newcommand{\startproblemset}
-   { \bigskip {\bf\large Exercises} \setcounter{problemnum}{0} }
+%% % for problem sets, each problem automatically numbered
+%% \newcounter{problemnum}
+%% \newcommand{\oneproblem}
+%%    { \stepcounter{problemnum} {\bf \arabic{problemnum}}. } 
+%% \newcommand{\startproblemset}
+%%    { \bigskip {\bf\large Exercises} \setcounter{problemnum}{0} }
 
 \lstset{language=r}
 \lstset{
