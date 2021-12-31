@@ -6,6 +6,7 @@ RSbookRevision.pdf:  RSbookRevision.tex \
 		   SVDRevision.tex \
 		   Infra3Revision.tex kNNRevision.tex \
 		   Mixed.tex PageRank.tex \
-		   PartI.tex PartII.tex PartIII.tex PartIV.tex
+		   PartI.tex PartII.tex PartIII.tex PartIV.tex \
+		   Clusters.tex ML.tex  
 	pdflatex RSbookRevision.tex
 
