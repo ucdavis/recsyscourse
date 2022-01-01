@@ -78,7 +78,10 @@ userID  movieID  rating1to5  timestamp
 Let's take a look:
 
 \begin{lstlisting}
-> ml100 <- read.csv('ml100k.data',header=FALSE,sep='\t')
+> download.file('http://files.grouplens.org/datasets/movielens/ml-100k.zip', 
+>    'ml-100k.zip') 
+> unzip('ml-100k.zip') 
+> ml100 <- read.csv('ml-100k/u.data',header=FALSE,sep='\t')
 > head(ml100)
    V1  V2 V3        V4
 1 196 242  3 881250949
@@ -91,7 +94,7 @@ Let's take a look:
 
 (Note that the data comes in TAB-separated fields.)
 
-So for instance user 22 rated movie 377 as 1.  Let's explore some more:
+We see for instance user 22 rated movie 377 as 1.  Let's explore some more:
 
 \begin{lstlisting}
 > length(unique(ml100$V1))
@@ -114,10 +117,10 @@ We can break that down by user:
 > tmp[22]
       22 
 3.351562 
-> hist(tmp)
 \end{lstlisting}
 
-\includegraphics[width=4.5in]{Images/Ch1HistMeanRatings.png}
+Here we groped ratings according to age, computing the mean rating for
+each age value.
 
 So for instance user 22 gave an average rating of about 3.35 to the ones
 he/she rated.  And how many films was that?
@@ -245,53 +248,65 @@ be
 \widehat{\beta}_{88}
 \end{equation}
 
-\subsubsection{Comparison}
+\subsection{Variety Is Good}
 
 Why so many methods?  There is no perfect solution, and each has
-advantagages and disadvantages.
+advantagages and disadvantages. 
+Some methods may do better than
+others on specific datasets.  Some methods take more computation time
+than others.  Some methods are hard to explain to nontechnical people.
 
-First, note that in the kNN and MF methods, the user must choose the
-value of a design parameter.  In kNN, we must choose $k$, the number of
-nearest neighbors, and while in MF, we must choose $m$, the rank.
-
-Parameters such as $k$ and $m$ are known as \textit{tuning parameters}
-in statistics and \textit{hyperparameters} in machine learning (ML).
-Many ML methods have multiple hyperparameters, sometimes 10 or more.
-This can be quite a drawback, as choosing their values is quite
-difficult.  By contrast, the statistical model described above has no
-tuning parameters.
-
-A problem with both MF and the statistical models is that one is limited
-to prediction only of ratings for users and items that are already in
-our dataset.  We could not predict a new user, for instance, without
-recomputing an updated fit.  With kNN, there is no such restriction.
+It's good, therefore, to have a variety of methods in our toolbox.
 
 \section{Tuning Parameters}
 
 The reader is likely familiar with histograms.  Recall that the analyst
-must choose a bin width.  Here there is a tradeoff:
+must choose a bin width, or similarly, the number of bins.  Here there
+is a tradeoff:
 
 \begin{itemize}
 
 \item If the width is too small, some bins will have no data points, or
-very few.  This will produce a very choppy appearance.
+very few.  We intuitively feel that small samples are not likely to be
+accurate, and we will get a histograms that has a very choppy appearance.
+For instance, 
+
+\begin{lstlisting}
+> tmp <- tapply(ml100$V3,ml100$V1,mean)
+> hist(tmp,breaks=15)
+> hist(tmp,breaks=50)
+\end{lstlisting}
+
+\includegraphics[width=3.5in]{Images/HistBrks15.png} 
+\includegraphics[width=3.5in]{Images/HistBrks50.png} 
 
 \item But it's also bad to have too large a width.  In the extreme, we
-have bins so wide that we have just one of them, totally uninformative.
+have bins so wide that we have just one or two of them, totally uninformative:
+
+\includegraphics[width=3.5in]{Images/HistBrks2.png} 
+\includegraphics[width=3.5in]{Images/HistBrks1.png} 
 
 \end{itemize} 
 
 The bin width is called a \textit{tuning parameter} or a
-\textit{hyperparameter}.  Most machine learning algorithms, including
-most in recommender systems, have several tuning parameters.  Choosing
-the values of those parameters is not easy, but there are methods for
-it.
+\textit{hyperparameter}.  In kNN, the number of neighbors $k$ is the
+tuning parameter, and in MF applications, it's the matrix rank $m$.
+Most machine learning algorithms, including most in recommender systems,
+have tuning parameters, even 10 or more.  Choosing the values of those
+parameters is not easy, but there are methods for it, as we will see.
 
-\textbf{Important note:} Think of datasets A and B, similar but A having
-only 25 data points and B having 500.  Then the problem of empty or
-nearly-empty bins is much less of an issue.  In other words, we can
-afford to make the bin width smaller if we have dataset B, thus getting
-a more detailed picture.
+\textbf{Important note:} Think of plotting a histogram for datasets A
+and B, similar but A having only 25 data points and B having 500.  With
+dataset B, can afford to make the bin width smaller than with dataset A,
+as the problem of having empty or nearly-empty bins is much less of an
+issue.  Of course, at a certain point, the number bins will be too large
+even with B, but the point is that optimal values of tuning parameters
+depend on the size of our dataset (as well as various other factors).
+
+By the way, the latent-variable statistical model we introduced earlier
+has no tuning parameters.  That may seem tempting, and the model
+certainly has various advantages.  But a tuning parameter gives an
+opportunity to \textit{tune}, to seek the most accurate model possible.
 
 \section{Covariates/Side Information}
 
@@ -300,45 +315,35 @@ example have demographic information on the user, such as age and
 gender.  Incorporating such information --- called \textit{covariates}
 in statistics and \textit{side information} in machine learning --- may
 enhance our predictive ability, especially if this user has not rated
-many items to date.
+many items yet.
 
-\section{Prerequisites}
-
-What is background is needed for this book?
-
-\begin{itemize}
-
-\item A calculus-based probability course.
-
-\item Some facility in programming.  
-
-\item Good mathematical intuition.
-
-\end{itemize} 
-
-We will be using the R programming language.  No prior experience with R
-is assumed.  A Quickstart in R is available in Appendix
-\ref{chap:rquickstart}.
-
-We will also use some machine learning techniques, but no prior
-background is assumed.
-
-\section{Software}
-
-A number of libraries are available for RS methods.  We will use the R
-package \textbf{rectools}, available in my GitHub repo,
-\textbf{github.com/matloff}.
-
-\section{What You Should Gain from This Book}
+However, making good use of side information may not be so easy, for a
+couple of reasons:
 
 \begin{itemize}
 
-\item A solid understanding of RS fundamentals:  You'll be able to build
-simple but effective RS systems, and will be able to read books and
-research on advanced RS methods.
+\item The exact nature of a relationship may not be very clear.  In the
+movie example, for instance, we might think that age is an important
+factor.  Let's take a quick look, using an extended version of
+\lstinline{ml100} obtained from others in the downloaded data (details
+not show for now):
 
-\item Greatly enhanced understanding of the basics of
-probability/statistics, machine learning and linear algebra.
+\begin{lstlisting}
+> w <- tapply(ml100kpluscovs$rating,ml100kpluscovs$age,mean)
+> plot(w)
+\end{lstlisting}
+
+\includegraphics[width=3.5in]{Images/MeanRatVsAge.png} 
+
+Yes, there does seem to be an upward age trend.  But is it turning
+downward at the older ages?
+
+\item And that relationship may not even be useful.  After all, if some
+user has rated a large number of films, this data already tells us a lot
+about this user's taste in movies.  For that reason, information about
+this user's age may be redundant.
 
 \end{itemize} 
+
+No easy answers in data modeling!
 
