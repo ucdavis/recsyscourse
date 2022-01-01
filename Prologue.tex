@@ -281,7 +281,9 @@ For instance,
 \includegraphics[width=3.5in]{Images/HistBrks50.png} 
 
 \item But it's also bad to have too large a width.  In the extreme, we
-have bins so wide that we have just one or two of them, totally uninformative:
+have bins so wide that we have just one or two of them; a 2-bin plot
+would be of very limited usefulness, and a 1-bin plot would be
+totally uninformative:
 
 \includegraphics[width=3.5in]{Images/HistBrks2.png} 
 \includegraphics[width=3.5in]{Images/HistBrks1.png} 
@@ -363,12 +365,14 @@ And my Google query on ``overfitting'' yielded 6,560,000 results!
 The concept refers to fitting an overly-complex model to our data.
 Consider Figure \ref{mightlintrend}, for example.  We might fit a
 straight line, and do fairly well.  But noting a possible dip in trend
-near the right side, we fit a parabola, i.e.\  a quadratic model,  And
-why stop there.  We could try polynomials of degree 3, 4 and so on.
+near the right side, we could fit a parabola, i.e.\  a quadratic model,
+And why stop there?  We could try polynomials of degree 3, 4 and so on.
 
 In fact, a polynomial of degree 62 would give an exact fit, with all 63
-points lying on the curve.  But clearly, it would be absurd to do this,
-as bad as our example above of a histogram with just one or two bins.
+points lying on the curve.\footnote{A degree-62 model has 63 parameters,
+including the constant term.} But clearly, it would be absurd to do
+this, as bad as our example above of a histogram with just one or two
+bins.
 
 And indeed, the analogy to the histogram case is strong.  Our polynomial
 degree $d$ here is a tuning parameter.  Too large a value, or one that
@@ -376,4 +380,25 @@ is too small, won't work well.
 
 In prediction applications, the definition of ``won't work well'' is
 that our predictions of new cases in the future won't be very accurate.
+Referring to our dataset as the \textit{training data} (``train'' as in
+``learn'' in ``machine learning''), we say that we overfit our model to
+the training data.  
 
+So, we need some new data.  If we had some, we would take each of our
+candidate models---one model for each degree we try---and see which
+one predicts best on the new data.
+
+Well, we often don't have new data yet, so we create some.  Before
+fitting our models, we set aside some of our data.  We call this the
+\textit{holdout set}, and take the rest of our data as the training set.
+We fit our various candidate models on this training set, then use each
+of the fitted models to predict the holdout set.  Whichever candidate
+model does best will then be our choice for prediction on further cases
+in the future.
+
+But...by coincidence, the particular holdout set that we form could be
+biaed in favor of one model or another.  So, we try many holdout sets,
+randomly chosen.  This of course also means many training sets.  For
+each training/holdout set pair, we fit all of our candidate models.  In
+the end, we take as our final choice whichever model does best over all
+the holdout sets.
