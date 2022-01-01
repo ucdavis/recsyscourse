@@ -368,8 +368,8 @@ straight line, and do fairly well.  But noting a possible dip in trend
 near the right side, we could fit a parabola, i.e.\  a quadratic model,
 And why stop there?  We could try polynomials of degree 3, 4 and so on.
 
-In fact, a polynomial of degree 62 would give an exact fit, with all 63
-points lying on the curve.\footnote{A degree-62 model has 63 parameters,
+In fact, a polynomial of degree 60 would give an exact fit, with all 61
+points lying on the curve.\footnote{A degree-60 model has 62 parameters,
 including the constant term.} But clearly, it would be absurd to do
 this, as bad as our example above of a histogram with just one or two
 bins.
@@ -402,3 +402,56 @@ randomly chosen.  This of course also means many training sets.  For
 each training/holdout set pair, we fit all of our candidate models.  In
 the end, we take as our final choice whichever model does best over all
 the holdout sets.
+
+\section{``P-Hacking,'' Roundoff Error Etc.}
+
+To give a somewhat frivolous example that still will make the point,
+say we are investigating whether there is any genetic component to a
+person's sense of humor.  Is there a Humor gene?  There are many, many
+genes to consider.  Say we have data on 100 people, with some kind of
+measurement on ``humorosity'' of each one, plus genetic data on each
+person.
+
+There are tons of genes to check.  For each gene, we could compare the
+humorosity of people with the gene and people not having the gene (say,
+having a particular mutation).  Since we have a random sample of people,
+our data is random.  The key point is that \textit{just be accident, by
+coincidence, there may be one gene that seems to separate the humorous
+people from the dull ones}, when in fact there is no Humor gene.
+Conducting a statistical study involving very large numbers of variables
+without concern regarding the above possible scenario is called
+\textit{p-hacking}.\footnote{The etymology need not concern us here, but
+for the curious:  Statistical hypothesis testing---itself methdology
+that is the subject of much criticism, rightly so---leads to something
+called a p-value.  In the genetics example, the analyst would look for
+small p-values, and declare an important discovery if they find one for
+some gene.}
+
+In the ML context, we (should) worry about p-hacking if we have a large
+number of potential predictor variables (textit{features}, in ML
+parlance).  In order to avoid overfitting, we may wish to pare down our
+feature set, e.g.\ retain age as a predictor but discard gender.  Denote
+the number of predictors by $p$.  (Standard notation, not related to the
+first letter in ``p-values.'')  We have $2^p$ possible subsets to
+retain.  Even with modest value of $p$, say 10, that's a lot of subsets!
+By accident, one might seem to predict better on the holdout sets.
+
+There is no magic solution to this problem (or lots of other problems in
+predictive modeling).  Granted,
+there are techniques called \textit{multiple inference} or
+\textit{multiple comparison} methods, to avoid p-hacking in performing
+statistical inference.  See for example \textit{Multiple Comparisons:
+Theory and Methods}, Jason Hsu, 1996, CRC.  But these are difficult to
+apply, and generally have retrictive assumptions.  
+
+Similarly, many ML methods involve computations involving huge matrices,
+with, say, millions of rows and thousands of columns.  Say we wish to
+find the inverse (or similar entity) of a huge matrix.  Not only will
+the computation take a long time, but also the cumulative roundoff error
+could be quite substantial.  Can we trust the result?
+
+Again, there are no magic solutions.  However, with experience one will
+develop ways to assess possible problems like these, and deal with them.
+Note that ``dealing with them'' may simply mean treating our results as
+useful but not infallible---a good viewpoint in any case.
+
