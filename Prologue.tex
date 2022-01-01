@@ -333,7 +333,11 @@ not show for now):
 > plot(w)
 \end{lstlisting}
 
+\begin{figure}[tp]
 \includegraphics[width=3.5in]{Images/MeanRatVsAge.png} 
+\caption{Rating vs.\ Age}
+\label{mightlintrend}
+\end{figure}
 
 Yes, there does seem to be an upward age trend.  But is it turning
 downward at the older ages?
@@ -345,5 +349,31 @@ this user's age may be redundant.
 
 \end{itemize} 
 
-No easy answers in data modeling!
+No easy answers in predictive data modeling!
+
+\section{Overfitting, Holdout Sets and Cross-Validation}
+
+A major issue---some would say THE major issue---in predictive
+data modeling is \textit{overfitting}.  Professor Yaser
+Abu-Mostafa of Caltech, a prominent ML figure, once summed it up: ``The
+ability to avoid overfitting is what separates professionals from
+amateurs in ML.''\footnote{https://www.youtube.com/watch?v=EQWr3GGCdzw}
+And my Google query on ``overfitting'' yielded 6,560,000 results!
+
+The concept refers to fitting an overly-complex model to our data.
+Consider Figure \ref{mightlintrend}, for example.  We might fit a
+straight line, and do fairly well.  But noting a possible dip in trend
+near the right side, we fit a parabola, i.e.\  a quadratic model,  And
+why stop there.  We could try polynomials of degree 3, 4 and so on.
+
+In fact, a polynomial of degree 62 would give an exact fit, with all 63
+points lying on the curve.  But clearly, it would be absurd to do this,
+as bad as our example above of a histogram with just one or two bins.
+
+And indeed, the analogy to the histogram case is strong.  Our polynomial
+degree $d$ here is a tuning parameter.  Too large a value, or one that
+is too small, won't work well.
+
+In prediction applications, the definition of ``won't work well'' is
+that our predictions of new cases in the future won't be very accurate.
 
