@@ -6,13 +6,14 @@ Keep in mind, this is just an overview; many questions should come to
 your mind, hopefully whetting your appetite for the succeeding chapters!
 
 In this chapter, we will mainly describe \textit{collaborative
-filtering}. 
+filtering}, one of several common approaches to recommender systems
+(RTSs). 
 
 \section{What Are Recommender Systems?}
 
-What is a recommender system (RS)?  We're all familiar with the obvious
-ones --- Amazon suggesting books for us to buy, Twitter suggesting whom
-we may wish to follow, even OK Cupid suggesting potential dates. 
+What is an RS?  We're all familiar with the obvious ones---Amazon
+suggesting books for us to buy, Twitter suggesting whom we may wish to
+follow, even OK Cupid suggesting potential dates. 
 
 But many applications are less obvious.  The University of Minnesota,
 for instance, has developed an RS to aid its students in selection of
@@ -38,7 +39,7 @@ you like it?''  The Minnesota grade prediction example above is an
 instance of this.
 
 In another example, we may wish to try to predict bad reactions to
-presciption drugs among patients in a medical organization.  Here the
+prescription drugs among patients in a medical organization.  Here the
 user is a patient, the item is a drug, and the rating may be 1 for
 reaction, 0 if not.  
 
@@ -62,6 +63,84 @@ items, most of the elements of the matrix will be unknown.  We are
 trying to predict the missing values.  Note carefully that these are not
 the same as 0s.
 
+\section{The ``Hello World'' of RS:  MovieLens}
+
+This dataset is the standard introduction to RSs, and indeed is a
+standard example in RS research papers.  It's available from the
+GroupLens project at the University of Minnesota, \url{grouplens.org}.
+In this book, we will mainly use the 100K version, which contains
+100,000 rates in the format
+
+\begin{lstlisting}
+userID  movieID  rating1to5  timestamp
+\end{lstlisting}
+
+Let's take a look:
+
+\begin{lstlisting}
+> ml100 <- read.csv('ml100k.data',header=FALSE,sep='\t')
+> head(ml100)
+   V1  V2 V3        V4
+1 196 242  3 881250949
+2 186 302  3 891717742
+3  22 377  1 878887116
+4 244  51  2 880606923
+5 166 346  1 886397596
+6 298 474  4 884182806
+\end{lstlisting}
+
+(Note that the data comes in TAB-separated fields.)
+
+So for instance user 22 rated movie 377 as 1.  Let's explore some more:
+
+\begin{lstlisting}
+> length(unique(ml100$V1))
+[1] 943
+> length(unique(ml100$V2))
+[1] 1682
+> table(ml100$V3)
+
+    1     2     3     4     5 
+ 6110 11370 27145 34174 21201 
+\end{lstlisting}
+
+So there were 943 users and 1682 films.  Users seemed to be pretty
+liberal in their ratings, with the most popular rating being a 4.
+
+We can break that down by user:
+
+\begin{lstlisting}
+> tmp <- tapply(ml100$V3,ml100$V1,mean)
+> tmp[22]
+      22 
+3.351562 
+> hist(tmp)
+\end{lstlisting}
+
+\includegraphics[width=4.5in]{Images/Ch1HistMeanRatings.png}
+
+So for instance user 22 gave an average rating of about 3.35 to the ones
+he/she rated.  And how many films was that?
+
+\begin{lstlisting}
+> tmp <- tapply(ml100$V3,ml100$V1,length)
+> tmp[22]
+ 22 
+128 
+\end{lstlisting}
+
+Did user 22 rate movie 88?
+
+\begin{lstlisting}
+> ml100[ml100$V1 == 22 & ml100$V2 == 88,]
+[1] V1 V2 V3 V4
+<0 rows> (or 0-length row.names)
+\end{lstlisting}
+
+No.  And that is the essence of RS:  How can we predict what rating user
+22 would give to that movie?
+
+
 \section{How Is It Done?}
 
 Putting aside possible privacy issues that arise in some of the above RS
@@ -69,7 +148,8 @@ applications,\footnote{I used to be mildy
 troubled by Amazon's suggestions, but with the general demise of
 browsable bricks-and-mortar bookstores, I now tend to view it as ``a
 feature rather than a bug.''} we ask here, How do they do this?  In this
-prologue, we'll discuss a few of the major methods.
+prologue, we'll discuss a few of the major methods for collaborative
+filtering (CF)..
 
 \subsection{Nearest-Neighbor Methods}
 
@@ -85,25 +165,29 @@ predicted rating of BGB for Maria.  We'll treat the issues of choosing
 the value of $k$ and defining ``similar'' later, but this is the
 overview.
 
-The above approach is called \textit{user-based}, with a corresponding
-\textit{item-based} method.  In general, these are called k-NN methods,
+In general, methods like this are called k-NN methods,
 for ``k-nearest neighbor.''  (We'll shorten it to kNN.)
+Actually, kNN was one of the earliest methods in machine learning in
+general.
 
 \subsection{Latent Factor Approach:  Matrix Factorization}
 \label{mf}
 
+This one is less intuitive, but is probably the most popular CF methods.
+
 Let $A$ denote the matrix of ratings described earlier, with $A_{ij}$
 denoting the rating user $i$ gives to item $j$.  Keep in mind, as noted,
-that most of the entries in $A$ are unknown; we'll refer to them as NA,
-the R-language notation for missing values.  Matrix factorization (MF)
-methods then estimate all of $A$ as follows.
+that most of the entries in $A$ are unknown; following R convention,
+we'll refer to them as NA, the R-language notation for missing values.  
+So for our movie example above, \lstinline{bf{A[22,377] = 1} and
+\lstinline{A[22,88] = NA}.
 
+Matrix factorization (MF) methods then estimate all of $A$ as follows.
 Let $r$ and $s$ denote the numbers of rows and colums of $A$,
-respectively.  In the smallest version of the MovieLens data, for
-example, $r = 943$ and $s = 1682$.  The idea is to find a
-\textit{low-rank approximation} to $A$:  Using on known ratings, we find
-matrices $W$ and $H$, of dimensions $r \times m$ and $m \times s$, each
-of rank $m$, such that 
+respectively.  In our data above, for example, $r = 943$ and $s = 1682$.
+The idea is to find a \textit{low-rank approximation} to $A$:  Using our
+known ratings, we find matrices $W$ and $H$, of dimensions $r \times m$
+and $m \times s$, each of rank $m$, such that 
 
 \begin{equation}
 A \approx WH
@@ -117,6 +201,13 @@ that $W$ and $H$ are \underline{known} matrices, no NA values.  Thus we
 can form the product $WH$, thus obtaining estimates for all the missing
 elements of $A$.
 
+For our example above, our predicted value for user 22's rating of
+moveie 88 would be
+
+\begin{equation}
+(WH)_{22,88}
+\end{equation}
+
 \subsection{Latent Factor Approach: Statistical Models}
 
 As noted, collaborative-filtering RS applications form a special case of
@@ -128,8 +219,8 @@ Y_{ij} = \mu + \alpha_i + \beta_j + \epsilon_{ij}
 \end{equation}
 
 a sum of an overall mean, an effect for user $i$, an effect for item
-$j$, and an ``all other effects'' term (often called the ``error term,''
-which is rather misleading).  
+$j$, and an ``all other effects'' term (often called the ``error
+term'').
 
 In the MovieLens setting, $\mu$ would be the mean rating given to all
 movies (in the ``population'' of all movies, past, present and future),
@@ -143,6 +234,16 @@ constant to be estimated.  As to $\alpha_i$ and $\beta_j$, one could on
 the one hand treat them as fixed constants to be estimated.  On the
 other hand, there are some advantages to treating them as random
 variables, we will be seen in Chapter \ref{chap:mixed}.
+
+It is customary to use the ``hat'' notation $\widehat{}$ to mean
+``estimate of.''  After finding estimates of the above model quantities
+from our data, our predicted value for user 22 and movie 88 would then
+be
+
+\begin{equation}
+\widehat{A}[22,88] = \widehat{\mu} + \widehat{\alpha}_{22} + 
+\widehat{\beta}_{88}
+\end{equation}
 
 \subsubsection{Comparison}
 
