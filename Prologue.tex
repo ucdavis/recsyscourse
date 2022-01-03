@@ -144,19 +144,30 @@ Did user 22 rate movie 88?
 No.  And that is the essence of RS:  How can we predict what rating user
 22 would give to that movie?
 
-We can represent our data as a matrix, e.g.
+We can represent our data as a matrix.  Let's illustrate that with some
+functions from the \lstinline{rectools} package, which we will be using
+in this book:
 
-\begin{equation}
-\label{ratmat}
-\left (
-\begin{array}{rrrr}
-1 & 5 & 1 & -2 \\
-8 & 3 & 2 & 8 \\
-9 & 8 & 3 & 6 
-\end{array}
-\right )
-\end{equation}
+\begin{lstlisting}
+> ml100UD <- formUserData(ml100[,1:3]) 
+> ml100A <- asMatrix(ml100UD) 
+> dim(ml100A)
+[1]  943 1682
+> ml100A[1:5,1:5] 
+     [,1] [,2] [,3] [,4] [,5]
+[1,]    5    3    4    3    3
+[2,]    4   NA   NA   NA   NA
+[3,]   NA   NA   NA   NA   NA
+[4,]   NA   NA   NA   NA   NA
+[5,]    4    3   NA   NA   NA
+\end{lstlisting}
 
+The \lstinline{formUserData()} function inputs data in the (userID,
+itemID, rating) format we've seen, and outputs an R list, one element
+for each distinct user.  Then \textbf{asMatrix()} forms the ratings
+matrix from that list.  Don't worry about the full call forms now, but
+just become familiar with the structure of the matrix.  We see, for
+instance, that user 2 rated item 1 as a 4, but didn't rated movies 2-5.
 
 \section{How Is It Done?}
 

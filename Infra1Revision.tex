@@ -235,6 +235,61 @@ $Ax$ is a linear combination of the columns of $A$.  The coefficients in
 that linear combination are the elements of $x$.
 \end{quote}
 
+Similarly:
+
+\begin{quote}
+Let $y$ be a row vector of length equal to the number of rows of $A$.
+Then $yA$ is a linear combination of the rows of A, with the
+coefficients being the element of $y$.
+\end{quote}
+
+Taking this last point a step further:
+
+\begin{quote}
+Each row of $AB$ is a linear combination of the rows of $B$ (with the
+coefficients being the elements of the corresponding row of $A$).
+Similarly,
+Each column of $AB$ is a linear combination of the columns of $A$ (with the
+coefficients being the elements of the corresponding column of $B$).
+\end{quote}
+
+\subsubsection{Application:  Rank of a Matrix Product}
+
+Say we have conformable matrices $A$ and $B$, and set $C = AB$.  Using
+the notation $rk()$ to mean ``rank of,'' we have
+
+\begin{itemize}
+
+\item The quantity $rk(C)$ is the maximal number of linearly independent
+rows of $C$, almost \textit{all} possible coefficients.
+
+\item The quantity $rk(B)$ is the maximal number of linearly independent
+rows of $B$, almost \textit{all} possible coefficients.
+
+\item Each row of $C = AB$ is a linear combination of rows of $B$,
+i.e.\ each row of $C$ is \textit{some} linear combination of the rows of
+$B$.
+
+\item Thus we see that 
+
+\begin{equation}
+rk(B) \geq rk(C)
+\end{equation}
+
+Similarly,
+
+\begin{equation}
+rk(A) \geq rk(C)
+\end{equation}
+
+\item In other words,
+
+\begin{equation}
+rk(C) \leq min(rk(A),rk(B))
+\end{equation}
+
+\end{itemize} 
+
 \subsection{Example:  Matrix Factorization}
 \label{mfact}
 
