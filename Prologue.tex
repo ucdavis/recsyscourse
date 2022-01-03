@@ -63,6 +63,7 @@ items, most of the elements of the matrix will be unknown.  We are
 trying to predict the missing values.  Note carefully that these are not
 the same as 0s.
 
+
 \section{The ``Hello World'' of RS:  MovieLens}
 
 This dataset is the standard introduction to RSs, and indeed is a
@@ -142,6 +143,19 @@ Did user 22 rate movie 88?
 
 No.  And that is the essence of RS:  How can we predict what rating user
 22 would give to that movie?
+
+We can represent our data as a matrix, e.g.
+
+\begin{equation}
+\label{ratmat}
+\left (
+\begin{array}{rrrr}
+1 & 5 & 1 & -2 \\
+8 & 3 & 2 & 8 \\
+9 & 8 & 3 & 6 
+\end{array}
+\right )
+\end{equation}
 
 
 \section{How Is It Done?}
