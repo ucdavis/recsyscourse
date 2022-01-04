@@ -62,7 +62,7 @@ sample analog is
 
 \begin{equation}
 \label{s2}
-\frac{1}{n} \sum_{i=1}^n (B_i - \overline{B})^2
+s^2 = \frac{1}{n} \sum_{i=1}^n (B_i - \overline{B})^2
 \end{equation}
 
 where the $B_i$ are the blood pressures in our sample, and $\overline{B}$
@@ -73,9 +73,17 @@ population value,
 Var(B) = E[(B - EB)^]
 \end{equation}
 
-(Books typically divide by $n-1$ instead of $n$ in (\ref{s2}), largely
-for historical reasons.  We'll use $n$ here to keep the analogy tight.
-Of course, for large $n$, the difference is negligible.
+How about estimating a covariance matrix?  Again, an extension of
+(\ref{s2}).  Say our sample consists of $n$ vectors
+$U_1,...,U_n$.  Then
+
+\begin{equation}
+\widehat{Cov}(U) =
+\frac{1}{n}
+\sum_{i=1}^n (U_i - \overline{U}) (U_i - \overline{U})'
+\end{equation}
+
+where here $\overline{U}$ is the average of the \textit{vectors} $U_i$.
 
 In many cases, the choice of estimator is less straightforward.  For
 instance, say we wish to estimate the probability density of $B$, 
@@ -84,6 +92,8 @@ As long as one scales to histogram to have total area 1.0 (in R's
 \lstinline{hist()} function, set \lstinline{probability=TRUE}), this
 provides an estimate of $f_B()$.  Let's call the histogram
 $\widehat{f}_B()$.
+
+\subsection{Consistency of Estimators}
 
 What do we mean in saying that an estimator is an estimate of something?
 At the very least, we should require \textit{consistent}, meaning that
@@ -101,5 +111,58 @@ we need not only $n \rightarrow \infty$ but also $h \rightarrow 0$,
 where $h$ is the bin width.\footnote{Technically, we cannot allow $h$
 to go to 0 ``too quickly,'' but this issue is beyond the scope of this
 book.}
+
+\subsection{Unbiasedness of Estimators}
+
+Another classical criterion for goodness of an estimator is that it be
+\textit{unbiasded}, which means the expected value of the estimator is
+the population quantity.  In the survey example above, this criterion
+would ask that
+
+\begin{equation}
+E\widehat{p} = p
+\end{equation}
+
+which in fact can be shown to be true.
+
+But $s^2$ is more complicated.  Books typically divide by $n-1$ instead
+of $n$ in (\ref{s2}), as a ``fudge factor'' to make
+
+\begin{equation}
+E(s^2) = \sigma^2
+\end{equation}
+
+where the right-hand side denotes the population variance.  But actually 
+even with the fudge factor $s$ (without the power 2) is biased:
+
+\begin{equation}
+0 < Var(s) = E(s^2) - (Es)^2 = \sigma^2  - (Es)^2 
+\end{equation}
+
+so
+
+\begin{equation}
+Es < \sigma
+\end{equation}
+
+rather than
+
+\begin{equation}
+Es = \sigma
+\end{equation}
+
+At the time basic statistics was being developed---about 100 years
+ago---not much was known, so unbiasedness was considered important.
+It in fact is still useful in some settings, but today it's understood 
+that we should not emphasize it so much.
+
+Indeed, a big issue in ML is the Bias-Variance Tradeoff.  In the above
+context, dividing by $1/n$ instead of $1/(n-1)$ reduces variance, 
+i.e.\ reduces $Var(s^2)$, which is good, at a cost of increasing bias, a
+tradeoff.
+
+Actually, it can be shown that the best mean squared error for $s^2$
+comes from dividing by $1/(n+1)$.  We'll use $n$ here to keep the
+analogy tight.  Of course, for large $n$, the difference is negligible.
 
 \subsection{The Methods of Moments and Maximum Likelihood}
