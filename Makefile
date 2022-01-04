@@ -2,7 +2,7 @@
 
 RSbookRevision.pdf:  RSbookRevision.tex \
 		   AuthorBio.tex Cover.tex Includes/Includes.tex \
-		   Prologue.tex LinearAlg.tex Infra2Revision.tex \
+		   Prologue.tex LinearAlg.tex \
 		   PCA.tex SVDRevision.tex ML.tex \
 		   Infra3Revision.tex  kNNRevision.tex \
 		   Mixed.tex PageRank.tex Probability.tex Statistics.tex \
