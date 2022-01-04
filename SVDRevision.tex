@@ -594,11 +594,8 @@ has potential problems.  I like to call this the Pillow Theorem ---
 pound down on one fluffy part and another part pops up.
 
 Unlike the PCA case, one issue with NMF is uniqueness --- there might
-not be a unique pair $(W,H)$ that minimizes (\ref{errawh}).\footnote{See
-Donoho and Stodden,￼{\it When Does Non-Negative Matrix Factorization
-Give a Correct Decomposition into Parts?},
-\url{https://web.stanford.edu/~vcs/papers/NMFCDP.pdf}.}  In fact, one
-can see this immediately:  Doubling $W$ while having $H$ leaves the
+not be a unique pair $(W,H)$ that minimizes (\ref{errawh}).  In fact,
+one can see this immediately:  Doubling $W$ while having $H$ leaves the
 product $WH$ unchanged.  Of course, the product is all that really
 counts, but in turn, this may result in convergence problems. The NMF
 documentation recommends running {\bf nmf()} multiple times; it will use
