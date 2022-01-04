@@ -1,4 +1,4 @@
-\chapter{Principle Components Analysis}   
+\chapter{Principal Components Analysis}   
 
 \section{Multivariate Distributions, Covariance Matrices}
 
@@ -394,7 +394,7 @@ with $p$ instead of $s$), but even this is usually done informally.
 In ML/RS settings, though, $s$ is typically chosen by a technique called
 \textit{cross validation}, to be discussed in Chapter \ref{chap:infra2}.
 
-\subsection{Software and Example}
+\subsection{Software and UCI Repository Example}
 
 The most commonly used R function for PCA is \textbf{prcomp()}.  As with
 many R functions, it has many optional arguments; we'll take the default
@@ -518,6 +518,8 @@ t(tpca$rotation) %*% tpca$rotation
 
 then check that it produces the identity matrix $I$, then ponder why
 this should be the case.
+
+\subsection{MovieLens Example}
 
 \subsection{More on the PC Coefficients}
 \label{coors}
