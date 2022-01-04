@@ -1,4 +1,4 @@
-\chapter{Some Infrastructure: Statistics}
+\chapter{Statistics}
 \label{chap:stat}
 
 % move the ML/MM stuff here, with ex of a random effects model of mean
@@ -6,3 +6,95 @@
 
 % then the other ML/MM leave in the stat recysys chapter
 
+It is assumed here that the reader has background in basic statistical
+inference, i.e.\ hypothesis testing and confidence intervals.
+
+\section{Sample vs.\ Population}
+
+Most readers have probably noticed that when the results of a survey are
+released, say during elections, a \textit{margin of error} (MOE) is stated.
+For instance, ``55\% of those surveyed say they plan to vote for
+Candidate Jones, with a margin of error of 3.2\%.''  The MOE is
+recognition of the fact that only a sample of voters were surveyed, not
+the entire population of voters.
+
+Let $p$ denote the population proportion, i.e.\ the proportion of voters
+across the population who favor Jones.  The value of $p$ is unknown, but
+our estimate is $\widehat{p} = 0.55$.
+
+Assuming the voters were polled at random, $\widehat{p}$ is a random
+variable.  As such, it has a standard deviation, which can be shown to
+be
+
+\begin{equation}
+[p(1-p)/n] ^{0.5}
+\end{equation}
+
+which we in turn estimate as
+
+\begin{equation}
+[\widehat{p}(1-\widehat{p})/n] ^{0.5}
+\end{equation}
+
+where $n$ is th number of people polled.  This is the \textit{standard
+error} of $\widehat{p}$, and is a measure of how accurate $\widehat{p}$
+is as an estimate of $p$.
+
+What about the MOE?  This is 1.96 times the standard error, and is the
+radius of an approximate 95\% confidence interval for $p$.
+
+Every ML method is an estimator in some form or other.  However,
+the terms \textit{sample} and \textit{population} are not used in the ML
+community.  Instead, they speak a \textit{generative process} to mean
+the same thing as sampling data from a population.
+
+\section{How Do We Select an Estimator?}
+
+In our survey example above, our estimate $\widehat{p}$ is the sample
+analog of the population value $p$; the former is the proportion in our
+sample data and the latter is the proportion in the population.
+
+Similarly, say we wish to estimate a population variance, say the
+variance of blood pressure $Var(B)$ in some patient population.  The
+sample analog is
+
+\begin{equation}
+\label{s2}
+\frac{1}{n} \sum_{i=1}^n (B_i - \overline{B})^2
+\end{equation}
+
+where the $B_i$ are the blood pressures in our sample, and $\overline{B}$
+is the average pressure in our sample.  This is analogous to the
+population value,
+
+\begin{equation}
+Var(B) = E[(B - EB)^]
+\end{equation}
+
+(Books typically divide by $n-1$ instead of $n$ in (\ref{s2}), largely
+for historical reasons.  We'll use $n$ here to keep the analogy tight.
+Of course, for large $n$, the difference is negligible.
+
+In many cases, the choice of estimator is less straightforward.  For
+instance, say we wish to estimate the probability density of $B$, 
+$f_B()$.  Actually, you already know such an estimator---a histogram!
+As long as one scales to histogram to have total area 1.0 (in R's
+\lstinline{hist()} function, set \lstinline{probability=TRUE}), this
+provides an estimate of $f_B()$.  Let's call the histogram
+$\widehat{f}_B()$.
+
+In the survey example, we have 
+
+\begin{equation}
+\lim_{n \rightarrow \infty} \widehat{p} = p
+\end{equation}
+
+We say that $\widehat{p}$ is a \textit{consistent} estimate of $p$.
+
+But what about the histogram case?  For the estimator to be consistent,
+we need not only $n \rightarrow \infty$ but also $h \rightarrow 0$,
+where $h$ is the bin width.\footnote{Technically, we cannot allow $h$
+to go to 0 ``too quickly,'' but this issue is beyond the scope of this
+book.}
+
+\subsection{The Methods of Moments and Maximum Likelihood}
