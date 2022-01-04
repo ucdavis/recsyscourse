@@ -38,18 +38,22 @@ linearly independent rows or columns.  The rank of $M$ above is 2.
 The reason we say ``rows or columns'' above is that it can be shown that
 the row rank and column rank are the same.  Note that the implies that
 the rank of a matrix is less than or equal to the minimum of the number
-of rows and columns.
+of rows and columns, i.e.\ the rank of an $r \times s$ matrix is thus at
+most $\min(r,s)$.  In the case of equality, we say the matrix has
+\textit{full rank}.  A ratings matrix, such as $A$ in Section \ref{mf},
+should be of full rank, since there presumably are no exact dependencies
+among users or items.
 
 Recall too the notion of the \textit{basis} of a vector space
 $\mathcal{V}$.  It is a linearly independent set of vectors whose linear
-combinations collectively form all of $\mathcal{V}$.  Here  $r_1$ and
+combinations collectively form all of $\mathcal{V}$.  And the
+\textit{dimension} of $\mathcal{V}$ is the number of vectors in a basis
+(which can be shown to be the same for all bases).
+
+
+Here  $r_1$ and
 $r_2$ form a basis for the \textit{row space} of $M$.  Alternatively,
 $r_1$ and $r_3$ also form a basis, as do $r_2$ and $r_3$.
-
-The rank of an $r \times s$ matrix is thus at most $\min(r,s)$.  In
-the case of equality, we say the matrix has \textit{full rank}.  A
-ratings matrix, such as $A$ in Section \ref{mf}, should be of full rank,
-since there presumably are no exact dependencies among users or items.
 
 \section{Partitioned Matrices}
 \label{partmat}
