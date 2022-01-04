@@ -50,6 +50,8 @@ the same thing as sampling data from a population.
 
 \section{How Do We Select an Estimator?}
 
+\subsection{Sample Analogs}
+
 In our survey example above, our estimate $\widehat{p}$ is the sample
 analog of the population value $p$; the former is the proportion in our
 sample data and the latter is the proportion in the population.
@@ -83,13 +85,16 @@ As long as one scales to histogram to have total area 1.0 (in R's
 provides an estimate of $f_B()$.  Let's call the histogram
 $\widehat{f}_B()$.
 
-In the survey example, we have 
+What do we mean in saying that an estimator is an estimate of something?
+At the very least, we should require \textit{consistent}, meaning that
+the estimator converges to the population quantity as the sample size
+grows.
+
+For example, in the survey example, we have 
 
 \begin{equation}
 \lim_{n \rightarrow \infty} \widehat{p} = p
 \end{equation}
-
-We say that $\widehat{p}$ is a \textit{consistent} estimate of $p$.
 
 But what about the histogram case?  For the estimator to be consistent,
 we need not only $n \rightarrow \infty$ but also $h \rightarrow 0$,
