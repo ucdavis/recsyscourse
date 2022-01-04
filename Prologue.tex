@@ -120,7 +120,7 @@ We can break that down by user:
 3.351562 
 \end{lstlisting}
 
-Here we groped ratings according to age, computing the mean rating for
+Here we grouped ratings according to age, computing the mean rating for
 each age value.
 
 So for instance user 22 gave an average rating of about 3.35 to the ones
@@ -201,7 +201,7 @@ general.
 \subsection{Latent Factor Approach:  Matrix Factorization}
 \label{mf}
 
-This one is less intuitive, but is probably the most popular CF methods.
+This one is less intuitive, but is probably the most popular CF method.
 
 Let $A$ denote the matrix of ratings described earlier, with $A_{ij}$
 denoting the rating user $i$ gives to item $j$.  Keep in mind, as noted,
@@ -230,7 +230,7 @@ can form the product $WH$, thus obtaining estimates for all the missing
 elements of $A$.
 
 For our example above, our predicted value for user 22's rating of
-moveie 88 would be
+movie 88 would be
 
 \begin{equation}
 (WH)_{22,88}
