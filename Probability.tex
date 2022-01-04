@@ -7,12 +7,12 @@
 
 It is assumed the reader has background in calculus-based probability
 constructs, e.g.\ density functions and distributions involving
-infinite series.  Here we treat some adanced topics used in the sequel.
+infinite series.  Here we treat some advanced topics used in the sequel.
 
 \section{Multivariate Distributions}
 
 \subsection{Multivariate Probability Mass Functions}
-\label{marblepmf}
+\label{marblepmf} 
 
 Recall that for a single discrete random variable $X$, the distribution of
 $X$ is defined to be a list of all the values of $X$, together with the
@@ -25,7 +25,7 @@ p_X(i) = P(X = i)
 
 Here the argument is $i$.
 
-The same is extended to a pair of discrete random variables $U$ and $V$ to
+This is extended to a pair of discrete random variables $U$ and $V$ as
 
 \begin{equation}
 p_{U,V}(i,j) = P(U = i, V = j)
@@ -65,10 +65,10 @@ So in our marble example above, $p_{Y,B}(1,2) = 0.048$, $p_{Y,B}(2,0) =
 \subsection{Multivariate Density Functions}
 
 Recall that for a continuous random variable $X$, we can find
-probabilities by integrating its density:
+probabilities involving $X$ by integrating its density:
 
 \begin{equation}
-P(X \textrm{in} A) = \int_{A} f_X(t) ~ dt
+P(X \textrm{ in } A) = \int_{A} f_X(t) ~ dt
 \end{equation}
 
 for regions $A$ in the real line.
@@ -76,7 +76,7 @@ for regions $A$ in the real line.
 This extends to multiple dimensions.  For sets $A$ in the plane,
 
 \begin{equation}
-P[(X,Y) \textrm{in} A] = \int_{A} \int f_{X,Y}(s,t) ~ ds  ~ dt
+P[(X,Y) \textrm{ in } A] = \int_{A} \int f_{X,Y}(s,t) ~ ds  ~ dt
 \end{equation}
 
 \section{Relations Between Variables}
@@ -115,7 +115,11 @@ E[(X - EX) (Y - EY)]
 \end{equation}
 
 is the average value of that product, as we range through various people
-in the population, so the covariance will be positive.
+in the population, so the covariance will be positive.  Note that 
+$(X - EX) (Y - EY)$ won't be positive for all people, but if the
+relation is typical enough, the average will be positive.
+
+Note that $Cov(X,X) = Var(X)$.
 
 \section{Covariance Matrices}
 
@@ -126,9 +130,9 @@ of the individual variables.
 
 \subsection{Correlation}
 
-In other words, positively-related variable will have positive
-covariance, with a similar statement for negatively-related variables.
-In fact, correlation is just scaled-down variance:
+In other words, roughly speaking, positively-related variable will have
+positive covariance, with a similar statement for negatively-related
+variables.  In fact, correlation is just scaled-down variance:
 
 \begin{equation}
 \rho(X,Y) = 
@@ -141,11 +145,35 @@ standard deviation, respectively.
 One can show that 
 
 \begin{equation}
+\label{rho1}
 -1 \leq \rho \leq 1
 \end{equation}
 
-In fact, one way to do this is to make a vector space of random
-variables, and use the Cauchy-Schwartz Inequality!
+In fact, one way to show this is to make a vector space of random
+variables, and use the Cauchy-Schwarz Inequality!  Specifically, 
+let $\mathcal{W}$ be the set of all random variables with finite
+variance.  It is clearly closed under linear combinations, and we can
+define an inner product (``dot product'') by
+
+\begin{equation}
+<U,V> = Cov(U,V)
+\end{equation}
+
+The vector norm will be
+
+\begin{equation}
+||U|| = (<U,U>)^{0.5} = \sigma(U)
+\end{equation}
+
+The Cauchy-Schwarz Inequality says that the absolute value of the inner
+product of two vectors, divided by the product of their norms, is at
+most 1.  That gives us (\ref{rho1})!
+
+So, is a correlation of, say, 0.4, large or small?  It is customary to
+gauge this by the squared correlation, which arises in the theory of
+linear predictors (Chapter \ref{chap:ml}).  The quantity $\rho^2$ can be
+shown to be the reduction in mean squared prediction error when we
+predict $V$ using $U$ (or vice versa).
 
 \subsection{Example:  MovieLens}
 
