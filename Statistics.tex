@@ -165,4 +165,106 @@ Actually, it can be shown that the best mean squared error for $s^2$
 comes from dividing by $1/(n+1)$.  We'll use $n$ here to keep the
 analogy tight.  Of course, for large $n$, the difference is negligible.
 
-\subsection{The Methods of Moments and Maximum Likelihood}
+\subsection{Fitting Parametric Models}
+
+It is often the case that one may try to fit a parametric family of
+densities to one's datat.  Let's use MovieLens as an example.
+
+\begin{lstlisting}
+> nu <- ml100kpluscovs$Nuser
+> hist(nu)
+\end{lstlisting}
+
+\includegraphics[width=3.5in]{Images/NuserGamma.png}
+
+That shape seems to suggest a good fit from the \textit{gamma} family of
+densities,
+
+\begin{equation}
+\label{erlang}
+f_{W}(t) = \frac{1}{(r-1)!} \lambda^r t^{r-1} e^{-\lambda t}, ~ t > 0
+\end{equation}
+
+A typical curve looks something like this:
+
+\includegraphics[width=3.0in]{Images/ErlangShape2Rate6.png}
+
+The family has parameters $r$ and $\lambda$.\footnote{Technically this
+is a subset of the gamma family, called \textit{Erlang}, but the only
+restriction is that $r$ be an integer.}  For each value of the latter
+two quantities, we get a different curve, some flatter, some more
+peaked.
+
+The question at hand is:
+
+\begin{quote}
+Is there some $(r,\lambda)$ pair such such that the curve (\ref{erlang})
+fits the data well?
+\end{quote}
+
+The task is then to:
+
+\begin{itemize}
+
+\item Estimate $r$ and $\lambda$ from our data.
+
+\item Check the fit.
+
+\end{itemize} 
+
+How do we do the estimation?  Two standard methods are the Method of
+Moments (MM) and Method of Maximum Likelihood (MLE).
+
+\subsubsection{The Method of Moments}
+
+The idea is simple, at least in concept.  Here's how it works in the
+gamma example above.
+
+First, some terminology:  For a random variable $X$, the $k^{th}$
+\textit{moment} is $E(X^k),~ k=1,2,3,...$.  A variant is the $k^{th}$
+\textit{central moment}, $E[(X - EX)^k]$.  Either the ordinary or
+central moments are fine.
+
+Let $N$ denote the number of ratings.  Then for the gamma family,
+
+\begin{equation}
+EN = r/\lambda
+\end{equation}
+
+and
+
+\begin{equation}
+Var(N) = r/\lambda^2
+\end{equation}
+
+Then replace everything by sample analogues:
+
+\begin{equation}
+\overline{X} = \widehat{r} / \widehat{\lambda}
+\end{equation}
+
+and
+
+\begin{equation}
+s^2 = \widehat{r} / \widehat{\lambda}^2
+\end{equation}
+
+Dividing the first equation by the second, we obtain
+
+\begin{equation}
+\widehat{\lambda} = \overline{N} / s^2
+\end{equation}
+
+and thus from the first equation,
+
+\begin{equation}
+\widehat{r} = \overline{N} \widehat{\lambda} = \overline{N}^2 / s^2
+\end{equation}
+
+where $ \overline{N}$ and $s^2$ are the sample mean and variance of
+$N_1,...,N_n$ for $n$ users.
+
+Now, what about assessing the fit?  A classic method is a
+\textit{goodness of fit test}, but these days hypothesis testing is
+frowned upon, for good reason.  Here's why:
+
