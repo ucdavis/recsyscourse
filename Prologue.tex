@@ -169,6 +169,41 @@ matrix from that list.  Don't worry about the full call forms now, but
 just become familiar with the structure of the matrix.  We see, for
 instance, that user 2 rated item 1 as a 4, but didn't rated movies 2-5.
 
+\section{NA Values Are Not So Inocuous}
+
+There are lots of ways to deal with \textit{missing values}, i.e.\ NAs.
+In fact, many full books have been written.  Some terminology has
+developed over years in terms of modeling how NAs arisew.
+
+The simplest model is \textit{Missing Completely at Random}, MCAR.
+As the name implies, this simply means that nature (or the data
+collection process) has randomly sprinkled NA values among the data.
+
+Another, \textit{Missing at Random}, MAR, is more complicated.  Here's
+what one of the leading authors says
+(\textit{https://stefvanbuuren.name/fimd/sec-MCAR.html}):
+
+\begin{quote}
+...While convenient, MCAR is often unrealistic for the data at hand.
+
+If the probability of being missing is the same only within groups
+defined by the observed data, then the data are missing at random (MAR).
+MAR is a much broader class than MCAR. For example, when placed on a
+soft surface, a weighing scale may produce more missing values than when
+placed on a hard surface. Such data are thus not MCAR. If, however, we
+know surface type and if we can assume MCAR within the type of surface,
+then the data are MAR. Another example of MAR is when we take a sample
+from a population, where the probability to be included depends on some
+known property. MAR is more general and more realistic than MCAR. Modern
+missing data methods generally start from the MAR assumption.
+
+\end{quote}
+
+RS data is in fact usually \textit{not} MCAR.  There may be a good
+reason a user hasn't rated a movie --- she knows she wouldn't like it.
+Handling missing values is hard enough in general, with no easy answers,
+but this should be kept in mind.
+
 \section{How Is It Done?}
 
 Putting aside possible privacy issues that arise in some of the above RS
