@@ -104,10 +104,10 @@ varies in repeated realizations.\footnote{If we look at many instances
 of a random variable $X$, they are called \textit{realizations}.}
 
 In the example above in which $X$ is the number of heads obtained in two
-flips of a coin, one can show that $EX = 1/2$ and
+flips of a coin, one can show that $EX = 1$ and
 $Var(X) = 2(0.5)(1-0.5) = 0.5$.  So, if we look at many, many
-realizations of $X$, the long-run average value of $X$ will be 1/2,
-and the long-run average of $(X - 0.5)^2$ will also be 1/2.
+realizations of $X$, the long-run average value of $X$ will be 1,
+and the long-run average of $(X - 1)^2$ will be 1/2.
 
 The \textit{standard deviation} of $X$, denoted here by $\sigma(X)$,
 is defned at $\sqrt{Var(X)}$.  Recall that for a constant, i.e.\ a
@@ -120,7 +120,7 @@ nonrandom quantity, $c$, we have
 and 
 
 \begin{equation}
-\sigma(X+c) = c \sigma(X)
+\sigma(X+c) = \sigma(X)
 \end{equation}
 
 The reader should make sure both of these make intuitive sense.  For
@@ -221,8 +221,8 @@ predict $V$ using $U$ (or vice versa).
 
 \subsection{Is a Correlation Large or Small?}
 
-Say we want to predict $V$ knowing $U$.  Intutively, the large
-$\rho(U,V)$, the more accurately I can predict.  This can be quantified.
+Say we want to predict $V$ knowing $U$.  Intutively, the larger
+$\rho(U,V)$ is, the more accurately I can predict.  This can be quantified.
 
 Let's consider predictors of the form
 
@@ -311,7 +311,7 @@ We might ask, say, whether any genres are related to each other:
 # some rows are all NAs
 > cc <- complete.cases(ml100kpluscovs[,11:29]) 
 > w <- ml100kpluscovs[cc,]
-> cor(wg[,11:19])
+> cor(w[,11:19])
             G11          G12          G13          G14          G15         G16
 G11  1.00000000 -0.031493550 -0.030273614  0.232039913 -0.055267116  0.01614678
 G12 -0.03149355  1.000000000 -0.054022202  0.001783286 -0.076165496  0.03418726
