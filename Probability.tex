@@ -195,9 +195,14 @@ the meter units cancel.  One can show that
 
 \subsection{Proof of (\ref{rho11}) by Vector Spaces}
 
-Let $\mathcal{W}$ be the set of all random variables with finite
-variance (in some setting).  It is clearly closed under linear
-combinations, and we can define an inner product (``dot product'') by
+Let $\mathcal{W}$ be the set of all random variables with mean 0 and
+finite
+variance (in some setting).  We lose no generality in assume mean 0,
+since replacing a random variable $U$ by $U - EU$ makes the mean 0 and
+does not change the correlation.
+
+$\mathcal{W}$is clearly closed under linear combinations, and we can
+define an inner product (``dot product'') by
 
 \begin{equation}
 <U,V> = Cov(U,V)
@@ -208,6 +213,11 @@ The vector norm will be
 \begin{equation}
 ||U|| = (<U,U>)^{0.5} = \sigma(U)
 \end{equation}
+
+To qualify as an inner product, it must be symmetric and linear in both
+arguments, and must be \textit{positive definite}, i.e. $<U,U> \geq 0$,
+with equality if and only if $U = 0$.  Covariance satisfies all these
+conditions. 
 
 On any inner product space, the Cauchy-Schwarz Inequality says that the
 absolute value of the inner product of two vectors, divided by the
