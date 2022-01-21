@@ -223,13 +223,14 @@ On any inner product space, the Cauchy-Schwarz Inequality says that the
 absolute value of the inner product of two vectors, divided by the
 product of their norms, is at most 1.  That gives us (\ref{rho11})!
 
+\subsection{Is a Correlation Large or Small?}
+\label{rholargesmall}
+
 So, is a correlation of, say, 0.4, large or small?  It is customary to
 gauge this by the squared correlation, which arises in the theory of
-linear predictors (Chapter \ref{chap:ml}).  The quantity $\rho^2$ can be
+linear predictors (Chapter \ref{chap:linmod}).  The quantity $\rho^2$ can be
 shown to be the reduction in mean squared prediction error when we
 predict $V$ using $U$ (or vice versa).
-
-\subsection{Is a Correlation Large or Small?}
 
 Say we want to predict $V$ knowing $U$.  Intutively, the larger
 $\rho(U,V)$ is, the more accurately I can predict.  This can be quantified.
@@ -455,8 +456,8 @@ To understand this better, consider this simulation experiment:
 
 Here we generated 2500 random values each from 
 $\textrm{N}(0,1)$ and $\textrm{N}(5,1)$, but formed \lstinline{x}
-by randomly choosing from those two sets of 2500.  (We slightly favored
-the second one.)
+by randomly choosing from those two sets of 2500.  To put more weight on
+one than the other, use the \textbf{prob} argument in \textbf{sample()}.
 
 \includegraphics[width=3.6in]{Images/MixSim.png} 
 

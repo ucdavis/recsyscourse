@@ -1,6 +1,6 @@
 
 
-RSbookRevision.pdf:  RSbookRevision.tex \
+RSbookRevision.pdf:  RSbookRevision.tex LinModel.tex \
 		   AuthorBio.tex Cover.tex Includes/Includes.tex \
 		   Prologue.tex LinearAlg.tex \
 		   PCA.tex SVDRevision.tex ML.tex \
