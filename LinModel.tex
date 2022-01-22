@@ -232,7 +232,7 @@ Then (\ref{sammspe}) (without the $1/n$ factor) is
 \end{equation}
 
 To minimize this, we must set the derivative of (\ref{quad}) to 0.  It
-can be shown that for a vector $u$, 
+can easily be verified that for a vector $u$, 
 
 \begin{equation}
 \frac{d}{du} u'u = 2u
@@ -265,13 +265,21 @@ us.  Here is an example using \textbf{mlb}, a dataset in the
 \textbf{regtools} package, involving Major League Baseball players:
 
 \begin{lstlisting}
+> head(mlb)  # take a look around
+        Position Height Weight   Age
+1        Catcher     74    180 22.99
+2        Catcher     74    215 34.69
+3        Catcher     72    210 30.78
+4  First_Baseman     72    210 35.43
+5  First_Baseman     73    188 35.71
+6 Second_Baseman     69    176 29.39
 > lmout <- lm(Weight ~ Height + Age,mlb)
 > coef(lmout)
  (Intercept)       Height          Age 
 -187.6381754    4.9235994    0.9115326 
 > predict(lmout,data.frame(Height=73,Age=25))
        1 
-194.g
+194.
 \end{lstlisting}
 
 The call says, ``Fit a linear model for predicting weight from height
@@ -279,7 +287,7 @@ and age, using the dataset \textbf{mlb}.''  The \textbf{coef()} function
 extracts $\widehat{\beta}$ from the output object.  We then predict a
 new case.
 
-We see that $\widehat{\beta} = (-187.64,4.92,0.91)$. 
+We see that $\widehat{\beta} = (-187.64,4.92,0.91)'$. 
 
 By the way, \textbf{coef()} and \textbf{predict()} are \textit{generic}
 functions in R, meaning that their actions depend on the class of object
@@ -291,5 +299,70 @@ in R, notably \textbf{print()} and \textbf{plot()}.
 
 \subsection{qeLin()}
 
+In this book, we will use the \textbf{qeML} package.  The name stands
+for ``quick and easy machine learning,'' alluding to the goal of making
+things as quick and convennient as possible:
+
+\begin{itemize}
+
+\item The functions have a simple, \textit{uniform} user interface.
+
+\item Cross-validation is automatically taken care of .
+
+\end{itemize} 
+
+Let's apply it to the above example:
+
+\begin{lstlisting}
+> qeout <- qeLin(mlb[,-1],'Weight')
+holdout set has  101 rows
+\end{lstlisting}
+
+The \textbf{qeML} functions all have the user specify the ``Y'' variable
+in the second argument, and ``X'' in the first argument.  It is assumed
+that all of the ``X'' columns will be used to predict ``Y,'' so to be
+consistent with the earlier example, we needed to exclude column 1.
+
+We can predict with any of the \textbf{qeML} functions.
+
+\begin{lstlisting}
+> predict(qeout,data.frame(Height=73,Age=25))
+      11 
+194.2245 
+\end{lstlisting}
+
+The functions are do cross-validation, with the size of the holdout
+being 10\% of the size of the dataset.  The prediction accuracy on the
+holdout set is in the \textbf{testAcc} component of the return value:
+
+\begin{lstlisting}
+> qeout$testAcc
+[1] 14.13652
+\end{lstlisting}
+
+For continuous ``Y,'' this is the Mean Absolute Prediction Error
+(MAPE).  On average, our predictions are about 14 pounds off.
+Could this be improved by adding \textbf{Position} to our feature set?
+
+\begin{lstlisting}
+> qeLin(mlb,'Weight')$testAcc
+holdout set has  101 rows
+[1] 12.16986
+\end{lstlisting}
+
+Ah, yes.  Catchers tend to be stocky, pitchers lanky and so on, so there
+is valuable extra information there.
+
+As noted, the \textbf{qeML} functions offer the benefit of a uniform
+API.  Let's try the kNN (``k-nearest neighbors'' method:
+
+\begin{lstlisting}
+> qeKNN(mlb,'Weight')$testAcc
+holdout set has  101 rows
+[1] 15.05624
+\end{lstlisting}
+
+Oh, not as good.  If the true regression function is approximately
+linear, we generally will do better by exploiting that fact.
 \section{Polynomial Models}
 
