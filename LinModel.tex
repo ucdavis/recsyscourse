@@ -1,14 +1,115 @@
 \chapter{Linear Models}  
-\label{chap:linmod}
+\label{chap:linmod} 
 
 In Section \ref{rholargesmall} we made reference to \textit{linear
 models}.  Directly or indirectly, they form the basis for much of ML.
 
+\section{Minimizing MSPE}
+
+Say are predicting a random variable $Y$, based on a random vector $X$.
+Our guess will be some function of $X$, $g(X)$.  What is the best $g$,
+in the sense of minimizing MSPE?  In other words, how should we choose
+$g$ to minimize
+
+\begin{equation}
+E \left ( [Y - g(X)]^2 \right )
+\end{equation}
+
+Using the Law of Iterated Expectations (Section \ref{adamsrule}), the
+above expression is equal to
+
+\begin{equation}
+E \left [ E \left ( [Y - g(X)]^2 | X \right ) \right ]
+\end{equation}
+
+For any random variable $W$, $E[ (W - c)^2$ is minimized by $c =
+EW$.\footnote{Write out the quantity as $E(W^2) -2c EW + (EW)^2$, then
+minimize with respect to $c$.}  Applying that to
+$E \left ( [Y - g(X)]^2 | X \right ) $, we have that:
+
+\begin{quote}
+We get minimum MSPE by taking $g(X)$ to be the conditional mean, $E(Y|X)$,
+\end{quote}
+
+This should make good intuitive sense:  To predict the weight of
+someone 70 inches tall, we take our guess to be the mean weight of all
+70-inch-tall people.
+
+We will then define the \textit{regression function}
+
+\begin{equation}
+\mu(t) = E (Y | X = t)
+\end{equation}
+
+(Note that $t = (t_1,...,t_p)'$ is a vector.)
+
+\section{Motivation for the Classical Linear Model}
+
 Say we are predicting a variable $Y$ from $p$ features, $X_1,...,X_p$.
-Let $X$ denote the (column) vector of those features.  We will also
-add a constant 1 at the beginning, setting
+Let $X$ denote the (column) vector of those features.  Sometimes we will
+also add a constant 1 at the beginning, setting
 
 \begin{equation}
 \widetilde{X} = (1,X_1,...,X_p)' 
 \end{equation}
+
+Here is the main point:
+
+\begin{quote}
+Suppose $(X,Y)$ has a $p+1$ dimensional normal distribution.  Then:
+
+\begin{itemize}
+
+\item \textbf{Linearity:} Using the notation $\widetilde{t} = (1,t')'$,
+we have that 
+
+$\mu(t) = \beta_0 + \beta_1 t_1 + ... + \beta_p t_p  = \beta' \widetilde{t}$
+
+for a certain vector $\widetilde{\beta}$.
+
+\item \textbf{Conditional normality:}  For any $t$, the conditional
+distribution of $Y$ given $X = t$ is normal.
+
+\item \textbf{Homoskedasticity:}  The conditional
+variance of $Y$ given $X = t$ is the same for all $t$.
+
+\end{itemize} 
+
+\end{quote}
+
+One can show that
+
+\begin{equation}
+\widetilde{\beta} = E(Y \widetilde{X}) [ E( \widetilde{X} \widetilde{X}') ]^{-1}
+\end{equation}
+
+\section{Coming Back Down to Earth}
+
+For those readers who have some background in linear regression modeling, 
+the above three bullet items will sound familiar.  They are the
+motivation for the classic assumptions of linear modeling:  linearity,
+normality and homoskedasticity.  \textit{However, note the following:}
+
+\begin{itemize}
+
+\item The normality and homoskedasticity assumptions are used only for
+\textit{statistical inference}, i.e.\ confidence intervals and tests.
+We will not be performing statistical inference in this
+book.\footnote{Even for inference, those assumptions aren't really
+necessary.  We get normality for our estimated $\widetilde{\beta}$ from
+the Central Limit Theorem, and we can deal with the lack of
+homoskedasticity by using the \textit{sandwich estimator}, e.g.\ in the
+R \textbf{sandwich} package.} 
+
+\item Many regresssion functions in practice are approximately linear.
+And, as will be seen shortly, polynomial models, which may provide a
+good fit in nonlinear situations, are actually linear!
+
+\end{itemize} 
+
+Note too that the term \textit{regresssion}, though often taken to mean
+the linear model, simply means the conditional mean, which may not have
+linear form.
+
+\section{Polynomial Models}
 

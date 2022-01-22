@@ -1,10 +1,5 @@
 \chapter{Probability}
 
-% take from 132: 2-D prob mass ftn, marble ex, as generaliz of 1-D;
-% covarince as extensive of variance in 1-D; correl is scaled version;
-% define in terms of rho, sigmas; MovieLens ex!!!!; age, userMean,
-% Nuser; rho in [-1,1] by Cauchy-Schwartz (optional)
-
 It is assumed the reader has background in calculus-based probability
 constructs, e.g.\ density functions and distributions involving
 infinite series.  Here we treat some advanced topics used in the sequel.
@@ -42,6 +37,7 @@ random, without replacement.  Let $Y$ and $B$ denote the number of yellow
 and blue marbles that we get.  Then
 
 \begin{equation}
+\label{marblepmf}
 p_{Y,B}(i,j) = P(Y = i \textrm{ and } B = j) = 
 \frac
 {
@@ -101,7 +97,9 @@ Var(X) = E[(X - EX)^2]
 
 It is a measure of \textit{dispersion}, i.e.\ how much $X$
 varies in repeated realizations.\footnote{If we look at many instances
-of a random variable $X$, they are called \textit{realizations}.}
+of a random variable $X$, they are called \textit{realizations}.  By the
+way, $EX$ means $E(X($; it is customary to drop the parentheses if there
+is no danger of ambiguiity.}
 
 In the example above in which $X$ is the number of heads obtained in two
 flips of a coin, one can show that $EX = 1$ and
@@ -196,10 +194,9 @@ the meter units cancel.  One can show that
 \subsection{Proof of (\ref{rho11}) by Vector Spaces}
 
 Let $\mathcal{W}$ be the set of all random variables with mean 0 and
-finite
-variance (in some setting).  We lose no generality in assume mean 0,
-since replacing a random variable $U$ by $U - EU$ makes the mean 0 and
-does not change the correlation.
+finite variance (in some probability space).  We lose no generality in
+assume mean 0, since replacing a random variable $U$ by $U - EU$ makes
+the mean 0 and does not change the correlation.
 
 $\mathcal{W}$is clearly closed under linear combinations, and we can
 define an inner product (``dot product'') by
@@ -488,3 +485,82 @@ Various methods have been devised, and have been found useful in RS,
 such as in \textit{market segmentation}.  We may find that moviegoers,
 for instance, tend to fall into, say, 5 main groups.  We will return to
 this later.
+
+\section{More on Bivariate Relations:  The Law of Iterated Expectations}
+\label{iterexp}
+
+Say $U$ and $V$ have finite expected value.\footnote{An example of a
+random variable whose expectation is infinite, consider this game:  I
+keep flipping a coin until I get a head.  Let $X$ denote the number of
+flips needed.  Say I win $2^X$ dollars.  Then $EX = 1 + 1 + 1 + ... =
+\infty$.  For some random variables, the sum for expectation may not converge 
+at all, even to $\infty$.}  Then we have the relation
+
+\begin{equation}
+\label{adam}
+E \left [ E(V|U) \right ] = EV
+\end{equation}
+
+To see what this means, consider the marbles example in Secction
+\ref{marblepmf}, taking $U$ and $V$ to be $Y$ and $B$.  We have for
+example
+
+\begin{equation}
+E(Y | B = 2) = a_0 0 + a_1 1 + a_2 2
+\end{equation}
+
+where
+
+\begin{equation}
+a_0 = 0.1429 / (0.1429+0.1905+0.0238) = 0.4001,
+\end{equation}
+
+\begin{equation}
+a_1 = 0.1905 / (0.1429+0.1905+0.0238) = 0.5333,
+\end{equation}
+
+and
+
+\begin{equation}
+a_1 = 0.0238 / (0.1429+0.1905+0.0238) = 0.0667
+\end{equation}
+
+So 
+
+\begin{equation}
+E(Y | B = 2) = 0.6665
+\end{equation}
+
+Of course, we can also look at $E(Y | B = 1)$ and $E(Y | B = 0)$.  We
+can construct the function $f(t) = E(Y | B = t)$ for $t = 0,1,2$.  Then
+since $B$ is random, the quantity $f(B)$ is a new random variable,
+which we denote by $E(Y | B) = f(B)$.
+
+All that is pretty abstract, but the concept is intuitive:  What is the
+expected number of yellow marbles, knowing the number of blue ones we
+got?
+
+The relation (\ref{adam}) says:
+
+\begin{quote}
+If you take a weighted average of $f(t)$ over $t=0,1,2$, using $P(B = t)$
+as weights, you will get $EY$---the same value you would get by
+averaging the value of $i$ over all 12 weights in the table below
+(\ref{marblepmf}).
+\end{quote}
+
+Or, say we want to find the mean weight of all students at a university.
+(\ref{adam}) says:
+
+\begin{quote}
+Find the mean weight of students in each department of the university.
+Then take the weighted average of those means, with weights being each
+department's proportion in the university.  Then you will get the same
+result if you averaged all the student weights in the university,
+without regard to department.
+\end{quote}
+
+(\ref{adam}) is sometimes called Adam's Rule, ``since it has been around
+since the time of Adam.''
+
+
