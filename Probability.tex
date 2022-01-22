@@ -275,7 +275,8 @@ proportion of variation in $V$ that is explainable by $U$.''
 
 Again, \textbf{ml100kpluscovs} is MovieLens plus some side information:
 
-\begin{lstlisting}
+% \begin{lstlisting}
+\begin{verbatim}
  head(ml100kpluscovs)
   user item rating timestamp age gender        occ   zip userMean Nuser G1 G2
 1    1    1      5 874965758  24      M technician 85711 3.610294   272  0  0
@@ -291,7 +292,8 @@ Again, \textbf{ml100kpluscovs} is MovieLens plus some side information:
 4  0  1  1  1  0  0  0   0   0   0   0   0   0   0   0   0   0 3.878319   452
 5  0  1  1  1  0  0  0   0   0   0   0   0   0   0   0   0   0 3.878319   452
 6  0  1  1  1  0  0  0   0   0   0   0   0   0   0   0   0   0 3.878319   452
-\end{lstlisting}
+\end{verbatim}
+% \end{lstlisting}
 
 (The G's are genres.)
 
@@ -315,7 +317,7 @@ other; users who give higher ratings rate fewer movies.
 
 We might ask, say, whether any genres are related to each other:
 
-\begin{lstlisting}
+\begin{verbatim}
 # some rows are all NAs
 > cc <- complete.cases(ml100kpluscovs[,11:29]) 
 > w <- ml100kpluscovs[cc,]
@@ -340,7 +342,7 @@ G16  0.04679552  0.16727458 -0.05253437
 G17  1.00000000 -0.10041124 -0.07278201
 G18 -0.10041124  1.00000000 -0.02372091
 G19 -0.07278201 -0.02372091  1.00000000
-\end{lstlisting}
+\end{verbatim}
 
 There may be some slight relations.
 
@@ -486,81 +488,81 @@ such as in \textit{market segmentation}.  We may find that moviegoers,
 for instance, tend to fall into, say, 5 main groups.  We will return to
 this later.
 
-\section{More on Bivariate Relations:  The Law of Iterated Expectations}
-\label{iterexp}
-
-Say $U$ and $V$ have finite expected value.\footnote{An example of a
-random variable whose expectation is infinite, consider this game:  I
-keep flipping a coin until I get a head.  Let $X$ denote the number of
-flips needed.  Say I win $2^X$ dollars.  Then $EX = 1 + 1 + 1 + ... =
-\infty$.  For some random variables, the sum for expectation may not converge 
-at all, even to $\infty$.}  Then we have the relation
-
-\begin{equation}
-\label{adam}
-E \left [ E(V|U) \right ] = EV
-\end{equation}
-
-To see what this means, consider the marbles example in Secction
-\ref{marblepmf}, taking $U$ and $V$ to be $Y$ and $B$.  We have for
-example
-
-\begin{equation}
-E(Y | B = 2) = a_0 0 + a_1 1 + a_2 2
-\end{equation}
-
-where
-
-\begin{equation}
-a_0 = 0.1429 / (0.1429+0.1905+0.0238) = 0.4001,
-\end{equation}
-
-\begin{equation}
-a_1 = 0.1905 / (0.1429+0.1905+0.0238) = 0.5333,
-\end{equation}
-
-and
-
-\begin{equation}
-a_1 = 0.0238 / (0.1429+0.1905+0.0238) = 0.0667
-\end{equation}
-
-So 
-
-\begin{equation}
-E(Y | B = 2) = 0.6665
-\end{equation}
-
-Of course, we can also look at $E(Y | B = 1)$ and $E(Y | B = 0)$.  We
-can construct the function $f(t) = E(Y | B = t)$ for $t = 0,1,2$.  Then
-since $B$ is random, the quantity $f(B)$ is a new random variable,
-which we denote by $E(Y | B) = f(B)$.
-
-All that is pretty abstract, but the concept is intuitive:  What is the
-expected number of yellow marbles, knowing the number of blue ones we
-got?
-
-The relation (\ref{adam}) says:
-
-\begin{quote}
-If you take a weighted average of $f(t)$ over $t=0,1,2$, using $P(B = t)$
-as weights, you will get $EY$---the same value you would get by
-averaging the value of $i$ over all 12 weights in the table below
-(\ref{marblepmf}).
-\end{quote}
-
-Or, say we want to find the mean weight of all students at a university.
-(\ref{adam}) says:
-
-\begin{quote}
-Find the mean weight of students in each department of the university.
-Then take the weighted average of those means, with weights being each
-department's proportion in the university.  Then you will get the same
-result if you averaged all the student weights in the university,
-without regard to department.
-\end{quote}
-
-(\ref{adam}) is sometimes called Adam's Rule, ``since it has been around
-since the time of Adam.''
-
-
+% \section{More on Bivariate Relations:  The Law of Iterated Expectations}
+% \label{iterexp}
+% 
+% Say $U$ and $V$ have finite expected value.\footnote{An example of a
+% random variable whose expectation is infinite, consider this game:  I
+% keep flipping a coin until I get a head.  Let $X$ denote the number of
+% flips needed.  Say I win $2^X$ dollars.  Then $EX = 1 + 1 + 1 + ... =
+% \infty$.  For some random variables, the sum for expectation may not converge 
+% at all, even to $\infty$.}  Then we have the relation
+% 
+% \begin{equation}
+% \label{adam}
+% E \left [ E(V|U) \right ] = EV
+% \end{equation}
+% 
+% To see what this means, consider the marbles example in Secction
+% \ref{marblepmf}, taking $U$ and $V$ to be $Y$ and $B$.  We have for
+% example
+% 
+% \begin{equation}
+% E(Y | B = 2) = a_0 0 + a_1 1 + a_2 2
+% \end{equation}
+% 
+% where
+% 
+% \begin{equation}
+% a_0 = 0.1429 / (0.1429+0.1905+0.0238) = 0.4001,
+% \end{equation}
+% 
+% \begin{equation}
+% a_1 = 0.1905 / (0.1429+0.1905+0.0238) = 0.5333,
+% \end{equation}
+% 
+% and
+% 
+% \begin{equation}
+% a_1 = 0.0238 / (0.1429+0.1905+0.0238) = 0.0667
+% \end{equation}
+% 
+% So 
+% 
+% \begin{equation}
+% E(Y | B = 2) = 0.6665
+% \end{equation}
+% 
+% Of course, we can also look at $E(Y | B = 1)$ and $E(Y | B = 0)$.  We
+% can construct the function $f(t) = E(Y | B = t)$ for $t = 0,1,2$.  Then
+% since $B$ is random, the quantity $f(B)$ is a new random variable,
+% which we denote by $E(Y | B) = f(B)$.
+% 
+% All that is pretty abstract, but the concept is intuitive:  What is the
+% expected number of yellow marbles, knowing the number of blue ones we
+% got?
+% 
+% The relation (\ref{adam}) says:
+% 
+% \begin{quote}
+% If you take a weighted average of $f(t)$ over $t=0,1,2$, using $P(B = t)$
+% as weights, you will get $EY$---the same value you would get by
+% averaging the value of $i$ over all 12 weights in the table below
+% (\ref{marblepmf}).
+% \end{quote}
+% 
+% Or, say we want to find the mean weight of all students at a university.
+% (\ref{adam}) says:
+% 
+% \begin{quote}
+% Find the mean weight of students in each department of the university.
+% Then take the weighted average of those means, with weights being each
+% department's proportion in the university.  Then you will get the same
+% result if you averaged all the student weights in the university,
+% without regard to department.
+% \end{quote}
+% 
+% (\ref{adam}) is sometimes called Adam's Rule, ``since it has been around
+% since the time of Adam.''
+% 
+% 

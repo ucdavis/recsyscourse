@@ -6,26 +6,29 @@ models}.  Directly or indirectly, they form the basis for much of ML.
 
 \section{Minimizing MSPE}
 
-Say are predicting a random variable $Y$, based on a random vector $X$.
-Our guess will be some function of $X$, $g(X)$.  What is the best $g$,
-in the sense of minimizing MSPE?  In other words, how should we choose
-$g$ to minimize
+Suppose we are predicting a random variable $Y$, based on a random
+vector $X$, say predicting weight from (height,age).  Our guess will be
+some function of $X$, $g(X)$.  What is the best $g$, in the sense of
+minimizing MSPE?  In other words, how should we choose $g$ to minimize
 
 \begin{equation}
+\label{mspe}
 E \left ( [Y - g(X)]^2 \right )
 \end{equation}
 
-Using the Law of Iterated Expectations (Section \ref{adamsrule}), the
-above expression is equal to
+% Using the Law of Iterated Expectations (Section \ref{adamsrule}), the
+% above expression is equal to
+% 
+% \begin{equation}
+% E \left [ E \left ( [Y - g(X)]^2 | X \right ) \right ]
+% \end{equation}
+% 
+% For any random variable $W$, $E[ (W - c)^2$ is minimized by $c =
+% EW$.\footnote{Write out the quantity as $E(W^2) -2c EW + (EW)^2$, then
+% minimize with respect to $c$.}  Applying that to
+% $E \left ( [Y - g(X)]^2 | X \right ) $, we have that:
 
-\begin{equation}
-E \left [ E \left ( [Y - g(X)]^2 | X \right ) \right ]
-\end{equation}
-
-For any random variable $W$, $E[ (W - c)^2$ is minimized by $c =
-EW$.\footnote{Write out the quantity as $E(W^2) -2c EW + (EW)^2$, then
-minimize with respect to $c$.}  Applying that to
-$E \left ( [Y - g(X)]^2 | X \right ) $, we have that:
+One can show that:
 
 \begin{quote}
 We get minimum MSPE by taking $g(X)$ to be the conditional mean, $E(Y|X)$,
@@ -41,7 +44,11 @@ We will then define the \textit{regression function}
 \mu(t) = E (Y | X = t)
 \end{equation}
 
-(Note that $t = (t_1,...,t_p)'$ is a vector.)
+Note that the argument $t = (t_1,...,t_p)'$ is a vector.  
+Also, prepending a 1, we will use the notation $\widetilde{t} = (1,t')'$.
+
+This definition is \textit{general}; it does not assume a linear model.
+Let's now see where the classical linear model comes from.
 
 \section{Motivation for the Classical Linear Model}
 
@@ -56,16 +63,21 @@ also add a constant 1 at the beginning, setting
 Here is the main point:
 
 \begin{quote}
-Suppose $(X,Y)$ has a $p+1$ dimensional normal distribution.  Then:
+Suppose $(X,Y)$ has a $p+1$ dimensional normal distribution.  Then
+the conditional distribution of $Y$ given $X$ has the following
+properties:
 
 \begin{itemize}
 
-\item \textbf{Linearity:} Using the notation $\widetilde{t} = (1,t')'$,
-we have that 
+\item \textbf{Linearity:} 
 
-$\mu(t) = \beta_0 + \beta_1 t_1 + ... + \beta_p t_p  = \beta' \widetilde{t}$
+\begin{equation}
+\label{betadef}
+\mu(t) = \beta_0 + \beta_1 t_1 + ... + \beta_p t_p  = \beta' \widetilde{t}
+\end{equation}
 
-for a certain vector $\widetilde{\beta}$.
+for a certain vector ${\beta}$.\footnote{One can show that
+$\beta = E(Y \widetilde{X}) [ E( \widetilde{X} \widetilde{X}') ]^{-1}$.}
 
 \item \textbf{Conditional normality:}  For any $t$, the conditional
 distribution of $Y$ given $X = t$ is normal.
@@ -76,12 +88,6 @@ variance of $Y$ given $X = t$ is the same for all $t$.
 \end{itemize} 
 
 \end{quote}
-
-One can show that
-
-\begin{equation}
-\widetilde{\beta} = E(Y \widetilde{X}) [ E( \widetilde{X} \widetilde{X}') ]^{-1}
-\end{equation}
 
 \section{Coming Back Down to Earth}
 
@@ -95,11 +101,15 @@ normality and homoskedasticity.  \textit{However, note the following:}
 \item The normality and homoskedasticity assumptions are used only for
 \textit{statistical inference}, i.e.\ confidence intervals and tests.
 We will not be performing statistical inference in this
-book.\footnote{Even for inference, those assumptions aren't really
-necessary.  We get normality for our estimated $\widetilde{\beta}$ from
+book; ML is mainly about \textit{prediction}.\footnote{Sadly, in ML
+circles, the situation is confused by using the term \textit{inference}
+for prediction.}  
+
+Even for inference, those assumptions aren't really
+necessary.  We get normality for our estimated $\beta$ from
 the Central Limit Theorem, and we can deal with the lack of
 homoskedasticity by using the \textit{sandwich estimator}, e.g.\ in the
-R \textbf{sandwich} package.} 
+R \textbf{sandwich} package. 
 
 \item Many regresssion functions in practice are approximately linear.
 And, as will be seen shortly, polynomial models, which may provide a
@@ -107,9 +117,180 @@ good fit in nonlinear situations, are actually linear!
 
 \end{itemize} 
 
-Note too that the term \textit{regresssion}, though often taken to mean
-the linear model, simply means the conditional mean, which may not have
-linear form.
+In other words:
+
+\begin{quote}
+
+\begin{itemize}
+
+\item The classic linear model is motivated by settings in $(X,Y)$
+has a multivariate normal distribution.
+
+\item This assumption is highly restrictive, but \textit{is not
+necessary} for our purposes.
+
+\end{itemize} 
+
+\end{quote}
+
+For the remainder of this chapter, we assume 
+
+\begin{equation}
+\label{linassump}
+g(t) = \beta' \widetilde{t}
+\end{equation}
+
+for some vector $\beta$ to be estimated from our data.
+
+\section{Estimating $\beta$}
+
+Here we lay groundwork leading up to the famous \textit{least-squares
+estimate}.
+
+\section{Sample vs.\ Population}
+
+Most readers have probably noticed that when the results of a survey are
+released, say during elections, a \textit{margin of error} (MOE) is stated.
+For instance, ``55\% of those surveyed say they plan to vote for
+Candidate Jones, with a margin of error of 3.2\%.''  The MOE is
+recognition of the fact that only a sample of voters were surveyed, not
+the entire population of voters.
+
+Let $p$ denote the population proportion, i.e.\ the proportion of voters
+across the population who favor Jones.  The value of $p$ is unknown, but
+our estimate is $\widehat{p} = 0.55$.  The ``hat'' notation $\widehat{}$
+means ``estimate of.''  (The MOE is the radius of a 95\% confidence
+interval for $p$, though as noted, we do not make much use of statistical
+inference in this book.)
+
+Every ML method is an estimator in some form or other.  However, the
+terms \textit{sample} and \textit{population} are not used in the ML
+community.  Instead, they speak a \textit{probabilistic generative
+process} to mean the same thing as sampling data from a population.
+
+So, $\beta$ is a population value.  Its estimator from the data is
+denoted $\widehat{\beta}$.
+
+\subsection{The Least Squares Estimator}
+
+Denote our data by $(X_{ij},Y_j), ~ j = 1,...,n$.  In other words, we
+have $n$ data points, and in the $j^{th}$ of them, $X_{ij}$ and $Y_j$
+are the valus of $X_i$ and $Y$, respectively.  Also, define
+
+\begin{equation}
+X^{(j)} = (1,X_{1j},...,X_{pj})'
+\end{equation}
+
+To keep a concrete example in mind, again suppose we are predicting
+human weight $Y$ from height $X_1$ and age $X_2$.  $X^{(3)}$, for
+instance, is then the vector (height,age) for the third person in our
+data (with a 1 prepended).
+
+Putting together the fact that $g$ minimizes (\ref{mspe}) and the
+assumption (\ref{linassump}), we have that $\beta$ is the vector $b$ 
+that minimizes
+
+\begin{equation}
+\label{linmspe}
+E \left [ (Y - b' \widetilde{X})^2 \right ]
+\end{equation}
+
+The sample analog of this quantity is
+
+\begin{equation}
+\label{sammspe}
+\frac{1}{n}
+\sum_{j=1}^n \left [ (Y_j - b' X^{(j)})^2 \right ]
+\end{equation}
+
+Since $b = \beta$ minimizes (\ref{linmspe}), it is natural by analogy to
+take $\widehat{\beta}$ to be the value of $b$ that minimizes
+(\ref{sammspe}).
+
+Just a little bit more notation:
+
+\begin{equation}
+D = (Y_1,...,Y_n)'
+\end{equation}
+
+\begin{equation}
+A = 
+\left (
+\begin{array}{r}
+X^{(1)'} \\
+... \\
+X^{(n)'} \\
+\end{array}
+\right )
+\end{equation}
+
+Then (\ref{sammspe}) (without the $1/n$ factor) is
+
+\begin{equation}
+\label{quad}
+(D - Ab)'(D - Ab)
+\end{equation}
+
+To minimize this, we must set the derivative of (\ref{quad}) to 0.  It
+can be shown that for a vector $u$, 
+
+\begin{equation}
+\frac{d}{du} u'u = 2u
+\end{equation}
+
+Applying this and the Chain Rule to (\ref{quad}), we have
+
+\begin{equation}
+0 = A (D - Ab) 
+\end{equation}
+
+Solve for $b$:
+
+\begin{equation}
+\widehat{\beta} = (A'A)^{-1} AD
+\end{equation}
+
+This is the \textit{least squares estimator} of $\beta$.
+\section{The Logistic Model}
+
+\section{Computation}
+
+We certainly do not want to do this compution by hand.  What are our
+choices?
+
+\subsection{lm()}
+
+R's \textbf{lm()} (``linear model'') function does the computation for
+us.  Here is an example using \textbf{mlb}, a dataset in the
+\textbf{regtools} package, involving Major League Baseball players:
+
+\begin{lstlisting}
+> lmout <- lm(Weight ~ Height + Age,mlb)
+> coef(lmout)
+ (Intercept)       Height          Age 
+-187.6381754    4.9235994    0.9115326 
+> predict(lmout,c(73,25))
+Error in eval(predvars, data, env) : 
+  numeric 'envir' arg not of length one
+> predict(lmout,data.frame(Height=73,Age=25))
+       1 
+194.g
+\end{lstlisting}
+
+The call says, ``Fit a linear model for predicting weight from height
+and age, using the dataset \textbf{mlb}.''  The \textbf{coef()} function
+extracts $\widehat{\beta}$ from the output object.  We then predict a
+new case.
+
+By the way, \textbf{coef()} and \textbf{predict()} are \textit{generic}
+functions in R, meaning that their actions depend on the class of object
+they are called on.  In this case, \textbf{lmout} is of class
+\textbf{'lm'}, so \textbf{coef()} is \textit{dispatched} to a function
+\textbf{coef.lm()} tailored to such objects; \textbf{predict()} is
+dispatched to \textbf{predict.lm()}.  There are many generic functions
+in R, notably \textbf{print()} and \textbf{plot()}.
+
+\subsection{qeLin()}
 
 \section{Polynomial Models}
 
