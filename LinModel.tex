@@ -1,5 +1,5 @@
 \chapter{Linear Models}  
-\label{chap:linmod} 
+\label{chap:linmod}   
 
 In Section \ref{rholargesmall} we made reference to \textit{linear
 models}.  Directly or indirectly, they form the basis for much of ML.
@@ -269,9 +269,6 @@ us.  Here is an example using \textbf{mlb}, a dataset in the
 > coef(lmout)
  (Intercept)       Height          Age 
 -187.6381754    4.9235994    0.9115326 
-> predict(lmout,c(73,25))
-Error in eval(predvars, data, env) : 
-  numeric 'envir' arg not of length one
 > predict(lmout,data.frame(Height=73,Age=25))
        1 
 194.g
@@ -281,6 +278,8 @@ The call says, ``Fit a linear model for predicting weight from height
 and age, using the dataset \textbf{mlb}.''  The \textbf{coef()} function
 extracts $\widehat{\beta}$ from the output object.  We then predict a
 new case.
+
+We see that $\widehat{\beta} = (-187.64,4.92,0.91)$. 
 
 By the way, \textbf{coef()} and \textbf{predict()} are \textit{generic}
 functions in R, meaning that their actions depend on the class of object
