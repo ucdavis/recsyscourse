@@ -431,10 +431,12 @@ the same across values of $i, i = 0,1$.  Then (\ref{logit}) holds.
 \end{quote}
 
 Let's see how this works for $p = 1$.  Consider a short interval in the
-real line, $A = (c,c+\epsilon)$.  Let $q = P(Y = 1)$, the
-\textit{unconditional probability of class 1}.  Let
-$w_i(t)$ denote the conditional density of $X$, given $Y = i$ (which by
-assumption is normal).  Then by Bayes Rule,
+real line, $A = (t,t+\epsilon)$.  We'll look at $P(Y = 1 | X \textrm{ in
+} A)$, then let $\epsilon \rightarrow 0$ to get $P(Y = 1 | X = t)$
+
+Let $q = P(Y = 1)$, the \textit{unconditional} probability of class 1.
+Let $w_i(t)$ denote the conditional density of $X$, given $Y = i$ (which
+by assumption is normal).  Then by Bayes Rule,
 
 \begin{eqnarray}
 P(Y = 1 | X \textrm{ in } A) [&=& 
@@ -485,38 +487,89 @@ convert the logical vector to a factor.  The prediction was FALSE, i.e.\
 this player is guessed to not be a catcher, and in fact has only about a
 13\% chance of being a catcher.
 
-As noted, we can also predict general categorical $Y$, .e.g.
+\subsection{Example:  Vertebral Disease}
+
+As noted, we can also predict general categorical $Y$.  Here we
+considera vertebral dataset from the UCI Machine Learning Repository.
 
 \begin{lstlisting}
-> qeo <- qeLogit(mlb,'Position')
-holdout set has  101 rows
-> predict(qeo,data.frame(Height=73,Weight=225,Age=25))
+> head(vert)
+     V1    V2    V3    V4     V5    V6 V7
+1 63.03 22.55 39.61 40.48  98.67 -0.25 DH
+2 39.06 10.06 25.02 29.00 114.41  4.56 DH
+3 68.83 22.22 50.09 46.61 105.99 -3.53 DH
+4 69.30 24.65 44.31 44.64 101.87 11.21 DH
+5 49.71  9.65 28.32 40.06 108.17  7.92 DH
+6 40.25 13.92 25.12 26.33 130.33  2.23 DH
+\end{lstlisting}
+
+There are three disease types, NO, DH and SL, where NO means normal.
+The other columns are various vertebral meansurements.
+
+\begin{lstlisting}
+> qel <- qeLogit(vert,'V7')
+holdout set has  31 rows
+\end{lstlisting}
+
+As an example of prediction, consider a patient like the ine in
+\textbf{vert[1,]}; but with $V7 = 1.88$.
+
+\begin{lstlisting}
+> newPatient <- vert[1,-7]
+> newPatient$V6 <- 1.88
+> prediction(qel,newPatient)
+Error in prediction(qel, newPatient) : 
+  could not find function "prediction"
+> predict(qel,newPatient)
 $predClasses
-[1] "Relief_Pitcher"
+[1] "DH"
 
 $probs
-       Catcher First_Baseman Outfielder Relief_Pitcher Second_Baseman
-[1,] 0.1475545    0.09828611  0.2300844       0.245291     0.02082625
-      Shortstop Starting_Pitcher Third_Baseman
-[1,] 0.01016817        0.1768094     0.0709802
+            DH        NO         SL
+[1,] 0.8594815 0.1190561 0.02146242
 \end{lstlisting}
 
-The most likely position played by this person is Relief Pitcher, though
-others have probabilities almost as high.  In fact, let's ask how well
-we can predict position:
+The prediction would be DH, with a probability of about 86\%.
+
+How well does logit predict on this dataset?
 
 \begin{lstlisting}
-> qeo$testAcc
-[1] 0.7029703
+> qel$testAcc
+[1] 0.1612903
+> qel$baseAcc
+[1] 0.5053763
 \end{lstlisting}
+
 
 For binary/categorical $Y$, the \textbf{qeML} functions report the
 overall misclassification rate.  Here, we would predict correctly about
-30\% of the time, not that good but then we are predicting among eight
-different categories..
+84\% of the time. 
 
+Are the features very helpful in prediction?  Consider this:
 
+\begin{lstlisting}
+> table(vert$V7) / nrow(vert)
+
+       DH        NO        SL 
+0.1935484 0.3225806 0.4838710 
+\end{lstlisting}
+
+If we did not have the features to use for prediction, we would always
+guess SL, as it is the most common cateogory.  We would be right 48\% of
+the time, thus wrong 52\% of the time.  But actually we didn't need to
+make that calculation above; it's returned by \textbf{qeLogit()}:
+
+\begin{lstlisting}
+> qel$baseAcc
+[1] 0.5053763
+\end{lstlisting}
+
+(The small discrepancy is due to using the full dataset versus using
+just the training set.)
 
 \section{Polynomial Models}
 
-% e^{- \left ( \frac{t-\mu_i}{\sigma} \right )^2}
+\subsection{Example:  Predicting userMean from age, Movielens Data}
+
+\section{Application to Collaborative Filtering}
+
