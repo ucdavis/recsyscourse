@@ -569,7 +569,181 @@ just the training set.)
 
 \section{Polynomial Models}
 
-\subsection{Example:  Predicting userMean from age, Movielens Data}
+Recall Figure \ref{mightlintrend}, reproduced below for convenience:
+
+\begin{figure}
+\includegraphics[width=3.5in]{Images/MeanRatVsAge.png}
+\caption{Rating vs.\ Age}
+\end{figure}
+
+The trend seemed to be vaguely linear, upward, but maybe even a downward
+trend near the end.  The latter point suggests there may even be a
+quadratic trend, with the middle-aged given higher ratings while the
+young and old are less generous.
+
+Though it sounds counterintuitive, quadratic models are actually linear!
+Here is why:  The model is
+
+\begin{equation}
+\label{firstquad}
+E( \textrm{userMean} ~|~ \textrm{age} = t) =
+\beta_0 + \beta_1 \textrm{ age} + \beta_2 \textrm{ age}^2
+\end{equation}
+
+This is quadratic in age but linear in $\beta$.  For instance, if we
+were to multiply each $\beta_i$ by 2.4, the entire sum would grow by
+that factor.
+
+Indeed, we should just consider $\textrm{age}^2$ as a new feature:
+
+\begin{lstlisting}
+> z <- ml100kpluscovs[,c('age','userMean')] 
+> z$age2 <- z$age^2
+> head(z)
+  age userMean age2
+1  24 3.610294  576
+2  20 3.918605  400
+3  27 3.393720  729
+4  25 3.470046  625
+5  33 4.025271 1089
+6  28 3.993007  784
+\end{lstlisting}
+
+We would then run \textbf{qeLin()} as usual:
+
+\begin{lstlisting}
+> qeLin(z,'userMean')$testAcc
+holdout set has  1000 rows
+[1] 0.3254251
+> qeLin(z[,1:2],'userMean')$testAcc
+holdout set has  1000 rows
+[1] 0.3472223
+\end{lstlisting}
+
+There may be a slight improvement of the quadratic model over the linear
+one.  But we must remember that since the holdout set is randomly
+chosen, there is some randomness to the above numbers.  Let's try 10
+replications of each, using the \textbf{replicMeans()} function from the
+\textbf{regtools} package:
+
+\begin{lstlisting}
+> replicMeans(10,"qeLin(z[,1:2],'userMean')$testAcc")
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+[1] 0.3363623
+attr(,"stderr")
+[1] 0.003186719
+> replicMeans(10,"qeLin(z,'userMean')$testAcc")
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+holdout set has  1000 rows
+[1] 0.3392382
+attr(,"stderr")
+[1] 0.003183424
+\end{lstlisting}
+
+(The \textit{standard error} is the estimated standard deviation of the
+reported mean.)
+
+The quad model probably is not helpful here.
+
+A better example is the \textbf{pef} dataset from \textbf{regtools}.
+
+\begin{lstlisting}
+> head(pef)
+       age     educ occ sex wageinc wkswrkd
+1 50.30082 zzzOther 102   2   75000      52
+2 41.10139 zzzOther 101   1   12300      20
+3 24.67374 zzzOther 102   2   15400      52
+4 50.19951 zzzOther 100   1       0      52
+5 51.18112 zzzOther 100   2     160       1
+6 57.70413 zzzOther 100   1       0       0
+\end{lstlisting}
+
+This is data from the 2000 US census, in Silicon Valley, over six
+different computer-related occupations.  Let's try a linear model:
+
+\begin{lstlisting}
+> qeLin(pef,'wageinc')$testAcc
+holdout set has  1000 rows
+[1] 25906.99
+\end{lstlisting}
+
+On average, our prediction is off by almost \$26,000.  But it's better
+than not using the features at all, i.e.\ just using mean income as our
+predictor:
+
+\begin{lstlisting}
+> qeLin(pef,'wageinc')$baseAcc
+holdout set has  1000 rows
+[1] 30804.21
+\end{lstlisting}
+
+Let's try a quadratic model.  But it would be harder than
+(\ref{firstquad}).  We would have to add columns for squares of all the 
+variables (first converting the categorical variables like \textbf{occ} 
+do dummies/one-hots), \textit{and} computer ``cross-product terms, such
+as age times sex (representing a difference in effect of age, between
+men and wome).
+
+But \textbf{qeML} does all that for us, via \textbf{qePolyLin()}.  So,
+let's try that:
+
+\begin{lstlisting}
+> replicMeans(50,"qeLin(pef,'wageinc')$testAcc")
+[1] 25361
+attr(,"stderr")
+[1] 145.1841
+> replicMeans(50,"qePolyLin(pef,'wageinc',deg=2)$testAcc")
+[1] 24762.21
+attr(,"stderr")
+[1] 136.9662
+\end{lstlisting}
+
+So, a quadratic model yields a small, but likely worthy, improvement.
+
+There is also \textbf{qePolyLog()}, for quadratic features in a logistic
+model.
 
 \section{Application to Collaborative Filtering}
+
+So, let's make our first attempt at collaborative filtering, on the
+MovieLens data.  We'll just use a linear model, with the small 100K
+dataset.
+
+\begin{lstlisting}
+> qeLin(ml100kpluscovs[,c('user','item','rating')],'rating')$testAcc
+holdout set has  1000 rows
+[1] 0.9213201
+> qeLin(ml100kpluscovs[,c('user','item','rating')],'rating')$baseAcc
+holdout set has  1000 rows
+[1] 0.9523251
+> qeLin(ml100kpluscovs[,c('rating','userMean','itemMean')],'rating')$testAcc
+holdout set has  1000 rows
+[1] 0.7484943
+\end{lstlisting}
+
+Remember, \textbf{lm()}, and thus the wrapper \textbf{qeLin()}, will
+convert the \textbf{user} variable to dummies, and the same for
+\textbf{item}.  With 943 users and 1682 items, that's 2624 dummies.
+A rough rule of thumb is that one should have $p < \sqrt{n}$, i.e.\
+about 300 features.  In other words, using the \textbf{user} and
+\textbf{item} columns is probably overfitting.  Replacing them by the
+\textit{embeddings}, i.e.\ replacing a variable by its summary or proxy,
+seems to be a good idea here.
 
