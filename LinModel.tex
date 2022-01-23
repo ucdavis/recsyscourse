@@ -251,7 +251,6 @@ Solve for $b$:
 \end{equation}
 
 This is the \textit{least squares estimator} of $\beta$.
-\section{The Logistic Model}
 
 \section{Computation}
 
@@ -311,6 +310,9 @@ things as quick and convennient as possible:
 
 \end{itemize} 
 
+Most of the \textbf{qeML} functions are wrappers to functions in other R
+packages; \textbf{qeML} adds a simple, uniform interface to them.
+
 Let's apply it to the above example:
 
 \begin{lstlisting}
@@ -331,7 +333,7 @@ We can predict with any of the \textbf{qeML} functions.
 194.2245 
 \end{lstlisting}
 
-The functions are do cross-validation, with the size of the holdout
+The functions do automatic cross-validation, with the size of the holdout
 being 10\% of the size of the dataset.  The prediction accuracy on the
 holdout set is in the \textbf{testAcc} component of the return value:
 
@@ -351,7 +353,9 @@ holdout set has  101 rows
 \end{lstlisting}
 
 Ah, yes.  Catchers tend to be stocky, pitchers lanky and so on, so there
-is valuable extra information there.
+is valuable extra information there.  By the way, \textbf{lm()}
+automatically converts R factors to dummy/one-hot form, as was the case
+for \textbf{Position} here.
 
 As noted, the \textbf{qeML} functions offer the benefit of a uniform
 API.  Let's try the kNN (``k-nearest neighbors'' method:
@@ -364,5 +368,155 @@ holdout set has  101 rows
 
 Oh, not as good.  If the true regression function is approximately
 linear, we generally will do better by exploiting that fact.
+
+As wrappers, the class of a \textbf{qeML} return value is a subclass of
+the function being wrapper:
+
+\begin{lstlisting}
+> class(qeout)
+[1] "qeLin" "lm"   
+\end{lstlisting}
+
+They thus inherit methods:
+
+\begin{lstlisting}
+> coef(qeout)
+ (Intercept)       Height          Age 
+-192.0942868    4.9726027    0.9327504 
+\end{lstlisting}
+
+\section{The Logistic Model}
+
+Say we are predicting a binary``Y.''  In the \textbf{mlb} data, say we
+are predicting whether a player is a catcher.  Say we define $Y$ to be 1
+for catcher, 0 if not.  In many ML circles, the coding is 1 and - 1, as
+opposed to the ``statistical'' 1,0.  The latter has the advantage that
+its expectation is the probability of the $Y = 1$ class, which will be
+seen below is an integral part of the \textit{logistic} model
+
+\begin{equation}
+\mu(t) = E(Y | X= t) = P(Y = 1 | X = t)
+\end{equation}
+
+The model is
+
+\begin{equation}
+\label{logit}
+P(Y = 1 | X = t) =
+\frac{1}{1 + e^{-\beta' t}}
+\end{equation}
+
+The reader will notice that in that expression we see the expression
+$\beta't$ from the linear model.  Accordingly, the logistic (often
+called ``logit'') is termed a \textit{generalized linear model}.
+The R \textbf{glm()} function implements models such as this.  (Another
+is \textit{Poisson regression}.)  In the logistic case,
+\textbf{qeLogit()} serves as a wrapper.
+
+\subsection{Again, a Multivariate Normal Motivation}
+
+The right-hand side of (\ref{logit}) is in (0,1), and thus a reasonable
+model for a probability.  It is an increasing function of $\beta't$,
+thus giving it an appealing quasi-linear nature.  If say $Y$ codes
+having diabetes, it is reasonable to postulate that the probability of
+having the disease is an increasing function of the age of the patient.
+
+As with the linear model, though, there is a multivariate normal
+motivation:
+
+\begin{quote}
+Suppose the distribution of $X$, given $Y = i$, is multivariate normal
+with mean vector different for each $i$ but with covariance matrix being
+the same across values of $i, i = 0,1$.  Then (\ref{logit}) holds.
+\end{quote}
+
+Let's see how this works for $p = 1$.  Consider a short interval in the
+real line, $A = (c,c+\epsilon)$.  Let $q = P(Y = 1)$, the
+\textit{unconditional probability of class 1}.  Let
+$w_i(t)$ denote the conditional density of $X$, given $Y = i$ (which by
+assumption is normal).  Then by Bayes Rule,
+
+\begin{eqnarray}
+P(Y = 1 | X \textrm{ in } A) [&=& 
+\frac
+{q P(X \textrm{ in } A ~|~  Y = 1)}
+{
+{q P(X \textrm{ in } A ~|~ Y = 1)} +
+(1-q) P(X \textrm{ in } A ~|~ Y = 0) 
+} \\
+&\approx&  
+\frac{q \epsilon w_1(t)}
+{q \epsilon w_1(t) + (1-q) \epsilon w_0(t)} \\
+&=& 
+\label{logitform}
+\frac{1}{1 + \frac{1-q}{a} \frac{w_0(t)}{w_1(t)}}
+\end{eqnarray}
+
+Now, 
+
+\begin{equation}
+w_i(t) = 
+\frac{1}{\sqrt{2 \pi} \sigma}
+% e^{- \left ( z \right )^2}
+e^{- \left ( \frac{t-\mu_i}{\sigma} \right )^2}
+\end{equation}
+
+Substituting this in (\ref{logitform}) does indeed simplify to
+(\ref{logit}) for the appropriate $\beta$.
+
+\subsection{Example:  Predicting ``Catcherness''}
+
+\begin{lstlisting}
+> catch <- mlb$Position == 'Catcher'
+> mlb$catch <- as.factor(catch)
+> qeo <- qeLogit(mlb[,-1],'catch')
+> predict(qeo,data.frame(Height=73,Weight=225,Age=25))
+$predClasses
+[1] "FALSE"
+
+$probs
+         FALSE      TRUE
+[1,] 0.8743196 0.1256804
+\end{lstlisting}
+
+The \textbf{qeML} functions sense that $Y$ is binary (or more generally,
+categorical) by testing whether it is an R factor.  So we needed to
+convert the logical vector to a factor.  The prediction was FALSE, i.e.\
+this player is guessed to not be a catcher, and in fact has only about a
+13\% chance of being a catcher.
+
+As noted, we can also predict general categorical $Y$, .e.g.
+
+\begin{lstlisting}
+> qeo <- qeLogit(mlb,'Position')
+holdout set has  101 rows
+> predict(qeo,data.frame(Height=73,Weight=225,Age=25))
+$predClasses
+[1] "Relief_Pitcher"
+
+$probs
+       Catcher First_Baseman Outfielder Relief_Pitcher Second_Baseman
+[1,] 0.1475545    0.09828611  0.2300844       0.245291     0.02082625
+      Shortstop Starting_Pitcher Third_Baseman
+[1,] 0.01016817        0.1768094     0.0709802
+\end{lstlisting}
+
+The most likely position played by this person is Relief Pitcher, though
+others have probabilities almost as high.  In fact, let's ask how well
+we can predict position:
+
+\begin{lstlisting}
+> qeo$testAcc
+[1] 0.7029703
+\end{lstlisting}
+
+For binary/categorical $Y$, the \textbf{qeML} functions report the
+overall misclassification rate.  Here, we would predict correctly about
+30\% of the time, not that good but then we are predicting among eight
+different categories..
+
+
+
 \section{Polynomial Models}
 
+% e^{- \left ( \frac{t-\mu_i}{\sigma} \right )^2}
