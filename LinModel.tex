@@ -461,7 +461,7 @@ Now,
 w_i(t) = 
 \frac{1}{\sqrt{2 \pi} \sigma}
 % e^{- \left ( z \right )^2}
-e^{- \left ( \frac{t-\mu_i}{\sigma} \right )^2}
+e^{-0.5 \left ( \frac{t-\mu_i}{\sigma} \right )^2}
 \end{equation}
 
 Substituting this in (\ref{logitform}) does indeed simplify to
@@ -491,7 +491,7 @@ this player is guessed to not be a catcher, and in fact has only about a
 \subsection{Example:  Vertebral Disease}
 
 As noted, we can also predict general categorical $Y$.  Here we
-considera vertebral dataset from the UCI Machine Learning Repository.
+consider a vertebral dataset from the UCI Machine Learning Repository.
 
 \begin{lstlisting}
 > head(vert)
@@ -742,10 +742,130 @@ holdout set has  1000 rows
 Remember, \textbf{lm()}, and thus the wrapper \textbf{qeLin()}, will
 convert the \textbf{user} variable to dummies, and the same for
 \textbf{item}.  With 943 users and 1682 items, that's 2624 dummies.
-A rough rule of thumb is that one should have $p < \sqrt{n}$, i.e.\
+A rough rule of thumb is that one should have at most $p < \sqrt{n}$, i.e.\
 about 300 features.  In other words, using the \textbf{user} and
 \textbf{item} columns is probably overfitting.  Replacing them by the
 \textit{embeddings}, i.e.\ replacing a variable by its summary or proxy,
 seems to be a good idea here; replacing 2624 columns by 2 seemed to pay
 off.
+
+\section{Regularization: the LASSO}
+
+A number of modern statistical methods ``shrink'' their classical
+counterparts.  This is true for ML methods as well.  In particular, the
+principle may be applied in:
+
+\begin{itemize}
+
+\item Boosting.
+
+\item Linear models.
+
+\item Support vector machines.
+
+\item Neural networks.
+
+\end{itemize}
+
+This is also applied to some RS models, such as matrix factorization.
+
+\subsection{Motivation}
+
+Suppose we have sample data on human height, weight and age.  Denote the
+population means of these quantities by $\mu_{ht}$, $\mu_{wt}$ and
+$\mu_{age}$.  We estimate them from our sample data as the corresponding
+sample means, $\overline{X}_{ht}$, $\overline{X}_{wt}$ and
+$\overline{X}_{age}$.
+
+Just a bit more notation, giving names to vectors:
+
+\begin{equation}
+\mu = (\mu_{ht},\mu_{wt}, \mu_{age})
+\end{equation}
+
+\noindent
+and
+
+\begin{equation}
+\overline{X} = (\overline{X}_{ht},\overline{X}_{wt}, \overline{X}_{age})
+\end{equation}
+
+\noindent
+Amazingly, \textit{James-Stein theory} says
+the best estimate of $\mu$ might NOT be $\overline{X}$.\footnote{Here
+``best'' means in terms of Mean Square Error.  The MSE for the
+non-shrunken case is $E \left [||\overline{X} - \mu ||^2 \right ].$}  
+It might be a shrunken-down version of $\overline{X}$, say $0.9
+\overline{X}$, i.e.
+
+\begin{equation}
+(0.9 \overline{X}_{ht},0.9 \overline{X}_{wt}, 0.9 \overline{X}_{age})
+\end{equation}
+
+\noindent
+And the higher the dimension (3 here), the more shrinking needs to be done.
+The intuition is this:  For many samples, there are a few data points
+that are extreme, on the fringes of the distribution.  These points skew
+our estimators, in the direction of being too large.  So, it is optimal
+to shrink them.
+
+How much shrinking should be done?  In practice this is unclear, and
+typically decided by our usual approach, cross-validation.
+
+Putting aside the mathematical theory --- it's quite deep --- the
+implication for us in this book is that, for instance, the least-squares
+estimator $\widehat{\beta}$ of the population coefficient vector $\beta$
+in the linear model is often too large, and should be shrunken.  Most
+interestingly, \textbf{this turns out to be a possible remedy for
+overfitting}.
+
+\subsection{Shrinking $\widehat{\beta}$ in Linear Regression Models}
+
+Instead of finding the value of $b$ that minimizes (\ref{quad}), we
+minimize
+
+\begin{equation}
+\label{quadLASSO}
+(D - Ab)'(D - Ab) + \lambda ||b]]_{1}
+\end{equation}
+
+The value of the hyperparameter $\lambda > 0$ is up to the analyst, but
+is typically chosen by cross-validation.
+
+Why does this result in shrinkage?  In minimizing (\ref{quad}) we are
+given free rein, choosing any $b$ that we want.  But (\ref{quadLASSO})
+penalizes us for using longer $b$.  Actually, one can show that
+minimizing (\ref{quadLASSO}) is equivalent to minimizing (\ref{quad})
+under the constraint that $||b||_{1} \leq \omega$ ($\omega$ is now the
+hyperparameter).
+
+\subsection{The Famous LASSO Picture}
+
+As mentioned, a key property of the LASSO is that it usually provides a
+\textit{sparse} solution for $\widehat{\beta}$, meaning the many of the
+$\widehat{\beta}_i$ are 0.  In other words, many features are discarded,
+thus providing a means of dimension reduction.  Figure \ref{lassosub}
+shows why.  Here is how it works.
+
+\begin{figure}
+\vskip 0.2in
+\centerline{
+\includegraphics[width=2.75in]{Images/LASSO_gray.png}
+}
+\caption{Feature subsetting nature of the LASSO}
+\label{lassosub}
+\end{figure}
+
+The figure is for the case of $p = 2$ predictors, whose coefficients are
+$b_1$ and $b_2$.  (For simplicity, we assume there is no constant term
+$b_0$.)  Let $U$ and $V$ denote the corresponding features.
+Write $b = (b_1,b_2)$ for the vector of the $b_i$.
+
+Without shrinkage, we would choose $b$ to minimize the sum of squared
+errors,
+
+\begin{equation}
+SSE = (Y_1 - b_1 U_1 - b_2 V_1)^2 + ... +
+(Y_n - b_1 U_n - b_2 V_n)^2
+\end{equation}
 
