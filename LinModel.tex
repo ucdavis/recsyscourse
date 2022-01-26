@@ -916,3 +916,9 @@ If we were to use the L2 norm in (\ref{quadLASSO}), that diamond would
 be a circle.  The resulting $\widehat{\beta}$ is called the
 \textit{ridge estimator}.  It also shrinks, but is not sparse, since the
 touchpoint can be anywhere.
+
+\subsection{The qeLASSO Function}
+
+This wraps the \textbf{glmnet} package, which chooses $\lambda$ through
+its own internal cross-validation.
+
