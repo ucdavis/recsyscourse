@@ -239,7 +239,14 @@ can easily be verified that for a vector $u$,
 \frac{d}{du} u'u = 2u
 \end{equation}
 
-Applying this and the Chain Rule to (\ref{quad}), we have
+Applying this and the Chain Rule to (\ref{quad}), i.e.
+
+\begin{equation}
+\frac{d}{db} = \frac{d}{du} ~ \frac{du}{db}
+\end{equation}
+
+
+we have
 
 \begin{equation}
 0 = A (D - Ab) 
@@ -262,7 +269,8 @@ choices?
 
 R's \textbf{lm()} (``linear model'') function does the computation for
 us.  Here is an example using \textbf{mlb}, a dataset in the
-\textbf{regtools} package, involving Major League Baseball players:
+\textbf{regtools} package, involving Major League Baseball
+players:\footnote{We trimmed down the number of columns here.}
 
 \begin{lstlisting}
 > head(mlb)  # take a look around
@@ -284,10 +292,12 @@ us.  Here is an example using \textbf{mlb}, a dataset in the
 
 The call says, ``Fit a linear model for predicting weight from height
 and age, using the dataset \textbf{mlb}.''  The \textbf{coef()} function
-extracts $\widehat{\beta}$ from the output object.  We then predict a
-new case.
+extracts $\widehat{\beta}$ from the output object.  We see that
+$\widehat{\beta} = (-187.64,4.92,0.91)'$. 
 
-We see that $\widehat{\beta} = (-187.64,4.92,0.91)'$. 
+We then predict a new case.  If the player whose weight is to be
+predicted is of height 73 and age 25, we would predict wieght 194 (an
+integer here just by coincidence).
 
 By the way, \textbf{coef()} and \textbf{predict()} are \textit{generic}
 functions in R, meaning that their actions depend on the class of object
@@ -334,8 +344,9 @@ We can predict with any of the \textbf{qeML} functions.
 194.2245 
 \end{lstlisting}
 
-The functions do automatic cross-validation, with the size of the holdout
-being 10\% of the size of the dataset.  The prediction accuracy on the
+The functions do automatic cross-validation, with the size of the
+holdout being 10\% of the size of the dataset.\footnote{This is the
+reason for the slight discrepancy above.} The prediction accuracy on the
 holdout set is in the \textbf{testAcc} component of the return value:
 
 \begin{lstlisting}
@@ -371,7 +382,7 @@ Oh, not as good.  If the true regression function is approximately
 linear, we generally will do better by exploiting that fact.
 
 As wrappers, the class of a \textbf{qeML} return value is a subclass of
-the function being wrapper:
+the function being wrapped:
 
 \begin{lstlisting}
 > class(qeout)
@@ -455,7 +466,7 @@ P(Y = 1 | X \textrm{ in } A) [&=&
 \frac{1}{1 + \frac{1-q}{a} \frac{w_0(t)}{w_1(t)}}
 \end{eqnarray}
 
-Now, 
+Now, since the $w_i$ are normal, we have
 
 \begin{equation}
 w_i(t) = 
@@ -512,15 +523,12 @@ The other columns are various vertebral meansurements.
 holdout set has  31 rows
 \end{lstlisting}
 
-As an example of prediction, consider a patient like the ine in
+As an example of prediction, consider a patient like the one in
 \textbf{vert[1,]}; but with $V7 = 1.88$.
 
 \begin{lstlisting}
 > newPatient <- vert[1,-7]
 > newPatient$V6 <- 1.88
-> prediction(qel,newPatient)
-Error in prediction(qel, newPatient) : 
-  could not find function "prediction"
 > predict(qel,newPatient)
 $predClasses
 [1] "DH"
@@ -565,17 +573,17 @@ make that calculation above; it's returned by \textbf{qeLogit()}:
 [1] 0.5053763
 \end{lstlisting}
 
-(The small discrepancy is due to using the full dataset versus using
-just the training set.)
+(Again, The small discrepancy is due to using the full dataset versus
+using just the training set.)
 
 \section{Polynomial Models}
 
 Recall Figure \ref{mightlintrend}, reproduced below for convenience:
 
-\begin{figure}
+% \begin{figure}
 \includegraphics[width=3.5in]{Images/MeanRatVsAge.png}
-\caption{Rating vs.\ Age}
-\end{figure}
+% \caption{Rating vs.\ Age}
+% \end{figure}
 
 The trend seemed to be vaguely linear, upward, but maybe even a downward
 trend near the end.  The latter point suggests there may even be a
@@ -804,6 +812,7 @@ It might be a shrunken-down version of $\overline{X}$, say $0.9
 
 \noindent
 And the higher the dimension (3 here), the more shrinking needs to be done.
+(Though for 1 or 2 dimensions, shrinkage brings no improvement.)
 The intuition is this:  For many samples, there are a few data points
 that are extreme, on the fringes of the distribution.  These points skew
 our estimators, in the direction of being too large.  So, it is optimal
@@ -830,22 +839,30 @@ minimize
 \end{equation}
 
 The value of the hyperparameter $\lambda > 0$ is up to the analyst, but
-is typically chosen by cross-validation.
+is typically chosen by cross-validation.  The resulting $\widehat{\beta}$
+is called the Least Absolute Shrinkage and Selection Operator, LASSO.
 
 Why does this result in shrinkage?  In minimizing (\ref{quad}) we are
 given free rein, choosing any $b$ that we want.  But (\ref{quadLASSO})
 penalizes us for using longer $b$.  Actually, one can show that
 minimizing (\ref{quadLASSO}) is equivalent to minimizing (\ref{quad})
-under the constraint that $||b||_{1} \leq \omega$ ($\omega$ is now the
-hyperparameter).
+under the constraint that 
+
+\begin{equation}
+\label{dual}
+||b||_{1} \leq \eta
+\end{equation}
+
+$\eta$ is now the hyperparameter.
 
 \subsection{The Famous LASSO Picture}
 
 As mentioned, a key property of the LASSO is that it usually provides a
 \textit{sparse} solution for $\widehat{\beta}$, meaning the many of the
 $\widehat{\beta}_i$ are 0.  In other words, many features are discarded,
-thus providing a means of dimension reduction.  Figure \ref{lassosub}
-shows why.  Here is how it works.
+thus providing a means of dimension reduction, thus an approach to
+avoiding overfitting.  Figure \ref{lassosub} shows why.  Here is how it
+works.
 
 \begin{figure}
 \vskip 0.2in
@@ -865,7 +882,37 @@ Without shrinkage, we would choose $b$ to minimize the sum of squared
 errors,
 
 \begin{equation}
+\label{sse}
 SSE = (Y_1 - b_1 U_1 - b_2 V_1)^2 + ... +
 (Y_n - b_1 U_n - b_2 V_n)^2
 \end{equation}
 
+Recalling that the non-shrunken $b$ is called the Ordinary Least Squares
+estimator, let's name that $b_{OLS}$, and name the corresponding SSE value
+$SSE_{OLS}$.
+
+The horizontal and vertical axes are for $b_1$ and $b_2$, as shown.  There is one ellipse for each possible value of SSE.  For SSE equal to, say 16.8, the corresponding ellipse is the set of all points $b$ that have SSE = 16.8. As we vary the SSE value, we get various concentric ellipses, two of which are shown in the picture.  The smaller the ellipse, the smaller the value of SSE.
+
+The OLS estimate is unique, so the ellipse for SSE = $SSE_{OLS}$ is
+degenerate, consisting of the single point $b_{OLS}$.
+
+The corners of the diamond are at $(\eta,0)$, $(0,\eta)$ and so on.  Due
+to the constraint (\ref{dual}), our LASSO estimator $b_{LASSO}$
+must be somewhere within the diamond.
+
+Remember, we want SSE --- the sum of square prediction errors --- to be
+as small as possible, but at the same time we must stay within the
+diamond.  So the solution is to choose our ellipse to just barely touch
+the diamond, as we see with the outer ellipse in the picture.  The
+touchpoint is then our LASSO solution, $b_{LASSO}$.
+
+But that touchpoint is sparse --- $b2 = 0$!  And you can see that, for
+almost any orientation and position of the ellipses, the eventual
+touchpoint will be one of the corners of the diamond, thus a sparse
+solution.  Thus the LASSO will usually be sparse, which is the major
+reason for its popularity.
+
+If we were to use the L2 norm in (\ref{quadLASSO}), that diamond would
+be a circle.  The resulting $\widehat{\beta}$ is called the
+\textit{ridge estimator}.  It also shrinks, but is not sparse, since the
+touchpoint can be anywhere.
