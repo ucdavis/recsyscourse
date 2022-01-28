@@ -6,7 +6,7 @@ factorization.  The overall theme will be \textit{low-rank
 approximation}:  given a matrix $M_1$,  find a matrix $M_2$ for which 
 
 \begin{equation}
-rk(M_2) << rk(M_1
+rk(M_2) << rk(M_1)
 \end{equation}
 
 and 
@@ -62,12 +62,13 @@ high-correlation (0.8) one.  As we said at the time about the latter:
 
 \begin{quote}
 
-To a large extent, there is only one variable here, $X_1$ (or other
-choices, e.g.\ $X_2$), not two.  
+The probability that $X_2 \approx X_1$ is high.  So, to a large extent,
+there is only one variable here, $X_1$ (or other choices, e.g.\ $X_2$),
+not two.  
 
 \end{quote}
 
-In the case of correlation 0.2, there really are two separate variables.
+In the case of correlation 0.2, the two variables are more separate.
 The probability that $X_2 \approx -X_1$ is lower here.
 
 Note one more time, though, the approximate nature of the approach we
@@ -95,7 +96,6 @@ and
 \begin{equation}
 Y_2 = X_1 - X_2 
 \end{equation}
-
 
 In fact, taking
 
@@ -154,7 +154,7 @@ reduce the number of variables, so we don't want any redundant ones.
 
 PCA won't be a perfect solution --- there is no such thing --- as might
 be the case if the relations between variables is nonmonotonic.  A
-common example is age, with mean income given age tending to be a
+common example is age and income, with mean income given age tending to be a
 quadratic (or higher degree) polynomial relation.  But PCA is a very
 common ``go to'' method for dimension reduction, and may work well even
 in (mildly) nonmonotonic settings.
@@ -168,32 +168,36 @@ Now, how do we find these $Y_i$?
 
 \subsection{Eigenanalysis}
 
-Say I have a sample of $n$ observations on two variables, $x =
-(x_1,...,x_n)$ and $y=(y_1,...,y_n)$, say height and weight on $n = 100$
-people.  The sample correlation between the variables is the sample
-analog of (\ref{rhodef}),
+Say we have a sample of $n$ observations on $p$ variables, say $p$
+measurements on each of $n$ people.  The measurements are $X_1,...,X_p$.
+For example, we might have $p=3$, with $X_1, ~ X_2, \textrm{ and } X_3$
+being height, weight and age.  
 
-\begin{equation}
-\label{corrdef}
-\frac
-{\frac{1}{n} \sum_{i=1}^n (x_i-\overline{x}) (y_i-\overline{y})}
-{s.d.(x) ~ s.d.(y)}
-\end{equation}
+% Let $X_{ik}$ be the value of $X_i$ on the $k^{th}$ person, $k = 1,...,n$.
+% 
+% The sample correlation between $X_i$ and $X_j$ is the sample
+% analog of (\ref{rhodef}),
+% 
+% \begin{equation}
+% \label{corrdef}
+% \widehat{\rho} =
+% \frac
+% {\frac{1}{n} \sum_{k=1}^n (X_{ik}-\overline{X}_i)
+% (X_{jk}-\overline{X}_j)}
+% {s.d.(X_i) ~ s.d.(X_j)}
+% \end{equation}
+% 
+% where the denominator is the product of the sample standard deviations
+% of the two variables, and $\overline{X}_i)$ and $\overline{X}_j)$ are
+% the sample means.  
 
-where the denominator is the product of the sample standard deviations of the
-two variables, and $\overline{x})$ and $\overline{y})$ are the sample
-means.  The correlation is a number between -1 and 1.
-
-The correlation matrix $C$ --- i.e. the set of all
-$\textrm{corr}(X_i,X_j)$ --- of a set of $p$ variables is $p \times p$,
-i.e.\ square.  Moreover, since $\textrm{corr}(X_i,X_j) =
-\textrm{corr}(X_j,X_i)$, $C$ is \textit{symmetric}:
+Let $C$ denote the covariance matrix of $X_1,...,X_p$.  Note that
+since $Cov(X_i,X_j) = Cov(X_j,X_i)$, 
+the matrix $C$ is \emph{symmetric},
 
 \begin{equation}
 C' = C
 \end{equation}
-
-where $'$ denotes matrix transpose.  
 
 Recall that for any square matrix $L$, if there is a scalar $\lambda$
 and a nonzero vector $x$ such that 
@@ -205,16 +209,57 @@ Lx = \lambda x
 then we say that $x$ is an \textit{eigenvector} of $L$, with
 \textit{eigenvalue} $\lambda$.  
 
-It can be shown that any symmetric matrix has real (not complex)
-eigenvalues, and that the corresponding eigenvectors $U_1,...,U_p$
-are \textit{orthogonal},
+It can be shown\footnote{Here and below, ``can be shown'' means that the
+assertion is proved in any standard textbook on linear algebra.} that
+any symmetric matrix has real (not complex) eigenvalues, and that the
+corresponding eigenvectors $U_1,...,U_p$ are \textit{orthogonal},
 
 \begin{equation}
 U_i' U_j = 0, ~ i \neq j
 \end{equation}
 
 We always take the $U_i$ to have length 1:  Just divide the vector by
-its length, so it now has length 1, and is still an eigenvector.
+its length, so it now has length 1, and is still an eigenvector.  
+
+Let $U$ denote the $p \times p$ matrix whose $i^{th}$ column is $U_i$.
+then from the orthogonality of the eigenvectors, we have
+
+\begin{equation}
+\label{uui}
+U'U = I
+\end{equation}
+
+the $p \times p$ identity matrix.  We also refer to $U$ as
+\emph{orthogonal}.
+
+It also can be shown that 
+
+\begin{equation}
+UCU' = D
+\end{equation}
+
+where $D$ is a diagonal matrix with the eigenvalues of $C$ on the
+diagonal.
+
+Multiplying on the left by $U'$ and the on the right by $U$,
+and using (\ref{uui}), we have
+
+\begin{equation}
+C = U'DU
+\end{equation}
+
+Now, form a new random vector from the random vector 
+$X = (X_1,...,X_p)'$:
+
+\begin{equation}
+Y = U'X
+\end{equation}$
+
+Let's find its covariance matrix, again using (\ref{covax}):
+
+\begin{equation}
+Cov(Y) = U
+\end{equation}
 
 \subsection{PCA}
 
@@ -231,8 +276,8 @@ So, finally, here is PCA:
 \begin{enumerate}
 
 
-\item Find the correlation matrix (or covariance matrix, a similar
-notion) from the data in $Q$.  Note again that since there are $p$
+\item Find the correlation matrix (or covariance matrix)
+from the data in $Q$.  Note again that since there are $p$
 variables, the correlation matrix will be $p \times p$.
 
 \item Compute its eigenvalues and eigenvectors.  It can be shown that

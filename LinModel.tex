@@ -518,6 +518,27 @@ consider a vertebral dataset from the UCI Machine Learning Repository.
 There are three disease types, NO, DH and SL, where NO means normal.
 The other columns are various vertebral meansurements.
 
+Our previous example and discussion concerned binary $Y$.  Here $Y$
+as three categories.  How does \textbf{qeLogit()} handle this?  It takes
+the \textit{One vs.\ All} approach::
+
+\begin{itemize}
+
+\item Create three separate dummy/one-hot variables from $Y$, one each
+for NO, DH and SL. 
+
+\item Fit a logit model for predicting NO from V1,...,V6.
+
+\item Fit a logit model for predicting DH from V1,...,V6.
+
+\item Fit a logit model for predicting SL from V1,...,V6.
+
+\item Then, for any future case, form predictions for it from all three
+models.  Whichever model gives the highest probability, take our
+prediciton to be that category.
+
+\end{itemize} 
+
 \begin{lstlisting}
 > qel <- qeLogit(vert,'V7')
 holdout set has  31 rows
