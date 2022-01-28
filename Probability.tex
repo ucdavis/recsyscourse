@@ -1,4 +1,5 @@
 \chapter{Probability}
+\label{chap:prob}
 
 It is assumed the reader has background in calculus-based probability
 constructs, e.g.\ density functions and distributions involving
@@ -176,6 +177,7 @@ positive covariance, with a similar statement for negatively-related
 variables.  In fact, correlation is just scaled-down variance:
 
 \begin{equation}
+\label{rhodef}
 \rho(X,Y) = 
 \frac{Cov(X,Y)}{\sigma(X) ~ \sigma(Y)}
 \end{equation}
@@ -277,7 +279,7 @@ Again, \textbf{ml100kpluscovs} is MovieLens plus some side information:
 
 % \begin{lstlisting}
 \begin{verbatim}
- head(ml100kpluscovs)
+> head(ml100kpluscovs)
   user item rating timestamp age gender        occ   zip userMean Nuser G1 G2
 1    1    1      5 874965758  24      M technician 85711 3.610294   272  0  0
 2  117    1      4 880126083  20      M    student 16125 3.918605    86  0  0
@@ -353,6 +355,7 @@ nonrandom matrix $A$.  Then $AX$ is a new random vector, of length $k$.
 One can show that
 
 \begin{equation}
+\label{covax}
 Cov(AX) = A ~ Cov(X) ~ A'
 \end{equation}
 
@@ -403,6 +406,7 @@ height column in the \lstinline{mlb} dataset that comes with
 \lstinline{regtools}.)
 
 \subsection{Multivariate}
+\label{mvnormal}
 
 If we have two random variables $X$ and $Y$, they have a
 \textit{bivariate normal distribution} if their density looks like a
