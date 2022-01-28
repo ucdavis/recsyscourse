@@ -1,5 +1,5 @@
 
-\chapter{Matrix Factorization Methods}   
+\chapter{Matrix Factorization Methods}    
 
 This chapter covers one of the more popular RS methods, matrix
 factorization.  The overall theme will be \textit{low-rank
@@ -229,37 +229,54 @@ then from the orthogonality of the eigenvectors, we have
 U'U = I
 \end{equation}
 
+so
+
+\begin{equation}
+U^{-1} = u'
+\end{equation}
+
 the $p \times p$ identity matrix.  We also refer to $U$ as
 \emph{orthogonal}.
 
 It also can be shown that 
 
 \begin{equation}
-UCU' = D
+U C U' = D
 \end{equation}
 
 where $D$ is a diagonal matrix with the eigenvalues of $C$ on the
 diagonal.
 
-Multiplying on the left by $U'$ and the on the right by $U$,
-and using (\ref{uui}), we have
+% Multiplying on the left by $U'$ and the on the right by $U$,
+% and using (\ref{uui}), we have
+% 
+% \begin{equation}
+% C = U'DU
+% \end{equation}
+
+
+$X = (X_1,...,X_p)'$ is a random vector, i.e. different for each person
+or other entity in the population.  Now, form a new random vector from
+$X$:
 
 \begin{equation}
-C = U'DU
+Y = UX
 \end{equation}
-
-Now, form a new random vector from the random vector 
-$X = (X_1,...,X_p)'$:
-
-\begin{equation}
-Y = U'X
-\end{equation}$
 
 Let's find its covariance matrix, again using (\ref{covax}):
 
 \begin{equation}
-Cov(Y) = U
+Cov(Y) = U C U' = D
 \end{equation}
+
+Aha!  The components of this new random vector are uncorrelated!  Just
+we need.  And that gives us PCA:
+
+\begin{itemize}
+
+\item Find the (sample) covariance matrix of $X$ in our data.
+
+\end{itemize} 
 
 \subsection{PCA}
 
