@@ -133,7 +133,8 @@ X_2,...,X_p$, not just two.  If our data is on people, these variables
 may be height, weight, age, gender and so on.  We can no longer
 visualize in higher dimensions, but one can show that the level sets
 will be $p$-dimensional ellipsoids.  These now have $p$ axes rather than
-just two, and we can define $p$ new variables, $W_1,W_2,...,W_p$ from
+just two, and we can define $p$ new variables, $W_1,W_2,...,W_p$,
+each of them some linear combination of 
 the $X_i$, such that:
 
 \begin{itemize}
@@ -143,7 +144,7 @@ the $X_i$, such that:
 \item [(b)] They are ordered in terms of variance:
 
 \begin{equation}
-Var(W_1) > Var(W_2) > ... > Var(W_p)
+Var(W_1) \geq Var(W_2) \geq ... \geq Var(W_p)
 \end{equation}
 
 \end{itemize} 
@@ -170,7 +171,7 @@ of our original ones.
 
 Now, how do we find these $W_i$?
 
-\subsection{Motivation}
+\subsection{Eigenanalysis}
 
 So, we are interested in finding new variables that are linear
 combinations of our original ones.  Let's look at the first one. 
@@ -190,32 +191,52 @@ This calls for the method of \textit{Lagrange multipliers}.  We redefine
 that problem as maximizing 
 
 \begin{equation}
-u'Cu + \omega (u'u - 1)
+u'Cu - \omega (u'u - 1)
 \end{equation}
 
 where $\omega$ is an artificial variable that enforces the constraint.
 Then
 
 \begin{equation}
-\frac{d}{du} [u'Cu + \omega (u'u - 1)] = 2 Cu + 2 \omega u 
+\frac{d}{du} [u'Cu - \omega (u'u - 1)] = 2 Cu + 2 \omega u 
 \end{equation}
 
 Setting this to 0, we have
 
 \begin{equation}
-0 = (C + \omega I) u
+0 = (C - \omega I) u
 \end{equation}
 
 In other words,
 
 \begin{equation}
-Cu = -\omega u
+Cu = \omega u
 \end{equation}
 
-Aha!  The vector $u$ would have to be an eigenvector of $C$.  Let's
-pursue this further...
+Aha!  The vector $u$ would have to be an eigenvector of $C$.  
 
-\subsection{Eigenanalysis}
+Let's call that vector $u_1$.  Then what about the second linear
+combination, $u_2$?  Again we would find $u$ to maximize
+
+\begin{equation}
+Var(u'X) = u' C u
+\end{equation}
+
+with the constraintt
+
+\begin{equation}
+u'u = 1
+\end{equation}
+
+but now with the additional constraint that we want $u_2$ to be
+uncorrelated with $u_1$.  Using (\ref{covax}), that means
+
+\begin{equation}
+u'u_1 = 0
+\end{equation}
+
+Using two-variable Lagrange, we would find that $u_2$ is also an
+eigenvector of $C$.
 
 Say we have a sample of $n$ observations on $p$ variables, say $p$
 measurements on each of $n$ people.  The measurements are $X_1,...,X_p$.
@@ -248,15 +269,17 @@ the matrix $C$ is \emph{symmetric},
 C' = C
 \end{equation}
 
-Recall that for any square matrix $L$, if there is a scalar $\lambda$
-and a nonzero vector $x$ such that 
+% Recall that for any square matrix $L$, if there is a scalar $\lambda$
+% and a nonzero vector $x$ such that 
+% 
+% \begin{equation}
+% Lx = \lambda x
+% \end{equation}
+% 
+% then we say that $x$ is an \textit{eigenvector} of $L$, with
+% \textit{eigenvalue} $\lambda$.  
 
-\begin{equation}
-Lx = \lambda x
-\end{equation}
-
-then we say that $x$ is an \textit{eigenvector} of $L$, with
-\textit{eigenvalue} $\lambda$.  
+Another way of looking at the above derivation:
 
 It can be shown\footnote{Here and below, ``can be shown'' means that the
 assertion is proved in any standard textbook on linear algebra.} that
@@ -320,6 +343,8 @@ Cov(W) = U C U' = D
 
 Aha!  The components of this new random vector are uncorrelated!  Just
 what we need.  And that gives us PCA:
+
+\subsection{PCA}
 
 \begin{itemize}
 
@@ -502,8 +527,6 @@ t(tpca$rotation) %*% tpca$rotation
 
 then check that it produces the identity matrix $I$, then ponder why
 this should be the case.
-
-\subsection{MovieLens Example}
 
 \subsection{More on the PC Coefficients}
 \label{coors}
