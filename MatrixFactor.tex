@@ -92,13 +92,13 @@ the line $t_1 + t_2 = 0$.  The minor axis will be the line perpendicular
 to that, $t_1 - t_2 = 0$.  That suggests forming new variables,
 
 \begin{equation}
-Y_1 = X_1 + X_2 
+W_1 = X_1 + X_2 
 \end{equation}
 
 and 
 
 \begin{equation}
-Y_2 = X_1 - X_2 
+W_2 = X_1 - X_2 
 \end{equation}
 
 In fact, taking
@@ -113,7 +113,7 @@ A =
 \right )
 \end{equation}
 
-in (\ref{covax}) shows that $\rho(Y_1,Y_2) = 0$.
+in (\ref{covax}) shows that $\rho(W_1,W_2) = 0$.
 
 Here is the point so far:
 
@@ -123,7 +123,7 @@ Here is the point so far:
 ``one variable is enough.''  Thus we might consider using just $X_1$
 rather than $X_1$ and $X_2$.
 
-\item Or, we might consider using $Y_1$ for our one
+\item Or, we might consider using $W_1$ for our one
 variable.  
 
 \end{itemize} 
@@ -133,25 +133,25 @@ X_2,...,X_p$, not just two.  If our data is on people, these variables
 may be height, weight, age, gender and so on.  We can no longer
 visualize in higher dimensions, but one can show that the level sets
 will be $p$-dimensional ellipsoids.  These now have $p$ axes rather than
-just two, and we can define $p$ new variables, $Y_1,Y_2,...,Y_p$ from
+just two, and we can define $p$ new variables, $W_1,W_2,...,W_p$ from
 the $X_i$, such that:
 
 \begin{itemize}
 
-\item [(a)] The $Y_i$ are uncorrelated.
+\item [(a)] The $W_i$ are uncorrelated.
 
 \item [(b)] They are ordered in terms of variance:
 
 \begin{equation}
-Var(Y_1) > Var(Y_2) > ... > Var(Y_p)
+Var(W_1) > Var(W_2) > ... > Var(W_p)
 \end{equation}
 
 \end{itemize} 
 
 Now we have a promising solution to our dimension reduction problem.  In
-(b) above, we can choose to use just the first few of the $Y_i$,
+(b) above, we can choose to use just the first few of the $W_i$,
 omitting the ones with small variance since they are essentially
-constants, uninformative.  And again, since the $Y_i$ will be
+constants, uninformative.  And again, since the $W_i$ will be
 uncorrelated, we are eliminating a source of possible redundancy among
 them; after all, we are doing dimension reduction, i.e.\ we wish to
 reduce the number of variables, so we don't want any redundant ones.
@@ -168,19 +168,13 @@ normal distributions, we haven't assumed it.  We are merely talking
 about finding a set of uncorrelated variables that are linear functions
 of our original ones.
 
-Now, how do we find these $Y_i$?
+Now, how do we find these $W_i$?
 
 \subsection{Motivation}
 
 So, we are interested in finding new variables that are linear
-combinations of our original ones, that is $Y = u'X$, for some $u$.
-How should we choose $u$?
-
-Ultimately we wish retain only some of the $Y_i$, the ones with large
-variance.  After all, those with small variance are essentially
-constants, thus uninformative.
-
-Thus we want to choose $u$ to maximimize 
+combinations of our original ones.  Let's look at the first one. 
+We want to choose $u$ to maximize 
 
 \begin{equation}
 Var(u'X) = u' C u
@@ -188,6 +182,19 @@ Var(u'X) = u' C u
 
 where we have used (\ref{covax}) with $A = u'$.
 
+Of course, this maximization problem doesn't make sense in the form
+stated, since we can just make $u$ larger and larger to make $Var(u'X)$
+large.  We need a constraint, say norm 1, $u'u = 1$.   
+
+This calls for the method of \textit{Lagrange multipliers}.  We redefine
+that problem as maximizing 
+
+\begin{equation}
+u'Cu + \omega (u'u - 1)
+\end{equation}
+
+where $\omega$ is an artificial variable that enforces the constraint.
+Then
 
 \begin{equation}
 \frac{d}{du} [u'Cu + \omega (u'u - 1)] = 2 Cu + 2 \omega u 
@@ -205,7 +212,8 @@ In other words,
 Cu = -\omega u
 \end{equation}
 
-Aha!  The vector $u$ would have to be an eigenvector of $C$.
+Aha!  The vector $u$ would have to be an eigenvector of $C$.  Let's
+pursue this further...
 
 \subsection{Eigenanalysis}
 
@@ -263,7 +271,7 @@ We always take the $U_i$ to have length 1:  Just divide the vector by
 its length, so it now has length 1, and is still an eigenvector.  
 
 Let $U$ denote the $p \times p$ matrix whose $i^{th}$ column is $U_i$.
-then from the orthogonality of the eigenvectors, we have
+Then from the orthogonality of the eigenvectors, we have
 
 \begin{equation}
 \label{uui}
@@ -301,17 +309,17 @@ or other entity in the population.  Now, form a new random vector from
 $X$:
 
 \begin{equation}
-Y = UX
+W = UX
 \end{equation}
 
 Let's find its covariance matrix, again using (\ref{covax}):
 
 \begin{equation}
-Cov(Y) = U C U' = D
+Cov(W) = U C U' = D
 \end{equation}
 
 Aha!  The components of this new random vector are uncorrelated!  Just
-we need.  And that gives us PCA:
+what we need.  And that gives us PCA:
 
 \begin{itemize}
 
@@ -327,32 +335,48 @@ Decide the new dimension $s$.
 
 \item Replace $U$ by its first $s$ rows.
 
-\item We've created a new random vector $Y = UX$, with the new $U$.
+\item We've created a new random vector $W = UX$, with the new $U$.
+$W$ will have length $s$, thus achieving dimension reduction.
 
 \end{itemize} 
 
 So for example, denote the $k^{th}$ value of $X$ in our original
 dataset, i.e.\ column $k$, by $X^{(k)}$.  The corresponding new vector
-is $Y^{(k) = U X^{(k)}}$.  When dealing with a new case
-$X^{(\textrm{new)}}$ in the future, premultiply by $U$ to get the $Y$
+is $W^{(k)} = U X^{(k)}$.  When dealing with a new case
+$X^{(\textrm{new)}}$ in the future, premultiply by $U$ to get the $W$
 value.
 
 
 \subsection{Choosing the Number of Principal Components}  
 
 The number of components we use, $s$, is a hyperparameter.  So, how do
-we choose $s$?  This is the hard part, and as usual there is no
-universally good method.  Typically $s$ is chosen so that 
+we choose $s$?  
+
+First one must ask what the goal of PCA is in the given application.
+It might be simply descriptive; if we can reduce some complex set of
+variables down to a few while losing only a small amount of
+information, those remaining variables may give us insight into the
+underlying workings of the process being studied.
+
+For this goal, the (rather) standard approach is ``proportion of total
+variance''; $s$ is chosen so that 
 
 \begin{equation} 
 \sum_{j=1}^s \lambda_j
 \end{equation}
 
-is ``most'' of total variance (again, that total is the above expression
+is ``most'' of total variance (that total is the above expression
 with $p$ instead of $s$), but even this is usually done informally.
 
-In ML/RS settings, though, $s$ is typically chosen by a technique called
-\textit{cross validation}, to be discussed in Chapter \ref{chap:infra2}.
+In ML/RS settings, though, $s$ is typically chosen by 
+cross validation.  Say we are predicting $Y$ from $X = (X_1,...,X_p)'$,
+using a linear model.  We fit such a model, predicting $Y$
+from $W_1$ alone; then we predict $Y$ from only $W_1$ and $W_2$,
+use then $s = 3$, then 4 and so on.  In each case, we look at our
+prediction accuracy in our holdout set.  In the end, we use the value of
+$s$ that gives the best accuracy.  The \textbf{qePCA()} function does
+this.
+
 
 \subsection{Software and UCI Repository Example}
 
