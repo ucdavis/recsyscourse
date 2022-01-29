@@ -1,5 +1,5 @@
 
-\chapter{Matrix Factorization Methods}    
+\chapter{Matrix Factorization Methods}   
 
 This chapter covers one of the more popular RS methods, matrix
 factorization.  The overall theme will be \textit{low-rank
@@ -40,6 +40,10 @@ Intuitively, we still might say that the rank of $M$ is
 ``approximately'' 2.  So row 3 still seems redundant, Let's
 formalize that, leading to one of the most common techniques in
 statistics/machine learning.  
+
+The reason this is of interest is dimension reduction.  We would like to
+reduce our feature set from $p$ variables to $s$, with $s << p$, with
+the goal of avoiding overfitting.
 
 \subsection{Exploiting Correlations}
 \label{explorecorr}
@@ -166,6 +170,43 @@ of our original ones.
 
 Now, how do we find these $Y_i$?
 
+\subsection{Motivation}
+
+So, we are interested in finding new variables that are linear
+combinations of our original ones, that is $Y = u'X$, for some $u$.
+How should we choose $u$?
+
+Ultimately we wish retain only some of the $Y_i$, the ones with large
+variance.  After all, those with small variance are essentially
+constants, thus uninformative.
+
+Thus we want to choose $u$ to maximimize 
+
+\begin{equation}
+Var(u'X) = u' C u
+\end{equation}
+
+where we have used (\ref{covax}) with $A = u'$.
+
+
+\begin{equation}
+\frac{d}{du} [u'Cu + \omega (u'u - 1)] = 2 Cu + 2 \omega u 
+\end{equation}
+
+Setting this to 0, we have
+
+\begin{equation}
+0 = (C + \omega I) u
+\end{equation}
+
+In other words,
+
+\begin{equation}
+Cu = -\omega u
+\end{equation}
+
+Aha!  The vector $u$ would have to be an eigenvector of $C$.
+
 \subsection{Eigenanalysis}
 
 Say we have a sample of $n$ observations on $p$ variables, say $p$
@@ -276,172 +317,32 @@ we need.  And that gives us PCA:
 
 \item Find the (sample) covariance matrix of $X$ in our data.
 
+\item Diagonalize as above, yielding $U$ and $D$.
+
+\item Reorder $D$ so that the eigenvalues are in nonincreasing order.
+Reorder the rows of $U$ accordingly.
+
+\item We are doing dimension reduction, reducing from $p$.  
+Decide the new dimension $s$.
+
+\item Replace $U$ by its first $s$ rows.
+
+\item We've created a new random vector $Y = UX$, with the new $U$.
+
 \end{itemize} 
 
-\subsection{PCA}
+So for example, denote the $k^{th}$ value of $X$ in our original
+dataset, i.e.\ column $k$, by $X^{(k)}$.  The corresponding new vector
+is $Y^{(k) = U X^{(k)}}$.  When dealing with a new case
+$X^{(\textrm{new)}}$ in the future, premultiply by $U$ to get the $Y$
+value.
 
-Typically we have many cases in our data, say $n$, arranged in an $n
-\times p$ matrix $Q$, with row $i$ representing case $i$ and column $j$
-representing the $j^{th}$ variable.
-
-Say our data is about people, 1000 of them, and we have data on height,
-weight, age, gender, years of schooling and income.  Then $n = 1000$, $p
-= 6$.
-
-So, finally, here is PCA:
-
-\begin{enumerate}
-
-
-\item Find the correlation matrix (or covariance matrix)
-from the data in $Q$.  Note again that since there are $p$
-variables, the correlation matrix will be $p \times p$.
-
-\item Compute its eigenvalues and eigenvectors.  It can be shown that
-the eigenvalues are the variances of our new variables.
-
-\item After ordering the eigenvalues from largest to smallest, let
-$\lambda_i$ be the $i^{th}$ largest, and let $U_i$ be the corresponding
-eigenvector, scaled to have length 1.  
-
-\item Let $U$ be the matrix whose $i^{th}$ column is $U_i$.  Its size
-will be $p \times p$.
-
-\item Choose the first few eigenvalues, say $s$ of them, using some
-criterion (see below).  Denote the matrix of the first $s$ columns of $U$
-by $U^{(s)}$.  
-
-\item Form a new data matrix, 
-
-\begin{equation}
-\label{rqu}
-R = Q U^{(s)}
-\end{equation}
-
-$R$ will be of size $n \times s$.  So, we've replaced our original $p$
-variables, the $p$ columns of $Q$, by $s$ new variables, the columns of
-$R$.  Column $j$ of $R$ is called the $j^{th}$ principal component of
-the original data.  
-
-As mentioned, it can be shown that the variance of the $j^{th}$ principal
-component is $\lambda_j$.  The sum of all $p$ eigenvalues is the same as
-the sum of the variances of the original variables, an important point.
-
-\end{enumerate} 
-
-From this point onward, any data analysis we do will be with $R$, not
-$Q$.  In $R$, row $i$ is still data on the $i^{th}$ case, e.g. the
-$i^{th}$ person, but now with $s$ new variables in place of the original
-$p$.  Since typically $s << p$, we have achieved considerable dimension
-reduction.
-
-\subsection{Applying Matrix Partitioning}
-
-Using the approach of Section \ref{partmat}, partition $U^{(s)}$ into
-its columns,
-
-\begin{equation}
-U^{(s)} = (U_1,...,U_s) 
-\end{equation}
-
-and thus write
-
-\begin{equation}
-\label{rqu1}
-R = Q U^{(s)} = Q (U_1,...,U_s)
-\end{equation} 
-
-After that second equality, pretend that $Q$ and the $U_i$ are
-``numbers.''  Then the last expression in (\ref{rqu1}),
-
-\begin{equation}
-Q (U_1,...,U_s)
-\end{equation}
-
-is a ``scalar'' times a ``vector,'' and is thus equal to 
-
-\begin{equation}
-(QU_1,...,QU_s)
-\end{equation}
-
-So, the $i^{th}$ column of $R$ is $Q U_i$.  The latter quantity is of
-the $Ax$, matrix-times-vector form of Section \ref{mfact}, so it is a
-linear combination of the columns of $Q$, with the coefficients in that
-linear combination being the elements in $U_i$.  
-
-Recall that each column of $Q$ is one variable; e.g.\ for people, there
-may be an age column, a height column, a weight column and so on.  Each
-column in $R$ is one of our new variables.  Therefore:
-
-\begin{quote}
-The $i^{th}$ new variable is equal to a linear combination of the old
-variables.
-\end{quote}
-
-So, a new variable might be, say, 1.9 age + 0.3 height + 1.2 weight.
-
-% \subsection{Why It Works}
-% 
-% Recall that the new variables have the $\lambda_i$ for variances and are
-% uncorrelated.  Here's why:
-% 
-% It is common (especially in neural networks, by the way) to
-% \textit{center} and \textbf{scale} one's data, meaning to subtract from
-% each variable its mean, and divide by its standard deviation.  For
-% instance, if one variable is human height and its standard deviation is
-% 3.2 inches, we divide the height column in $Q$ by 3.2 (after subtracting
-% mean height).
-% 
-% The new mean and standard deviation are 0 and 1.  In that case,
-% (\ref{corrdef}) becomes
-% 
-% 
-% \begin{equation}
-% \frac{1}{n} \sum_{i=1}^n x_i y_i
-% \end{equation}
-% 
-% Using this insight, the reader should verify that with the matrices $Q$
-% and $R$ above (old and new data), their correlation matrices are $Q'Q$
-% and $R'R$.  Let's see how that works out:
-% 
-% \begin{eqnarray}
-% \label{rrqq}
-% R'R &=& (Q U^{(s)})' (QU^{(s)}) \\  
-% &=&  
-% U^{(s)} {}' Q' ~ Q U^{(s)} \\
-% \end{eqnarray}
-% 
-% using the fact that $(AB)' = B'A'$.
-% 
-% But remember that the $U_i$ are eigenvectors of the correlation matrix,
-% in this case $Q'Q$!  So
-% 
-% \begin{equation}
-% \label{qqu}
-% (Q'Q) U^{(s)} = (Q'Q) (U_1,U_2,...,U_s) = 
-% (\lambda_1 U_1,...,\lambda_s U_s)
-% \end{equation}
-% 
-% Finally, recall that the $U_i$ are orthogonal with length 1.
-% Substituting (\ref{qqu}) in (\ref{rrqq})e then get
-% 
-% \begin{equation}
-% R'R = U^{(s)}'(Q'Q) U^{(s)} =
-% U^{(s)}'(\lambda_1 U_1,...,\lambda_s U_s)
-% = \textrm{diag}(\lambda_1,...,\lambda_s)
-% \end{equation} 
-% 
-% the matrix having the $\lambda_i$ on the diagonal and 0s elsewhere.  The
-% latter imply that the new variables are uncorrelated, and the former
-% fact says that the variances of the new variables are the $\lambda_i$,
-% as claimed.
 
 \subsection{Choosing the Number of Principal Components}  
 
-The number of components we use, $s$, is called a \textit{tuning
-parameter} or \textit{hyperparameter}.  So, how do we choose $s$?  This
-is the hard part, and there is no universal good method.  Typically $s$
-is chosen so that 
+The number of components we use, $s$, is a hyperparameter.  So, how do
+we choose $s$?  This is the hard part, and as usual there is no
+universally good method.  Typically $s$ is chosen so that 
 
 \begin{equation} 
 \sum_{j=1}^s \lambda_j
