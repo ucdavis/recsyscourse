@@ -635,6 +635,30 @@ column by its mean.  This addresses the miles-vs.-kilometers problem,
 and makes sense in that a variance is large or small in relation to its
 mean.
 
+\section{SVD}
+
+The \textit{Singular Value Decomposition} (SVD) is a generalization of
+of PCA.  It has many applications, but will be especially valuable for
+us in RS, as it can factor our ratings matrix into the product of a user
+matrix and an item matrix, the product $WH$ in (\ref{awh}).
+
+\subsection{How It Works}
+
+Let $A$ be any matrix, not necesarily square.  In fact, it is nonsquare
+in typical applications, RS being a case in point.  Let $k$ denote
+$rk(A)$.  Then there exist orthogonal matrices $U$ and $V$ such that
+
+\begin{equation}
+A = U D V'
+\end{equation}
+
+where $D$ is a diagonal matrix in the sense that $D_{ij} = 0$ whenever $i
+\neq j$.  The diagonal elements are the \textit{singular values}.
+
+By permuting the rows and columns of $A$, we can arrange things so that
+the singular values appear in descending order.}
+
+
 \section{Matrix Factorization Methods}  
 
 \section{The Setting}
