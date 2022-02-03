@@ -255,6 +255,7 @@ we have
 Solve for $b$:
 
 \begin{equation}
+\label{ols}
 \widehat{\beta} = (A'A)^{-1} A'D
 \end{equation}
 
@@ -365,9 +366,32 @@ holdout set has  101 rows
 \end{lstlisting}
 
 Ah, yes.  Catchers tend to be stocky, pitchers lanky and so on, so there
-is valuable extra information there.  By the way, \textbf{lm()}
-automatically converts R factors to dummy/one-hot form, as was the case
-for \textbf{Position} here.
+is valuable extra information there.  
+
+\subsection{Dumy/One-Hot Variables}
+
+By the way, \textbf{lm()} automatically converts R factors to
+\textit{dummy/one-hot} form,\footnote{The term \textit{dummy variables }
+is used in statistics, economics and almost all fields of application,
+but in the machine learning world, the term is \textit{one-ot}.} as was
+the case for \textbf{Position} here.  This is necessary for the matrix
+operations on which the linear model is based, which of course are
+numeric. 
+
+So, if we have a categorical variable with $k$ categories ($k =8$
+here\footnote{There are 9 positions in baseball, but the dataset has a
+slightly different classification, e.g.\ just one Outfielder
+category.}), we create $k-1$ dummies.  We lose no information that
+way---if a record is not in those $k-1$ categories, it must be in the
+$k^{th}$---and it is actually necessary.  Here is why:
+
+If we had dummy columns for all $k$ categories, the sum of those columns
+would be a vector of all 1s.  But our matrix $A$ has a column of 1s
+already.  Thus the columns would be linearly dependent.  But then $A$
+would not be full rank, and $A'A$ would have the same problem.  The
+later matrix would then be nonintertible, making (\ref{ols}) impossible.
+
+\subsection{Uniform APIs in qeML}
 
 As noted, the \textbf{qeML} functions offer the benefit of a uniform
 API.  Let's try the kNN (``k-nearest neighbors'' method:

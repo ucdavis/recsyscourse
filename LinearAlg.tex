@@ -206,6 +206,7 @@ which the reader should verify really is correct as matrices, i.e. the
 computation on the right side really does yield a matrix equal to $C_{11}$.
 
 \subsection{Important Special Case:  Matrix Times Vector}
+\label{matxvec}
 
 Consider the product of a matrix and a vector, $Ax$.  This product is a
 linear combination of the columns of $A$.  To see this, write
@@ -265,6 +266,16 @@ $A$, with the coefficients being the elements of the corresponding
 column of $B$.
 
 \end{quote}
+
+\subsubsection{Application of Partitioning:  Invertible Square Matrices 
+Must Be of Full Rank}
+\label{invertmustfull}
+
+Say $Q$ is less than full rank.  Then some linear combination of its
+columns is 0.  (And rows; remember, the row rank equals the column
+rank.) So, from Section \ref{matxvec}, we have that $Qw = 0$ for some
+nonzero vector $w$.  If $Q$ were invertible, we could premultiply by its
+inverse, which would give us $w = 0$, a contradiction.
 
 \subsubsection{Application of Partitioning:  Rank of a Matrix Product}
 
