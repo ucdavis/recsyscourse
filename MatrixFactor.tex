@@ -130,12 +130,26 @@ variable.
 
 Now suppose we have $p$ variables, $X_1,
 X_2,...,X_p$, not just two.  If our data is on people, these variables
-may be height, weight, age, gender and so on.  We can no longer
-visualize in higher dimensions, but one can show that the level sets
-will be $p$-dimensional ellipsoids.  These now have $p$ axes rather than
-just two, and we can define $p$ new variables, $W_1,W_2,...,W_p$,
-each of them some linear combination of 
-the $X_i$, such that:
+may be height, weight, age, blood glucose level, and so on, i.e.\    
+$X$ = (height, weight, age, blood glucose level,...)'.  
+
+$X$ is different for each person, so it is a random vector.  Let $C$
+denote the $p \times p$ covariance matrix of $X$.
+
+Note:  In our data, we will have $n$ people, each of which has a
+different value of the vector $X$.  Our data is then a matrix (or data
+frame) of $p$ columns, with the value of $X$ for person $i$ in column
+$i$.  If we call the R function \textbf{cov()} on that matrix, we get
+$\widehat{C}$, 
+
+We want to create a new 4-dimensional random vector $W =
+(W_1,W_2,W_3,W_4)'$, with each $W_i$ being some linear combination of
+$X_1, X_2, X_3 \textrm{ and } X_4$.
+
+We can no longer visualize in higher dimensions, but one can show that
+the level sets will be $p$-dimensional ellipsoids.  These now have $p$
+axes rather than just two, and we can define our $W_i$ is such a way
+that 
 
 \begin{itemize}
 
@@ -171,10 +185,11 @@ of our original ones.
 
 Now, how do we find these $W_i$?
 
+
 \subsection{Eigenanalysis}
 
 So, we are interested in finding new variables that are linear
-combinations of our original ones.  Let's look at the first one. 
+combinations of our original ones.  Let's look at the first one.  
 We want to choose $u$ to maximize 
 
 \begin{equation}
