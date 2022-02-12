@@ -1,5 +1,5 @@
 
-\chapter{Matrix Factorization Methods}   
+\chapter{Matrix Factorization Methods}  
 
 Note:  The reader may find it useful to review Section \ref{partmat}
 before continuing.
@@ -145,7 +145,7 @@ Note:  In our data, we will have $n$ people, each of which has a
 different value of the vector $X$.  Our data is then a matrix (or data
 frame) of $p$ columns, with the value of $X$ for person $i$ in column
 $i$.  If we call the R function \textbf{cov()} on that matrix, we get
-$\widehat{C}$, 
+$\widehat{C}$, the estimate of $C$.
 
 We want to create a new 4-dimensional random vector $W =
 (W_1,W_2,W_3,W_4)'$, with each $W_i$ being some linear combination of
@@ -328,7 +328,7 @@ U^{-1} = u'
 \end{equation}
 
 the $p \times p$ identity matrix.  We also refer to $U$ as
-\emph{orthogonal}.
+\emph{orthogonal}, for this property.
 
 It also can be shown that 
 
@@ -657,10 +657,10 @@ mean.
 
 \section{SVD}
 
-The \textit{Singular Value Decomposition} (SVD) is a generalization of
+The \textit{Singular Value Decomposition} (SVD) is a generalization 
 of PCA.  It has many applications, but will be especially valuable for
 us in RS, as it can factor our ratings matrix into the product of a user
-matrix and an item matrix, the product $WH$ in (\ref{awh}).  
+matrix and an item matrix.
 
 \subsection{The Decomposition}
 
@@ -694,8 +694,8 @@ singular values are nonnegative.
 \end{itemize} 
 
 By permuting the rows and columns of $A$, e.g.\ in MovieLens, permuting
-the order of the users, and of the movies, we can arrange things so that
-the singular values appear in descending order.  We'll assume that
+the order of the users, and that of the movies, we can arrange things so
+that the singular values appear in descending order.  We'll assume that
 here.
 
 Let $u_i$ and $v_1$ denote the $i^{th}$ row in $U$ and $V$, 
@@ -730,7 +730,7 @@ equivalent to
 
 \item Retaining the first $r$ columns of $U$.
 
-\item Retaining the first $r$ rows of $V$.
+\item Retaining the first $r$ columns of $V$.
 
 \end{itemize} 
 
@@ -741,7 +741,7 @@ Result:
 \item The new $U$, $D$ and $V$ will now be of dimensions
 $n \times r$, $r \times r$ and $m \times r$.
 
-\item The new product $UDV'$ still have dimensions $n \times m$,
+\item The new product $UDV'$ will still have dimensions $n \times m$,
 the same as $A$.  But, whereas we had
 
 \begin{equation}
@@ -757,11 +757,11 @@ A \approx UDV'
 \item The new $UDV'$ will have rank $r$, hence the term
 \textit{low-rank approximation}.  In fact, it can be shown to be the
 best rank-$r$ approximation to $A$, in the sense the the Frobenius norm
-of the difference 
+(Section \ref{vecnorms}) of the difference 
 
 \begin{equation}
 \label{bestlow}
-|| A - UDV'||_{F}
+\| A - UDV'\|_{F}
 \end{equation}
 
 is minimized.
@@ -771,8 +771,8 @@ is minimized.
 \subsection{Back to RS}
 
 Since $D$ is a diagonal matrix with nonnegative diagonal entries, it has
-a square root, which we will denote as $u^{0.5}$---we obtain this latter
-matrix by taking the square of each diagonal value.  Then
+a square root, which we will denote as $D^{0.5}$---we obtain the square
+root matrix, take the square of each diagonal value.  Then
 
 \begin{equation}
 A \approx (UD^{0.5}) (D^{0.5} V')
@@ -786,9 +786,12 @@ W = UD^{0.5}, ~ H = D^{0.5}V' ~
 
 In our RS context, the ratings matrix $A$ has a lot of missing values.
 How can we find $U$, $D$ and $V$?  The answer is that numeric methods
-exist to minimize (\ref{betstlow}), where the Frobenius norm is now
-taken only on the non-NA elements of $A$.  Of course, $U$, $D$ and $V$
-will then turn out to be different from what they would be if $A$ were
+exist to minimize (\ref{bestlow}), where the Frobenius norm is now taken
+only on the non-NA elements of $A$.  One such method is
+\textit{Stochastic Gradient Descent} (SGD), an iterative workhorse
+method in machine learning.  It essentially sets derivatives to 0 and
+solves, but with various refinements.  Of course, $U$, $D$ and $V$ will
+then turn out to be different from what they would be if $A$ were
 intact.
 
 \section{General Issues with Matrix Factorization Methods}  
@@ -803,24 +806,23 @@ In all methods, we have
 A \approx WH
 \end{equation}
 
-where $W$ is of dimensions $n \times r$
-$H$ is of dimensions $r \times m$ and both matrices are of rank $r$.
-There are a number of issues to discuss.
+where $W$ is of dimensions $n \times r$,
+$H$ is of dimensions $r \times m$, and both matrices are of rank $r$.
+There are several issues to discuss.
 
 \subsection{Bias, Variance and Overfitting}
 
 There are $nr$ numbers in $W$, and $rm$ in $H$.  Treating our data as a
 sample from a conceptual population---e.g.\ all moviegoers and all
-movies---estimating $r(n+m)$ values is much better than estimating $nm$
-ones.
+movies---estimating only $r(n+m)$ values is much better than estimating
+the much larger $nm$ ones.
 
 But this depends on $r$, which is our tuning parameter/hyperparameter
 for this method.  We have a classical tradeoff:
 
-As $r$ grows, the variance increases, due to estimating more
-parameters, but the bias decrases.
-
-As usual, typically $r$ is chosen by cross-validation.
+As $r$ grows, the variance increases, due to estimating more parameters,
+but the bias decrases.  As usual, typically $r$ is chosen by
+cross-validation.
 
 \subsection{Regularization}
 
@@ -829,7 +831,7 @@ factorization is no exception.  In the context here, that means
 shrinking both $W$ and $H$, and we choose them to minimize
 
 \begin{equation}
-||A - WH||_F + \gamma_1 ||W||_F^2 + \gamma_2 ||H||_F^2
+\|A - WH\|_F + \gamma_1 \|W\|_F^2 + \gamma_2 \|H\|_F^2
 \end{equation}
 
 \subsection{Predicting New Cases} 
@@ -842,10 +844,12 @@ update, rather than fitting from scratch.
 
 \section{Interpretation of W and H}
 
-\subsection{Synthetic, Representative Recommender Systems Users}
-\label{synth}
+One of the big advantages of matrix factorization methods is
+interpretability.
 
-Note the key relation, which we showed in Section \ref{partmat}:
+For any matrix $Q$, let $Q_{i.}$ and $Q_{.j}$ denote row $i$ and column
+$j$, respectively.  Note the key relation, using the material in Section
+\ref{partmat}:
 
 \begin{equation}
 (WH)_{i \cdot} = \sum_{m=1}^k W_{im} H_{m \cdot}
@@ -865,206 +869,10 @@ rating that synthetic user $r$ gives item $s$.
 
 \end{itemize} 
 
-In this manner, we can predict ratings for any user that is already in
-$A$.  but what about an entirely new user?  What we need is the
-coordinates of this new user with respect to the rows of $H$.  We'll see
-how to get these later in the chapter.\footnote{After accumlating enough
-new users, of course, we should update $A$, and thus $W$ and $H$.}
-
 Of course, interchanging the roles of rows and columns above, we have
 that the columns of $W$ serve as an approximate basis for the columns of
 $A$.  In other words, the latter become synthetic, representative items,
 e.g.\ representative movies in the MovieLens data.
-
-\subsection{Vector Space View}
-
-Recall that the \textit{span} of a set of vectors in a vector space is
-the set of all linear combinations of those vectors.  The term
-\textit{basis} in means a linearly independent set of vectors that spans
-the given subspace, i.e.\ any vector in the subspace can be expressed as
-a linear combinations of the basis vectors.
-
-Thus the rows of $H$ can be thought of as an ``approximate
-basis'' for the span of the rows of $A$.
-
-\section{The Case of Entirely Known A}
-
-In RS applications, the matrix $A$ is only partially known.  But it will
-be easier to understand the methods for finding the $W$ and $H$ matrices
-by looking at another class of applications.  In fact, NMF has become
-widely used in a variety of ML applications in which the matrix $A$
-entirely known. 
-
-
-
-
-
-
-
-\section{The Setting}
-
-Recall the brief introduction in Chapter \ref{chap:prologue}:  Let $A$
-denote the ratings matrix, with the element in row $i$, column $j$
-storing the rating of item $j$ given by user $i$.  Most of $A$ is
-unknown, i.e.\ NA values in R.  We wish to estimate the unknown ones.
-
-Say the dimension of $A$ is $u \times v$.  We wish to find rank-$k$
-matrices $W$ ($u \times k$) and $H$ ($k \times v$) such that  
-
-\begin{equation}
-\label{awh}
-A \approx W H
-\end{equation}
-
-Note that the $W$ and $H$ that we find will be \textit{fully known},
-with values that will be derived somehow from the known elements of $A$.
-
-Again, most of the elements of $A$ are unknown.  But it is typically the
-case that similar users have similar ratings patterns, and the matrix
-factorization will hopefully exploit that.  We thus hope to obtain good
-estimates of all of $A$ even though only a small part of it is known.  
-
-\textbf{Note that k is a tuning parameter, chosen by the user.}  One
-might use cross-validation in making this choice, comparing performance
-of various values of $k$.
-
-\textit{This is a form of dimension reduction}, with the rank $k$
-controlling the bias-variance tradeoff.  Typically a good approximation
-can be achieved with
-
-\begin{equation}
-k \ll \textrm{ rank}(A)
-\end{equation}
-
-\section{Finding W and H}
-
-There are two main approaches to matrix factorization in recommender
-systems and general machine learning:
-
-\begin{itemize}
-
-\item Singular Value Decomposition (SVD):  This is a ``cousin'' of PCA,
-kind of a ``square root'' of the latter.  There is a function in base R
-for this, \textbf{svd()}.
-
-\item Nonnegative Matrix Factorization (NMF): Here the matrix $A$ has
-nonnegative elements, and one desires the same property for $W$ and $H$.
-This may lead to sparsity in $WH$, and in some cases a helpful
-intepretability.  There are several R packages for this; see below.
-
-\end{itemize} 
-
-Since most of the issues are the same for both methods, we'll mainly stick
-to one, NMF.
-
-\section{Notation}
-
-We'll use the following notation for a matrix $Q$
-
-\begin{itemize}
-
-\item $Q_{ij}$:  element in row $i$, column $j$
-
-\item $Q_{i \cdot}$:  row $i$
-
-\item $Q_{\cdot j}$:  column $j$
-
-\end{itemize}
-
-\subsection{Image Classification}
-:
-\textbf{The setting:}
-
-Say we have $n$ image files, each of which has brightness data for $r$
-rows and $c$ columns of pixels.  We also know the class, i.e.\ the
-subject, of each image.  The famous MNIST dataset, for instance,
-consists of 70,000 28x28 images of hand-drawn digits; here $n = 70000$
-and $r = c = 28$.  Thus the data for an image consists of $28^2 = 784$
-pixel intensities, each in the range 0,1,2,...,255.  (255 is fully
-black, 0 is fully white and the others are shades of gray.) We have 10
-classes, '0' through '9'.
-
-We wish to predict the classes of new images. Denote the class of
-image $j$ in our original data by $C_j$.
-
-We form a matrix $A$ with $n$ rows and $w = rc$ columns, where the
-$i^{th}$ row, $A_{i \cdot}$ stores the data for the $i^{th}$ image, say
-in row-major order:\footnote{Make sure not to confuse the rows of $A$
-with the rows of an image.  One row of $A$ contains the totality of rows
-and columns of one image.} $A_{i \cdot}$ would first store row 1 of
-that image, then store row 2 of the image, and so on.\footnote{For
-simplicity here we will assume greyscale.  For color, each row of $A$
-will consist of three pixel vectors, one for each primary color.}
-
-\textbf{Dimension reduction:}
-
-Say we wish to use the logit approach to the MNIST data.  That would
-mean that the features portion of our data is a $70000 \times 784$
-matrix.  With that many columns, computation may be extremely long, and
-since $\sqrt{70000} \approx 265$, we'd run a big risk of overfitting
-with 784 features.  So, dimension reduction is imperative.
-
-One form of dimension reduction would be PCA.\footnote{\textit{The ``C''
-part of \textit{Convolutional Neural Networks} also does dimension
-reduction, but that approach is not relevant to the discussion here.}}
-We could apply PCA to that $70000 \times 784$ matrix, and then use, say,
-the first 50 principal components.  Our features matrix would now be of
-size $70000 \times 50$, much more manageable.
-
-Approach is NMF.  In the sense stated above, the rows of $H$ serve as synthetic,
-representative images.  Row $i$ of $A$, i.e.\ the $i^{th}$ image in our
-training data, is then approximately a linear combination of the rows of
-$H$, with the coordinates being the elements of row $i$ of $W$.
-
-% So, in predicting the class of a new image, we first need to find the
-% coordinate vector $h$ of that image with respect to the columns of $W$.  
-% We then find the closest $H_{\cdot s}$ to $h$, and guess the class of
-% the new image to be that of image $s$.\footnote{There are lots of
-% variants of this.}
-
-\textbf{Predicting new, unlabeled images:}
-
-So, just as in the PCA case, we transform our training data, via $A
-\rightarrow W$.  We apply our favorite classification method --- for
-concreteness, let's assume here that it is the logistic --- to this new
-training data (together with the class vector for that data), then use
-it to classify new data vectors $S$.  
-
-To do the latter, we must find the coordinates of $S$ with respect to
-the rows of $H$.  This means finding the linear combination of rows of
-$H$ that is closest to $S, i.e.$
-
-\begin{equation}
-\label{slh}
-\lambda = \arg\min_l || S - l'H ||
-\end{equation}
-
-(We'll see how to do the minimization shortly.) Then $\lambda$ will be
-the coordinate vector for the new case.  This is then plugged into our
-logit model, to predict the new case.
-
-
-
-
-Thus we are going from $rc$ variables to $rk$ of them, where $k$ is the
-chosen rank.  If
-
-\begin{equation}
-k \ll \textrm{ rank}(A)
-\end{equation}
-
-we have a big dimension reduction.
-
-Again, there is the issue of choosing $k$, as with choosing $s$ in PCA,
-and so on.  More on this in Section \ref{chooserank}.
-
-\subsection{Text classification}
-
-Here $A$ consists of, say, word counts. We have a list of $k$ keywords,
-and $d$ documents of known classes (politics, finance, sports etc.).
-Row $i$ of $A$ contains the counts of the various keywords (or maybe
-just a binary variable indicating presence or absence of the word).
-Otherwise, the situation is the same as for image recognition above.
 
 % \subsection{Relation to Recommender Systems}
 % 
@@ -1077,201 +885,209 @@ Otherwise, the situation is the same as for image recognition above.
 % A more ambiitious approach would be to do the same for images in the film's
 % ad trailer.
 
-\section{The R Package NMF}
+% \section{The R Package NMF}
+% 
+% The R package {\bf NMF} is quite extensive, with many, many options.  In
+% its simplest form, though, it is quite easy to use.  For a matrix {\bf
+% a} and desired rank {\bf k}, we simply run
+% 
+% \begin{lstlisting}
+% > nout <- nmf(a,k)
+% \end{lstlisting}
+% 
+% Here the returned value {\bf nout} is an object of class {\bf "NMF"}
+% defined in the package.  It uses R's S4 class structure, with
+% \lstinline{@} as the delimiter denoting class membership, as opposed to
+% \$ as in the S3 case.  
+% 
+% As is the case in many R packages, {\bf "NMF"} objects contain classes
+% within classes.  The computed factors are in {\bf nout@fit@W} and {\bf
+% nout@fit@H}.
+% 
+% Let's illustrate it in an image context, using the following:
+% 
+% \includegraphics[width=3.6in]{Images/MtRush.png}
+% 
+% Here we have only one image, and we'll store it as a matrix $A$ (rows of
+% the matrix corresponding to rows of $A$).  we'll use NMF to compress it,
+% not do classification.  First obtain $A$:
+% 
+% \begin{lstlisting}
+% > library(pixmap) 
+% # read file
+% > mtr <- read.pnm('MtRush.pgm') 
+% > class(mtr)
+% [1] "pixmapGrey"
+% attr(,"package")
+% [1] "pixmap"
+% # mtr is an R S4 object of class "pixmapGrey"
+% # extract the pixels matrix
+% > a <- mtr@grey
+% \end{lstlisting}
+% 
+% Now, perform NMF with rank 50, find the approximation to $A$, and
+% display it:
+% 
+% \begin{lstlisting}
+% > aout <- nmf(a,50)
+% > w <- aout@fit@W
+% > h <- aout@fit@H
+% > approxa <- w %*% h
+% # brightness values must be in [0,1]
+% > approxa <- pmin(approxa,1) 
+% > mtrnew <- mtr
+% > mtrnew@grey <- approxa 
+% > plot(mtrnew)  # dispatched to plot.pixmapGrey()
+% \end{lstlisting}
+% 
+% Here is the result:
+% 
+% \includegraphics[width=3.6in]{Images/MtRush50.png}
+% 
+% This is somewhat blurry.  The original matrix has dimension $194 \times
+% 259$, and thus presumably has rank 194.\footnote{One could check this by
+% finding the number of nonzero eigenvalues of $A'A$, say by running
+% \textbf{prcomp()}.} We've approximated the matrix by one of rank only
+% 50.  We could use this for compression, and if we had millions of
+% images and this amount of blurriness were acceptable, we could take this
+% approach.
+% 
+% Actually, there are better ways to compress images, and this was just an
+% illustration of the effect of the reduced rank.  Getting back to our
+% classification context, the point is:
+% 
+% \begin{itemize}
+% 
+% \item When we use the term \textit{low-rank approximation}, it is indeed
+% approximate, as can be seen by the blurriness.  
+% 
+% \item Applying NMF or PCA/SVD to a whole collection of images, e.g.\
+% MNIST, further heightens this approximate nature of the process.
+% 
+% \item But we need to do something to avoid overfitting, i.e.\ some kind
+% of dimension reduction, and finding a low-rank approximation does that.
+% 
+% \end{itemize} 
+% 
+% \section{The Bias vs.\ Variance Tradeoff}
+% 
+% The blurriness in that second picture is really an issue of bias, as
+% follows.  Consider a given pixel, say in the 3rd row and 52nd column. 
+% That pixel's intensity in the second picture will be a weighted
+% average of various pixels in the first picture.  Some of the latter may
+% be in locations within the picture that are somewhat far away from the
+% 3rd row and 52nd column.  This biases the pixel in the second picture.
+% 
+% On the other hand, there definitely is a variance issue.  Let's review
+% what this entails.
+% 
+% Recall from Chapter \ref{chap:overfit} that an intuitive way to view the
+% variance issue in overfitting is that our data are being ``shared'' by
+% the various things we're estimating, so that in a rough sense, each of
+% these things has less data to itself.  Less data means more
+% sample-to-sample variability, i.e.\ higher variance.  In linear
+% regression with $p$ features, we are estimating $p+1$ parameters
+% (including $\beta_0$); the larger $p$ is, the larger the variance of the
+% estimated $\beta_i$.  Thus in turn we get larger variance to our
+% predicted values.  For predicting a new case, different samples will
+% give us different predictions, and larger $p$ will give us higher
+% variance in our predicted value for that case.
+% 
+% Let $n$ and $m$ denote the number of rows and columns in $A$.  Then $W$
+% and $H$ will be of dimensions $n \times k$ and $k \times m$.  Well,
+% then, how many parameters are we estimating?  It's
+% 
+% \begin{equation}
+% nk + km = k(n+m)
+% \end{equation}
+% 
+% So, the larger we make $k$, the larger the variance.
+% 
+% In other words, in predicting a specific $A_{ij}$, our predicted value
+% $\widehat{A}_{ij}$ will experience this tradeoff:
+% 
+% \begin{itemize}
+% 
+% \item Larger $k$ means lesser bias in our estimate of $\widehat{A}_{ij}$.
+% 
+% \item Larger $k$ means greater variance in $\widehat{A}_{ij}$.
+% 
+% \end{itemize} 
+% 
+% \section{Computation}
+% \label{nmfcomp}
+% 
+% How are the NMF solutions found?  What is {\bf nmf()} doing internally?
+% 
+% Needless to say, the methods are all iterative, with one approach being
+% that of the Alternating Least Squares algorithm AltLS).  It's quite
+% intuitive, builds on our previous material and provides insight into NMF
+% itself.\footnote{By the way, Alt.\ Least Squares is not the default for
+% {\bf nmf()}.  To select it, set {\bf method = 'snmf/r'}.}
+% 
+% And most importantly ---  AltLS is easily adapted to the recommender
+% systems setting.  Remember, recommender systems differ fundamentally
+% from, say, the image and text classification applications cited earlier,
+% due to the fact that some, typically the vast majority, of elements of
+% the $A$ matrix are unknown.  
+% 
+% So let's take a look, still assuming for now that $A$ \textit{is}
+% competely known.
 
-The R package {\bf NMF} is quite extensive, with many, many options.  In
-its simplest form, though, it is quite easy to use.  For a matrix {\bf
-a} and desired rank {\bf k}, we simply run
 
-\begin{lstlisting}
-> nout <- nmf(a,k)
-\end{lstlisting}
+\section{Alternating Least Squares}
 
-Here the returned value {\bf nout} is an object of class {\bf "NMF"}
-defined in the package.  It uses R's S4 class structure, with
-\lstinline{@} as the delimiter denoting class membership, as opposed to
-\$ as in the S3 case.  
-
-As is the case in many R packages, {\bf "NMF"} objects contain classes
-within classes.  The computed factors are in {\bf nout@fit@W} and {\bf
-nout@fit@H}.
-
-Let's illustrate it in an image context, using the following:
-
-\includegraphics[width=3.6in]{Images/MtRush.png}
-
-Here we have only one image, and we'll store it as a matrix $A$ (rows of
-the matrix corresponding to rows of $A$).  we'll use NMF to compress it,
-not do classification.  First obtain $A$:
-
-\begin{lstlisting}
-> library(pixmap) 
-# read file
-> mtr <- read.pnm('MtRush.pgm') 
-> class(mtr)
-[1] "pixmapGrey"
-attr(,"package")
-[1] "pixmap"
-# mtr is an R S4 object of class "pixmapGrey"
-# extract the pixels matrix
-> a <- mtr@grey
-\end{lstlisting}
-
-Now, perform NMF with rank 50, find the approximation to $A$, and
-display it:
-
-\begin{lstlisting}
-> aout <- nmf(a,50)
-> w <- aout@fit@W
-> h <- aout@fit@H
-> approxa <- w %*% h
-# brightness values must be in [0,1]
-> approxa <- pmin(approxa,1) 
-> mtrnew <- mtr
-> mtrnew@grey <- approxa 
-> plot(mtrnew)  # dispatched to plot.pixmapGrey()
-\end{lstlisting}
-
-Here is the result:
-
-\includegraphics[width=3.6in]{Images/MtRush50.png}
-
-This is somewhat blurry.  The original matrix has dimension $194 \times
-259$, and thus presumably has rank 194.\footnote{One could check this by
-finding the number of nonzero eigenvalues of $A'A$, say by running
-\textbf{prcomp()}.} We've approximated the matrix by one of rank only
-50.  We could use this for compression, and if we had millions of
-images and this amount of blurriness were acceptable, we could take this
-approach.
-
-Actually, there are better ways to compress images, and this was just an
-illustration of the effect of the reduced rank.  Getting back to our
-classification context, the point is:
-
-\begin{itemize}
-
-\item When we use the term \textit{low-rank approximation}, it is indeed
-approximate, as can be seen by the blurriness.  
-
-\item Applying NMF or PCA/SVD to a whole collection of images, e.g.\
-MNIST, further heightens this approximate nature of the process.
-
-\item But we need to do something to avoid overfitting, i.e.\ some kind
-of dimension reduction, and finding a low-rank approximation does that.
-
-\end{itemize} 
-
-\section{The Bias vs.\ Variance Tradeoff}
-
-The blurriness in that second picture is really an issue of bias, as
-follows.  Consider a given pixel, say in the 3rd row and 52nd column. 
-That pixel's intensity in the second picture will be a weighted
-average of various pixels in the first picture.  Some of the latter may
-be in locations within the picture that are somewhat far away from the
-3rd row and 52nd column.  This biases the pixel in the second picture.
-
-On the other hand, there definitely is a variance issue.  Let's review
-what this entails.
-
-Recall from Chapter \ref{chap:overfit} that an intuitive way to view the
-variance issue in overfitting is that our data are being ``shared'' by
-the various things we're estimating, so that in a rough sense, each of
-these things has less data to itself.  Less data means more
-sample-to-sample variability, i.e.\ higher variance.  In linear
-regression with $p$ features, we are estimating $p+1$ parameters
-(including $\beta_0$); the larger $p$ is, the larger the variance of the
-estimated $\beta_i$.  Thus in turn we get larger variance to our
-predicted values.  For predicting a new case, different samples will
-give us different predictions, and larger $p$ will give us higher
-variance in our predicted value for that case.
-
-Let $n$ and $m$ denote the number of rows and columns in $A$.  Then $W$
-and $H$ will be of dimensions $n \times k$ and $k \times m$.  Well,
-then, how many parameters are we estimating?  It's
-
-\begin{equation}
-nk + km = k(n+m)
-\end{equation}
-
-So, the larger we make $k$, the larger the variance.
-
-In other words, in predicting a specific $A_{ij}$, our predicted value
-$\widehat{A}_{ij}$ will experience this tradeoff:
-
-\begin{itemize}
-
-\item Larger $k$ means lesser bias in our estimate of $\widehat{A}_{ij}$.
-
-\item Larger $k$ means greater variance in $\widehat{A}_{ij}$.
-
-\end{itemize} 
-
-\section{Computation}
-\label{nmfcomp}
-
-How are the NMF solutions found?  What is {\bf nmf()} doing internally?
-
-Needless to say, the methods are all iterative, with one approach being
-that of the Alternating Least Squares algorithm AltLS).  It's quite
-intuitive, builds on our previous material and provides insight into NMF
-itself.\footnote{By the way, Alt.\ Least Squares is not the default for
-{\bf nmf()}.  To select it, set {\bf method = 'snmf/r'}.}
-
-And most importantly ---  AltLS is easily adapted to the recommender
-systems setting.  Remember, recommender systems differ fundamentally
-from, say, the image and text classification applications cited earlier,
-due to the fact that some, typically the vast majority, of elements of
-the $A$ matrix are unknown.  
-
-So let's take a look, still assuming for now that $A$ \textit{is}
-competely known.
-
-
-\subsection{Objective Function}
-
-We need an {\it objective function}, a criterion to optimize, in this
-case a criterion for goodness of approximation. Here we will take that
-to be the {\it Frobenius} norm (Section \ref{vecnorms}),
-
-\begin{equation}
-\label{froben}
-\|Q\|_2 = 
-\sqrt{
-\sum_{i,j} Q_{ij}^2
-}
-\end{equation}
-
-So our criterion for error of approximation will be
+Again, a general approach to finding $W$ and $H$ is to minimize the
+Frobenius norm of the approximation error:
 
 \begin{equation}
-\label{errawh}
-\|A - WH\|_2
+W,H = \arg \min_{w,h} \|A - wh\|_F
 \end{equation}
 
-So, we choose $W$ and $H$ to be 
+Of course, minimizing that quantity is equivalent to minimizing its
+square, setting up a leasts-squares approach that we'll describe here.
+So, we wish to minimize
 
 \begin{equation}
-\arg \min_{w,h} \|A - wh\|_2
+W,H = \arg \min_{w,h} \|A - wh\|_F^2
 \end{equation}
 
-This measure is specified in {\bf nmf()} by setting {\bf objective =
-'euclidean'}.
-
-Note that we can write (\ref{froben}) as
+As noted, we could use SGD for this.  But the old saying, ``Easier said
+than done'' applies.  SGD works really well for minimization of
+\textit{convex} functions.  Roughly, convexity means that a function
+is concave-up in one dimension (i.e. the function has one argument),
+``bowl-shaped'' in two dimensions (two arguments), and the
+un-visualizable equivalent in multiple dimensions.  Unfortunately, 
+the function
 
 \begin{equation}
-\label{wholething}
-\|Q\|_2 = 
-\sqrt{
-\sum_j \left ( \sum_i Q_{ij}^2 \right )
-}
+f(w,h) = \|A - wh\|_F^2
 \end{equation}
 
-This mean that if we can separately minimize that inner sum, for each
-$j$, we will have minimized the entire expression (\ref{wholething}).
-Our strategy will depend on this.
+which has $nr + rm$ arguments, is not convex.  It generally will have
+complicated, multiple local minima, causing possible convergence
+problems.
 
-\subsection{Alternating Least Squares}
+However, for fixed $h$, the function $f(w,h)$ \textit{is} convex.  In
+fact, it's our old friend from the linear model, which not only has a
+unique minimum but in fact has a close-form solution for the minimum.
+The same is true if we fix $w$ and allow $h$ to vary.
+
+% Note that we can write (\ref{froben}) as
+% 
+% \begin{equation}
+% \label{wholething}
+% \|Q\|_2 = 
+% \sqrt{
+% \sum_j \left ( \sum_i Q_{ij}^2 \right )
+% }
+% \end{equation}
+% 
+% This mean that if we can separately minimize that inner sum, for each
+% $j$, we will have minimized the entire expression (\ref{wholething}).
+% Our strategy will depend on this.
+% 
+% \subsection{Alternating Least Squares}
 
 So, how does Alternating Least Squares work?  Suppose just for a moment
 that we know the exact value of $W$, with $H$ unknown.  Then for each
