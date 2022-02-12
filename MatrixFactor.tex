@@ -888,12 +888,20 @@ should recognize this.)  The idea is then to do our matrix factorization
 on the \textit{residual}, i.e.\ what is ``left over'' after prediction
 by the model (\ref{anova}).
 
+\subsection{Dealing with Covariates}
 
+Why stop with just removing ``biases''?  We can go a step further and
+account for user or item covariates.
 
+The easiest approach to handling covariates is again to subtract (and
+later add back) residuals, in this case those arising from a linear or
+other regression model.  One would first put the data in (user ID, iterm
+ID, rating) format, then run \textbf{lm()} or whatever.  One would then
+perform matrix factorization to fill in the ratings matrix, then finally
+add the residuals back to the result.
 
-
-
-
+Another way would be to append user covariates as new columns in the $A$
+matrix, or item covariates as new rows.
 
 \subsection{Predicting New Cases} 
 
@@ -913,7 +921,7 @@ denote row $i$, column $j$, and element $(i,j),$ respectively.  Note the
 key relation, using the material in Section \ref{partmat}:
 
 \begin{equation}
-(WH)_{i \cdot} = \sum_{m=1}^k W_{im} (h_0){m \cdot}
+(WH)_{i \cdot} = \sum_{m=1}^k w_{im} (h_0)_{m \cdot}
 \end{equation}
 
 In other words, in (\ref{awh}), we have that:
@@ -1130,7 +1138,7 @@ f(w,h) = \|A - wh\|_F^2
 which has $nr + rm$ arguments, is not convex.  It generally will have
 multiple local minima, causing possible convergence problems.
 
-\subsection{A Non-SGD Approach}
+\subsection{A Non-SGD Approach, ALS}
 
 For fixed $h$, the function $f(w,h)$ \textit{is} convex.  In
 fact, it's our old friend from the linear model, which not only has a
@@ -1361,6 +1369,47 @@ give us crisper distinction among the various synthetic users.  This may
 reveal clusters of user behavior, which could be quite helpful to the
 analyst.
 
+\section{Software}
+
+Given that matrix factorization plays a major role in RS and many other
+applications, it's not surprising that many libraries have been
+developed for it.
+
+\subsection{The svd() Function}
+
+This is a general (i.e.\ not RS-specific) function to perform SVD.  The
+function is part of base-R.  It does not handle missing values.
+Here is an example:
+
+\begin{lstlisting}
+> m
+     [,1] [,2] [,3] [,4]
+[1,]   15   18    5   11
+[2,]    1   16   26    4
+[3,]    5   12   13    5
+> z
+$d
+[1] 40.9655903 18.1306964  0.3134599
+
+$u
+          [,1]        [,2]       [,3]
+[1,] 0.5361629  0.80414164 -0.2566818
+[2,] 0.7045689 -0.59380206 -0.3885637
+[3,] 0.4648785 -0.02748343  0.8849478
+
+$v
+          [,1]       [,2]       [,3]
+[1,] 0.2702611  0.6249570  0.5932112
+[2,] 0.6469473  0.2561355 -0.6952051
+[3,] 0.6601400 -0.6494748  0.3772584
+[4,] 0.2695057  0.3492934  0.1498884
+> z$u %*% diag(z$d) %*% t(z$v) 
+     [,1] [,2] [,3] [,4]
+[1,]   15   18    5   11
+[2,]    1   16   26    4
+[3,]    5   12   13    5
+\end{lstlisting}
+
 % \section{Functions in rectools}
 % 
 % The \textbf{recoSystem} package by Chih-Jen Li \textit{et al} has a good
@@ -1385,91 +1434,57 @@ analyst.
 % our notation.  In the case of covariates (see below), some R
 % \textbf{attributes} are also included.
 
-\section{Dealing with Covariates}
-
-Why stop with just removing ``biases''?  We can go a step further and
-account for user or item covariates.
-
-The easiest approach to handling covariates is to simply ``subtract them
-out'' for the data via linear regression, then run NMF/SVD on the
-resulting \textit{residuals},\footnote{In regression modeling, the
-values of true Y minus the fitted model are called ``residuals.'' They
-are often used to assess quality of model fit. There is a
-\textbf{residuals}} component in the S3 object returned by
-\textbf{lm().} and finally, at the prediction stage, add the regression
-values back in.
-
-Here are relevant code excerpts:
-
-\textbf{trainReco()}:
-
-\begin{lstlisting}
-hasCovs <- (ncol(ratingsIn) > 3)
-if (hasCovs) {
-    covs <- as.matrix(ratingsIn[, -(1:3)])
-    lmout <- lm(ratingsIn[, 3] ~ covs)
-    # now make fake ratings; for NMF, must be >= 0
-    minResid <- min(lmout$residuals)  
-    ratingsIn[, 3] <- lmout$residuals - minResid
-}
-...
-r$train(train_set, opts = list(dim = rnk, nmf = nmf))
-result <- r$output(out_memory(), out_memory())
-attr(result, "hasCovs") <- hasCovs
-if (hasCovs) {
-    attr(result, "covCoefs") <- coef(lmout)
-    # add the residuals back in
-    attr(result, "minResid") <- minResid
-}
-class(result) <- "RecoS3"
-result
-\end{lstlisting}
-
-\textbf{predict.RecoS3()}:
-
-\begin{lstlisting}
-if (hasCovs) {
-     tmp <- c(1, testCovs[i, ]) %*% covCoefs + minResid
-}
-pred[i] <- p[j, ] %*% q[k, ] + tmp
-\end{lstlisting}
-
-In the covariates case, \textbf{trainReco()} replaces the ratings by the
-residuals, so the product $WH$ approximates them rather than the
-original $A$.  Then in \textbf{predict.RecoS3()}, after multiplying
-$W_{i \cdot}$ and $H_{\cdot j}$, the estimated regression function value
-for the given case is added back in.
-
-The role of \textbf{minResid} is this:  If we are using NMF, fitting to the
-residuals, which are both positive and negative, makes no sense.  So, we
-subtract the (algebraically) smallest residual, resulting in only
-nonnegative values.  Again, this is added back in later on.
-
-\section{The recosystem Package}
+\subsection{The recosystem Package}
 
 The \textbf{recosystem} package does matrix factorization specifically
 for recommender systems, i.e.\ specifically for settings in which the
 matrix $A$ has many missing values.  It's written by experts in
 numerical matrix factorization, and features a number of useful options.
 
+The \textbf{recosystem} authors recognized that RS systems tend to be
+large, with many rows and columns in a ratings matrix.  Accordingly, the
+package does the following:
+
+\begin{itemize}
+
+\item It takes its input in the usual (user ID, item ID, rating) format,
+not the ratings matrix, which could be huge.
+
+\item As an option, it will stores the resulting $W$ and $H$ matrices as
+disk files.
+
+\end{itemize} 
+
+The package uses R's R6 class system.  This is transparent if one uses
+the wrapper \textbf{rectools::trainReco()}, but let's take a close look,
+calling the function directly.
+
+
 Below is a \textbf{recosystem} session using the small MovieLens data.
-Let's suppose we've already decided on rank $k = 20$, say by cross
-validation, and now we'll go back to using the full dataset for our
-predictions.
+(We'll read the data from the original \textbf{.zip} package here, but
+of course the source is irrelevant..)
+
+Let's suppose we've decided on rank $k = 20$. 
 
 \begin{lstlisting}
 > library(recosystem)
-# all action will take place within r;
-# typically the output of a function will be stored as a new component in r
-> r <- Reco()
-> ml <- read.table('u.data',header=F)
-# need to create an object of class 'DataSource', specifying which
-# columns are user IDs, item IDs and ratings
-> ml.dm <- data_memory(ml[,1],ml[,2],ml[,3],index1=TRUE)
-\end{lstlisting}
 
-\begin{lstlisting}
-# do the factorization, with rank 20; do use NMF
+> r <- Reco()
+> class(r)
+[1] "RecoSys"
+attr(,"package")
+[1] "recosystem"
+# all action will take place within this R6 class instance; typically the 
+# output of a function will be stored back as a new component in r
+
+> ml <- read.table('u.data',header=F)
+
+# need to create an object of class 'DataSource', specifying which
+# columns are user IDs, item IDs and ratings; here we will have the data
+# in memory; see below
+> ml.dm <- data_memory(ml[,1],ml[,2],ml[,3],index1=TRUE)
+
+# do the factorization, with rank 20; use NMF not SVD
 > r$train(ml.dm,opts=list(dim=20,nmf=TRUE))
 iter      tr_rmse          obj
    0       2.0381   5.0056e+05
@@ -1493,8 +1508,8 @@ iter      tr_rmse          obj
   18       0.9318   1.5641e+05
   19       0.9316   1.5637e+05
 # training went for 20 iterations; RMSE is the square root
-#    of mean squared error
-# for large data, write to disk, otherwise in memory
+# of MSPE
+# for large data, write to disk; here we store in memory
 > result <- r$output(out_memory(),out_memory())
 > str(result)
 List of 2
@@ -1503,7 +1518,8 @@ List of 2
 # P and Q are W and H'
 > w <- result$P
 > h <- t(result$Q)
-# let's try a prediction, with a known rating
+# let's try a prediction, with a known rating we can do the
+# matrix multiply ourselves if we wish
 > head(ml)
    V1  V2 V3        V4
 1 196 242  3 881250949
@@ -1513,67 +1529,16 @@ List of 2
 > w[22,] %*% h[,377]
          [,1]
 [1,] 2.196976
-# or just have recosystem do it for us
-> preds <- r$predict(ml.dm,out_memory())
-> head(preds)
-[1] 3.979107 4.212397 2.196976 3.601082 3.900878 4.467487
+# there is a predict() method, not shown here
 \end{lstlisting}
 
-\section{How Do We Minimize (\ref{slh})?}
-\label{howmin}
+\section{The softImpute Package}
 
-The answer, as it was in Section \ref{nmfcomp}, is to convert the
-question to one of linear regresson.
+In the literature on missing values, we often sees the term
+\textit{impute}, which is a fancy form of ``guess.''  Hence the name of
+this package.
 
-It will be helpful to keep some concrete numbers in mind, say with the
-MNIST data.  Say we wish a rank of 50.  Then
-
-\begin{itemize}
-
-\item $A$ is 70000x784;
-
-\item $W$ is 70000x50;
-
-\item $H$ is 50x784;
-
-\item $S$ is 1x784; and
-
-\item $l$ is 50x1.
-
-\end{itemize} 
-
-Keeping these numbers in mind as concrete examples,
-now note that in (\ref{slh}),
-
-\begin{equation}
-\label{slh1}
-|| S - l'H ||^2 = (S - l'H)(S - l'H)'
-\end{equation}
-
-This looks pretty close to (\ref{dab}).  But recall that $S$ and $l'H$
-are row vectors, so (\ref{slh1}) looks slightly different.  Now, using
-the fact from linear algebra that $(UV)' = V'U'$, (\ref{slh1}) says
-
-\begin{equation}
-\label{slh2}
-|| S - l'H ||^2 = (S' - H'l)(S' - H'l)
-\end{equation}
-
-Now it's in the form of (\ref{dab}), so our minimization problem is
-solved!  In (\ref{famouslm}), just set $D$, $A$ and $b$ to $S'$, $H'$
-and $l$, respectively.  This gives us
-
-\begin{equation}
-\lambda = (HH')^{-1} HS'
-\end{equation}
-
-We could compute this directly, using R's matrix operations (for matrix
-inversion, we can use \textbf{solve()}, or for better numerical
-accuracy, \textbf{solve.qr()}), but it's easier to send it to
-\textbf{lm()}, e.g.
-
-\begin{lstlisting}
-lm(s ~ t(h) - 1)$coef
-\end{lstlisting}
-
-Again, the `-1'' tells \textbf{lm()}, ``Don't add a column of 1s to $H'$.''
+The package works directly on the ratings matrix $A$.  If that matrix is
+too large for memory, there is an option to use the Spark system, which
+has an R interface \textbf{sparkr}.  Spark is a highly complex system
+which may be difficult to install.  We do not pursue that here.
