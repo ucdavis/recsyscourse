@@ -798,7 +798,7 @@ intact.
 
 There are many refinements of the SVD approach described above, and
 indeed many other ways to achieve approximate factorization.  We'll
-discuss another method, NMF, shortly.  
+discuss other methods, later in this chapter.  
 
 In all methods, we have
 
@@ -833,6 +833,67 @@ shrinking both $W$ and $H$, and we choose them to minimize
 \begin{equation}
 \|A - WH\|_F + \gamma_1 \|W\|_F^2 + \gamma_2 \|H\|_F^2
 \end{equation}
+
+\subsection{``Bias'' Removal}
+
+In machine learning circles, the term \textit{bia} as a second,
+unrelated meaning beyond the ``bias-variance tradeoff'' context.
+This second meaning refers to the $\beta_0$ term in (\ref{betadef}).
+Recall that if we have no covariates, i.e.\ $p = 0$ in that equation,
+$\beta_0$ reduces to $EY$, the unconditional mean of $Y$.  
+
+We will discuss covariates shortly, but for now the point is that it is
+customary to \textit{center} the $A$ ratings matrix by subtracting
+means.  Let $m$, $m_{i \cdot}$, and $m_{\cdot j}$ denote the overall
+mean rating, the mean for user $i$ and the mean for item $j$,
+respectively.  Then the recommended approach is first make the
+adjustment
+
+\begin{equation}
+\label{adjust}
+A_{ij} \leftarrow A_{ij} - (m_{i \cdot} + m_{\cdot j} -m)
+\end{equation}
+
+Then the factorizaiton is performed, and finally the adjustment is
+``undone'':
+
+\begin{equation}
+\label{unadjust}
+A_{ij} \leftarrow A_{ij} + (m_{i \cdot} + m_{\cdot j} -m)
+\end{equation}
+
+What is going on here?  First, the expression
+
+\begin{equation}
+m_{i \cdot} + m_{\cdot j} -m
+\end{equation}
+
+is motivated by the equivalent
+
+\begin{equation}
+\label{anova}
+m + (m_{i \cdot} - m) + (m_{\cdot j} -m)
+\end{equation}
+
+which models the ratings as 
+
+\begin{quote}
+
+overall mean + effect due to user i + effect due to item j
+
+\end{quote}
+
+(Readers who are familiar with the \textit{analysis of variance}
+should recognize this.)  The idea is then to do our matrix factorization
+on the \textit{residual}, i.e.\ what is ``left over'' after prediction
+by the model (\ref{anova}).
+
+
+
+
+
+
+
 
 \subsection{Predicting New Cases} 
 
@@ -1035,7 +1096,7 @@ e.g.\ representative movies in the MovieLens data.
 % competely known.
 
 
-\section{Alternating Least Squares}
+\section{Alternating Least Squares (ALS)}
 
 Again, a general approach to finding $W$ and $H$ is to minimize the
 Frobenius norm of the approximation error:
@@ -1278,33 +1339,20 @@ The Alternating Least Squares method used here is considered by some to
 have better convergence properties, since the solution at each iteration
 is unique.  This may come at the expense of slower convergence.
 
-\section{How Do We Choose the Rank?}
-\label{chooserank}
+\section{Nonnegative Matrix Factorization (NMF)}
 
-This is not an easy question.  One approach would be to use
-\textbf{prcomp}, or for that matter \textbf{svd()}, to find the
-eigenvalues, then take our rank to be the number of ``large''
-eigenvalues, as discussed in Chapter \ref{chap:linalg}.  
+In most RS applications, the ratings are nonnegative.  So, we might
+require that $W$ and $H$ be nonnegative.  In ALS, for instance, we might
+just truncate to 0 any elements in $w_i$ and $h_i$ that stray into
+negative territory.  This makes sense since the ratings are nonnegative,
+and also there is hope that the resulting $W$ and $H$ are more likely to
+be sparse.
 
-Of course, the typical way rank is chosen is cross validation.
-
-\section{Why Nonnegative?}
-
-In the applications we've mentioned here, we always have $A_{ij} \geq 0$.
-However, that doesn't necesarily mean that we need $W$ and $H$ to be
-nonnegative, and indeed if we were to use PCA, they may not so.  (With
-PCA, even their product could have negative element, which we would
-truncate to 0.)  Why use NMF, i.e.\ why insist that the factors $W$ and
-$H$ themselves be nonnegative?
-
-There are a couple of reasons NMF may be preferable.  First, truncation
-may be questionable if we have a lot of negative values.  But the second
-reason is that NMF may be more useful, as follows:
-
-In a facial image recognition case, say, there is hope that the vectors
-$W_{\cdot j}$ will be {\it sparse}, i.e.\ mostly 0s. Then we might have,
-say, the nonzero elements of $W_{\cdot 1}$ correspond to eyes, $W_{\cdot
-2}$ correspond to nose and so on with other parts of the face.  We are
+A second motivation is as follows:  Matrix factorization methods have
+also been applied to image and text classification.  Consider 
+a facial image recognition case, say, there is hope that 
+the nonzero elements of $W_{\cdot 1}$, say, correspond to eyes, $W_{\cdot
+2}$ correspond to noses, and so on with other parts of the face.  We are
 then ``summing'' to form a complete face.  This may enable effective
 {\it parts-based recognition}, with helpful interpretations.
 
@@ -1312,12 +1360,6 @@ In our recommender systems setting, this parts-based effect, NMF would
 give us crisper distinction among the various synthetic users.  This may
 reveal clusters of user behavior, which could be quite helpful to the
 analyst.
-
-Another point is that the nonnegativity allows us to better fulfill the
-``synthetic users'' idea from Section \ref{synth}.  To make these more
-realistic, they should be on the same level as real user ratings.  We
-can arrange this by simply scaling down each $H_{i.}$ to the ratings
-scale, e.g. 1 to 5 for the MovieLens data.  
 
 % \section{Functions in rectools}
 % 
@@ -1342,28 +1384,6 @@ scale, e.g. 1 to 5 for the MovieLens data.
 % 'RecoS3', with components $P$ and $Q$, corresponding to $W$ and $H'$ in
 % our notation.  In the case of covariates (see below), some R
 % \textbf{attributes} are also included.
-
-\section{``Bias'' Removal}
-
-As noted in Chapter \ref{chap:knn}, some users tend to give more liberal
-ratings, while others tend to be more cautious.  Similarly, some items
-tend to be rated more highly than others.  One way of dealing with
-that is to adjust our ratings matrix $A$ accordingly:  For each user
-$i$, let $R_i$ denote the average of all known ratings from that user.
-Also, for each item $j$ let $S_j$ denote the average of all known ratings
-for that item.  These are termed \textit{biases}. Then do the replacement
-
-\begin{equation}
-A_{uv} \leftarrow A_{uv} - R_u - S_v
-\end{equation}
-
-and then form the matrix factorization as usual.  In the end, after
-estimating the unknown entries in $A$, restore
-the subtracted quantities:
-
-\begin{equation}
-A_{uv} \leftarrow A_{uv} + R_u + S_v
-\end{equation}
 
 \section{Dealing with Covariates}
 
@@ -1424,23 +1444,6 @@ The role of \textbf{minResid} is this:  If we are using NMF, fitting to the
 residuals, which are both positive and negative, makes no sense.  So, we
 subtract the (algebraically) smallest residual, resulting in only
 nonnegative values.  Again, this is added back in later on.
-
-\section{Regularization}
-
-Recall Section \ref{dosomething}, where we introduced the idea of
-shrinkage as a guard against overfitting.
-
-For NMF (or SVD), we probably don't want to force some predicted ratings
-to 0, the $l_2$ norm is a popular choice.  Thus, instead of choosing $W$ and
-$H$ to minimize (\ref{errawh}), we minimize
-
-\begin{equation}
-||A - WH||_2 + \gamma_1 ||W||_2^2 + \gamma_2 ||H||_2^2
-\end{equation}
-
-Both $\gamma_1$ and $\gamma_2$ are tuning parameters.
-
-The \textbf{NMF} package offers regularization as an option.
 
 \section{The recosystem Package}
 
