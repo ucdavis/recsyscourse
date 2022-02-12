@@ -1,6 +1,9 @@
 
 \chapter{Matrix Factorization Methods}   
 
+Note:  The reader may find it useful to review Section \ref{partmat}
+before continuing.
+
 This chapter covers one of the more popular RS methods, matrix
 factorization.  The overall theme will be \textit{low-rank
 approximation}:  given a matrix $M_1$,  find a matrix $M_2$ for which 
@@ -15,9 +18,11 @@ and
 M_2 \approx M_1
 \end{equation}
 
+This is important for \textit{dimension reduction}.  In RS, our
+ratings matrix may have hundreds of millions of rows and millions of
+columns, which presents both computational and overfitting problems.
 
-To set the stage, we start with a more basic matrix
-operation, PCA.
+To set the stage, we start with a more basic matrix operation, PCA.
 
 \section{An Approach to Approximate Rank:  Principal Components
 Analysis}
@@ -655,26 +660,246 @@ mean.
 The \textit{Singular Value Decomposition} (SVD) is a generalization of
 of PCA.  It has many applications, but will be especially valuable for
 us in RS, as it can factor our ratings matrix into the product of a user
-matrix and an item matrix, the product $WH$ in (\ref{awh}).
+matrix and an item matrix, the product $WH$ in (\ref{awh}).  
 
-\subsection{How It Works}
+\subsection{The Decomposition}
 
 Let $A$ be any matrix, not necesarily square.  In fact, it is nonsquare
-in typical applications, RS being a case in point.  Let $k$ denote
-$rk(A)$.  Then there exist orthogonal matrices $U$ and $V$ such that
+in typical applications, RS being a case in point.  Let $n$ and $m$
+denote the numbers of rows and columns of $A$.
+% Let $k$ denote $rk(A)$.  
+Then there exist matrices $U$, $D$ and $V$ such that
 
 \begin{equation}
+\label{audv}
 A = U D V'
 \end{equation}
 
-where $D$ is a diagonal matrix in the sense that $D_{ij} = 0$ whenever $i
-\neq j$.  The diagonal elements are the \textit{singular values}.
+where:
 
-By permuting the rows and columns of $A$, we can arrange things so that
-the singular values appear in descending order.
+\begin{itemize}
+
+\item The dimensions of $U$, $D$ and $V$ are $n \times n$, $n \times m$
+and $m \times m$.
+
+\item $U$ and $V$ are orthogonal matrices, so that $U U' = I$ and $V'V =
+I$.
+
+\item $D$ is a diagonal matrix in the sense that $D_{ij} = 0$ whenever
+$i \neq j$.  The diagonal elements are the \textit{singular values}.
+Let $d_{i}$ denote the $i^{th}$ diagonal element in $D$
+$i = 1,2,...,\min(n,m)$.  One can construct the matrices so that the
+singular values are nonnegative.
+
+\end{itemize} 
+
+By permuting the rows and columns of $A$, e.g.\ in MovieLens, permuting
+the order of the users, and of the movies, we can arrange things so that
+the singular values appear in descending order.  We'll assume that
+here.
+
+Let $u_i$ and $v_1$ denote the $i^{th}$ row in $U$ and $V$, 
+respectively.  By expanding the multiplication in (\ref{audv}), we have
+
+\begin{equation}
+\label{rank1s}
+A = \sum_{i=1}^{\min(n,m)} d_i  u_i v_i'
+\end{equation}
+
+% The rows of $U$ for an orthonormal basis for the row space of
+% $A$.  Recall:  The latter is the subspace of $\mathcal{R}^{m}$
+% consisting of all linear combinations of the rows of $A$.  An
+% orthonormal basis consists of linearly independent vectors of norm 1.
+% 
+% The rows of $V$ for an orthonormal basis for the column space of $A$.
+
+\subsection{Low-Rank Approximation}
+
+Equation (\ref{rank1s}) then suggests how to accomplish dimension
+reduction.  Remember, the $d_i$ are decreasing.\footnote{Technically,
+nonincreasing, but typically there are no cases of equality.}  The last
+few may be really tiny, so why not delete those terms, just as we
+deleted the principal components with small variances?
+
+Say we retain the first $r$ terms, with $r < \min(n,m)$.  That is
+equivalent to
+
+\begin{itemize}
+
+\item Retaining the $r \times r$ ``northwest corner'' of $D$.
+
+\item Retaining the first $r$ columns of $U$.
+
+\item Retaining the first $r$ rows of $V$.
+
+\end{itemize} 
+
+Result:
+
+\begin{itemize}
+
+\item The new $U$, $D$ and $V$ will now be of dimensions
+$n \times r$, $r \times r$ and $m \times r$.
+
+\item The new product $UDV'$ still have dimensions $n \times m$,
+the same as $A$.  But, whereas we had
+
+\begin{equation}
+A = UDV'
+\end{equation}
+
+before, we now have
+
+\begin{equation}
+A \approx UDV'
+\end{equation}
+
+\item The new $UDV'$ will have rank $r$, hence the term
+\textit{low-rank approximation}.  In fact, it can be shown to be the
+best rank-$r$ approximation to $A$, in the sense the the Frobenius norm
+of the difference 
+
+\begin{equation}
+\label{bestlow}
+|| A - UDV'||_{F}
+\end{equation}
+
+is minimized.
+
+\end{itemize} 
+
+\subsection{Back to RS}
+
+Since $D$ is a diagonal matrix with nonnegative diagonal entries, it has
+a square root, which we will denote as $u^{0.5}$---we obtain this latter
+matrix by taking the square of each diagonal value.  Then
+
+\begin{equation}
+A \approx (UD^{0.5}) (D^{0.5} V')
+\end{equation}
+
+So to obtain our desired factorization $A \approx WH$, we simply set
+
+\begin{equation}
+W = UD^{0.5}, ~ H = D^{0.5}V' ~ 
+\end{equation}
+
+In our RS context, the ratings matrix $A$ has a lot of missing values.
+How can we find $U$, $D$ and $V$?  The answer is that numeric methods
+exist to minimize (\ref{betstlow}), where the Frobenius norm is now
+taken only on the non-NA elements of $A$.  Of course, $U$, $D$ and $V$
+will then turn out to be different from what they would be if $A$ were
+intact.
+
+\section{General Issues with Matrix Factorization Methods}  
+
+There are many refinements of the SVD approach described above, and
+indeed many other ways to achieve approximate factorization.  We'll
+discuss another method, NMF, shortly.  
+
+In all methods, we have
+
+\begin{equation}
+A \approx WH
+\end{equation}
+
+where $W$ is of dimensions $n \times r$
+$H$ is of dimensions $r \times m$ and both matrices are of rank $r$.
+There are a number of issues to discuss.
+
+\subsection{Bias, Variance and Overfitting}
+
+There are $nr$ numbers in $W$, and $rm$ in $H$.  Treating our data as a
+sample from a conceptual population---e.g.\ all moviegoers and all
+movies---estimating $r(n+m)$ values is much better than estimating $nm$
+ones.
+
+But this depends on $r$, which is our tuning parameter/hyperparameter
+for this method.  We have a classical tradeoff:
+
+As $r$ grows, the variance increases, due to estimating more
+parameters, but the bias decrases.
+
+As usual, typically $r$ is chosen by cross-validation.
+
+\subsection{Regularization}
+
+To some analysts, ``If it's random, then shrink it.''  Matrix
+factorization is no exception.  In the context here, that means
+shrinking both $W$ and $H$, and we choose them to minimize
+
+\begin{equation}
+||A - WH||_F + \gamma_1 ||W||_F^2 + \gamma_2 ||H||_F^2
+\end{equation}
+
+\subsection{Predicting New Cases} 
+
+One drawback of matrix factorization methods is that there generally is
+no good method to handle new users or new items not in the existing
+data.  One must compute the entire factorization all over again.  This
+is not too problematic, though, as most numerical methods are easy to
+update, rather than fitting from scratch.
+
+\section{Interpretation of W and H}
+
+\subsection{Synthetic, Representative Recommender Systems Users}
+\label{synth}
+
+Note the key relation, which we showed in Section \ref{partmat}:
+
+\begin{equation}
+(WH)_{i \cdot} = \sum_{m=1}^k W_{im} H_{m \cdot}
+\end{equation}
+
+In other words, in (\ref{awh}), we have that:
+
+\begin{itemize}
+
+\item The entire vector of predicted ratings by user $i$ can be
+expressed as a linear combination of the rows of $H$.
 
 
-\section{Matrix Factorization Methods}  
+\item The rows of $H$ can thus be thought of as synthetic
+``users'' who are representative of users in general.  $H_{rs}$ is the
+rating that synthetic user $r$ gives item $s$.
+
+\end{itemize} 
+
+In this manner, we can predict ratings for any user that is already in
+$A$.  but what about an entirely new user?  What we need is the
+coordinates of this new user with respect to the rows of $H$.  We'll see
+how to get these later in the chapter.\footnote{After accumlating enough
+new users, of course, we should update $A$, and thus $W$ and $H$.}
+
+Of course, interchanging the roles of rows and columns above, we have
+that the columns of $W$ serve as an approximate basis for the columns of
+$A$.  In other words, the latter become synthetic, representative items,
+e.g.\ representative movies in the MovieLens data.
+
+\subsection{Vector Space View}
+
+Recall that the \textit{span} of a set of vectors in a vector space is
+the set of all linear combinations of those vectors.  The term
+\textit{basis} in means a linearly independent set of vectors that spans
+the given subspace, i.e.\ any vector in the subspace can be expressed as
+a linear combinations of the basis vectors.
+
+Thus the rows of $H$ can be thought of as an ``approximate
+basis'' for the span of the rows of $A$.
+
+\section{The Case of Entirely Known A}
+
+In RS applications, the matrix $A$ is only partially known.  But it will
+be easier to understand the methods for finding the $W$ and $H$ matrices
+by looking at another class of applications.  In fact, NMF has become
+widely used in a variety of ML applications in which the matrix $A$
+entirely known. 
+
+
+
+
+
+
 
 \section{The Setting}
 
@@ -745,59 +970,6 @@ We'll use the following notation for a matrix $Q$
 \item $Q_{\cdot j}$:  column $j$
 
 \end{itemize}
-
-\section{Synthetic, Representative Recommender Systems Users}
-\label{synth}
-
-Note the key relation, which we showed in Section \ref{partmat}:
-
-\begin{equation}
-(WH)_{i \cdot} = \sum_{m=1}^k W_{im} H_{m \cdot}
-\end{equation}
-
-In other words, in (\ref{awh}), we have that:
-
-\begin{itemize}
-
-\item The entire vector of predicted ratings by user $i$ can be
-expressed as a linear combination of the rows of $H$.
-
-
-\item The rows of $H$ can thus be thought of as synthetic
-``users'' who are representative of users in general.  $H_{rs}$ is the
-rating that synthetic user $r$ gives item $s$.
-
-\end{itemize} 
-
-In this manner, we can predict ratings for any user that is already in
-$A$.  but what about an entirely new user?  What we need is the
-coordinates of this new user with respect to the rows of $H$.  We'll see
-how to get these later in the chapter.\footnote{After accumlating enough
-new users, of course, we should update $A$, and thus $W$ and $H$.}
-
-Of course, interchanging the roles of rows and columns above, we have
-that the columns of $W$ serve as an approximate basis for the columns of
-$A$.  In other words, the latter become synthetic, representative items,
-e.g.\ representative movies in the MovieLens data.
-
-\section{Vector Space View}
-
-Recall that the \textit{span} of a set of vectors in a vector space is
-the set of all linear combinations of those vectors.  The term
-\textit{basis} in means a linearly independent set of vectors that spans
-the given subspace, i.e.\ any vector in the subspace can be expressed as
-a linear combinations of the basis vectors.
-
-Thus the rows of $H$ can be thought of as an ``approximate
-basis'' for the span of the rows of $A$.
-
-\section{The Case of Entirely Known A}
-
-In RS applications, the matrix $A$ is only partially known.  But it will
-be easier to understand the methods for finding the $W$ and $H$ matrices
-by looking at another class of applications.  In fact, NMF has become
-widely used in a variety of ML applications in which the matrix $A$
-entirely known. 
 
 \subsection{Image Classification}
 :
