@@ -847,12 +847,12 @@ update, rather than fitting from scratch.
 One of the big advantages of matrix factorization methods is
 interpretability.
 
-For any matrix $Q$, let $Q_{i.}$ and $Q_{.j}$ denote row $i$ and column
-$j$, respectively.  Note the key relation, using the material in Section
-\ref{partmat}:
+For any matrix $Q$, let $Q_{i \cdot }$, $Q_{\cdot j}$, and $Q_{ij}$
+denote row $i$, column $j$, and element $(i,j),$ respectively.  Note the
+key relation, using the material in Section \ref{partmat}:
 
 \begin{equation}
-(WH)_{i \cdot} = \sum_{m=1}^k W_{im} H_{m \cdot}
+(WH)_{i \cdot} = \sum_{m=1}^k W_{im} (h_0){m \cdot}
 \end{equation}
 
 In other words, in (\ref{awh}), we have that:
@@ -1041,6 +1041,7 @@ Again, a general approach to finding $W$ and $H$ is to minimize the
 Frobenius norm of the approximation error:
 
 \begin{equation}
+\label{generalwh}
 W,H = \arg \min_{w,h} \|A - wh\|_F
 \end{equation}
 
@@ -1061,159 +1062,170 @@ un-visualizable equivalent in multiple dimensions.  Unfortunately,
 the function
 
 \begin{equation}
+\label{fwh}
 f(w,h) = \|A - wh\|_F^2
 \end{equation}
 
 which has $nr + rm$ arguments, is not convex.  It generally will have
-complicated, multiple local minima, causing possible convergence
-problems.
+multiple local minima, causing possible convergence problems.
 
-However, for fixed $h$, the function $f(w,h)$ \textit{is} convex.  In
+\subsection{A Non-SGD Approach}
+
+For fixed $h$, the function $f(w,h)$ \textit{is} convex.  In
 fact, it's our old friend from the linear model, which not only has a
-unique minimum but in fact has a close-form solution for the minimum.
+unique minimum but in fact has a close-form solution for the minimum!
+Indeed, we can use R's \textbf{lm()} function to obtain the solution.
 The same is true if we fix $w$ and allow $h$ to vary.
 
-% Note that we can write (\ref{froben}) as
-% 
-% \begin{equation}
-% \label{wholething}
-% \|Q\|_2 = 
-% \sqrt{
-% \sum_j \left ( \sum_i Q_{ij}^2 \right )
-% }
-% \end{equation}
-% 
-% This mean that if we can separately minimize that inner sum, for each
-% $j$, we will have minimized the entire expression (\ref{wholething}).
-% Our strategy will depend on this.
-% 
-% \subsection{Alternating Least Squares}
-
-So, how does Alternating Least Squares work?  Suppose just for a moment
-that we know the exact value of $W$, with $H$ unknown.  Then for each
-$j$ we could minimize
-
-\begin{equation}
-\label{errajwhj}
-\|A_{\cdot j} - W H_{\cdot j}\|_2
-\end{equation}
-
-We are seeking to find $H_{\cdot j}$ that minimizes (\ref{froben}), with
-$A_{\cdot j}$ and $W$ known.  But since the Frobenius norm is just a sum
-of squares, that minimization is just a least-squares problem, i.e.\
-linear regression, just as in Section \ref{howmin}.  We are
-``predicting'' $A_{\cdot j}$ from $W$,
-
-So again in the notation of Section \ref{lmdetails}:
+The \textit{alternating least squares} approach to minimizing (\ref{fwh})
+exploits the fact that $f(w,h)$ is separately convex in $w$ and $h$,
+holding one of them fixed.  The algorithm is then
 
 \begin{itemize}
 
-\item The matrix $A$ there is our $W$ here, known.
+\item [(1)] Set an initial guess $w_0$ for the solution.  (We won't need
+an initial guess for $h$.)
+
+\item [(2)] Minimize $f(w_0,h)$ with respect to $h$, yielding our next
+guess, $h_1$.
+
+\item [(3)] Minimize $f(w,h_1)$ with respect to $w$, yielding our next
+guess, $h_1$.
+
+\item [(2)] Minimize $f(w_1,h)$ with respect to $h$, yielding our next
+guess, $h_2$.
+
+\item [(5)] Repeat until convergence.
+
+\end{itemize} 
+
+Here is more detail:  In step (2) above, first write
+
+\begin{equation}
+\label{breakdownbyj}
+f(w_0,h) = \sum_{j=1}^n
+\|A_{\cdot j} - w_0 ~ h_{\cdot j}
+\|_F^2
+\end{equation}
+
+where $h_{0 \cdot j}$ means column $j$ of $h_0$.  If we can find $h$ to
+minimize the $j$ term in (\ref{breakdownbyj}) for each $j$, then we will
+have minimized (\ref{breakdownbyj}), achieving our goal.
+
+But luckily this is exactly the structure we had in minimizing
+(\ref{quad}):
+
+\begin{itemize}
+
+\item The matrix $A$ there is our $w_0$ here, known.
 
 \item The vector $D$ there is our $A_{\cdot j}$ here, known.
 
-\item The vector $b$ there is our $H_{\cdot j}$ here, unknown and to be
+\item The vector $b$ there is our $h_{\cdot j}$ here, unknown and to be
 solved for.
 
 \end{itemize} 
 
-So we compute
+So we have
+
+\begin{equation}
+(h_1)_{\cdot j} = (w_0'w_0)^{-1} w_0' A_{\cdot j}
+\end{equation}
+
+And again, via matrix partitioning,
+
+\begin{equation}
+(h_1) = (w_0'w_0)^{-1} w_0' A
+\end{equation}
+
+for each $j$.  In R code,
 
 \begin{lstlisting}
-> h[,j] <- lm(a[,j] ~ w - 1)$coef
+> h[,j] <- lm(a[,j] ~ w0 - 1)$coef
 \end{lstlisting}
 
-for each $j$.\footnote{The -1 specifies that we do not want a constant term in
-the model.}
+The -1 specifies that we do not want a constant term in
+the model, i.e.\ no 1s column..
 
-On the other hand, suppose we know $H$ but not $W$.  We could take 
+On the other hand, what about step (3)?.  We could take 
 transposes,
 
 \begin{equation}
-A' = H' W'
+A' = h' w'
 \end{equation}
 
-and then just interchange the roles of $W$ and $H$ above.  Here a call
-to {\bf lm()} gives us a column of $W'$, thus a row of $W$, and we do
+and then just interchange the roles of $w$ and $h$ above.  Here a call
+to {\bf lm()} gives us a column of $w'$, thus a row of $w$, and we do
 this for all rows.
-
-Putting all this together, we first choose initial guesses, say random
-numbers, for $W$ and $H$; {\bf nmf()} gives us various choices as to how
-to do this.  Then we alternate: Compute the new guess for $W$ assuming
-$H$ is correct, then choose the new guess for $H$ based on that new $W$,
-and so on.
-
-During the above process, we may generate some negative values.  If so,
-we simply truncate to 0.
 
 \subsection{Back to Recommender Systems:  Dealing with the Missing Values}
 
-In our recommender systems setting, of course, most of $A$ is missing.
-But we can easily adapt to that.  Roughly speaking, in (\ref{errajwhj}),
-do these replacements:
+In our recommender systems setting, of course, much of $A$ is missing.
+But we can easily adapt to that.  Roughly speaking, in
+(\ref{breakdownbyj}), do these replacements:
 
 \begin{itemize}
 
 \item replace $A_{.j}$ by the known portion of $A_{.j}$
 
-\item replace $W$ by the corresponding rows of $W$
+\item replace $_0$ by the corresponding rows of $w_0$
 
 \end{itemize} 
 
 Then proceed as before.  
 
-Here is a little example.  Say $A$ ix $5 \times 5$ and we want rank 3.
-Then $W$ and $H$ are of sizes $5 \times 3$ and $3 \times5$.  
-
-Note too that $(WH)_{.j}$, thus column $j$ of our approximation to $A$,
-is a linear combination of the columns of $W$, with coefficients being
-$H_{.j}$.
-
-
-Suppose
-
-\begin{equation}
-A_{.4} = 
-\left (
-\begin{array}{r}
-NA \\
-3 \\
-NA \\
-8 \\
-2
-\end{array}
-\right )
-\end{equation}
-
-Then in (\ref{errajwhj}) we replace $A_{.5}$ by
-
-\begin{equation}
-\label{smalla}
-\left (
-\begin{array}{r}
-3 \\
-8 \\
-2 
-\end{array}
-\right )
-\end{equation}
-
-Also, replace $W$ by
-
-\begin{equation}
-\label{smallw}
-\left (
-\begin{array}{rrr}
-w_{21} & w_{22} & w_{23} \\
-w_{41} & w_{42} & w_{43} \\
-w_{51} & w_{52} & w_{53} \\
-\end{array}
-\right )
-\end{equation}
-
-Remember, at this stage, $W$ is assumed known.  So, we just use
-\textbf{lm()}, ``predicting'' (\ref{smalla}) from (\ref{smallw}) to find
-$h_{.4}$.
+% Here is a little example.  Say $A$ ix $5 \times 5$ and we want rank 3.
+% Then $W$ and $H$ are of sizes $5 \times 3$ and $3 \times5$.  
+% 
+% Note too that $(WH)_{.j}$, thus column $j$ of our approximation to $A$,
+% is a linear combination of the columns of $W$, with coefficients being
+% $H_{.j}$.
+% 
+% 
+% Suppose
+% 
+% \begin{equation}
+% A_{.4} = 
+% \left (
+% \begin{array}{r}
+% NA \\
+% 3 \\
+% NA \\
+% 8 \\
+% 2
+% \end{array}
+% \right )
+% \end{equation}
+% 
+% Then in (\ref{errajwhj}) we replace $A_{.5}$ by
+% 
+% \begin{equation}
+% \label{smalla}
+% \left (
+% \begin{array}{r}
+% 3 \\
+% 8 \\
+% 2 
+% \end{array}
+% \right )
+% \end{equation}
+% 
+% Also, replace $W$ by
+% 
+% \begin{equation}
+% \label{smallw}
+% \left (
+% \begin{array}{rrr}
+% w_{21} & w_{22} & w_{23} \\
+% w_{41} & w_{42} & w_{43} \\
+% w_{51} & w_{52} & w_{53} \\
+% \end{array}
+% \right )
+% \end{equation}
+% 
+% Remember, at this stage, $W$ is assumed known.  So, we just use
+% \textbf{lm()}, ``predicting'' (\ref{smalla}) from (\ref{smallw}) to find
+% $h_{.4}$.
 
 
 % \subsubsection{Multiplicative Update}
@@ -1253,13 +1265,14 @@ There are no panaceas for applications considered here.  Every solution
 has potential problems.  I like to call this the Pillow Theorem ---
 pound down on one fluffy part and another part pops up.
 
-Unlike the PCA case, one issue with NMF is uniqueness --- there might
-not be a unique pair $(W,H)$ that minimizes (\ref{errawh}).  In fact,
-one can see this immediately:  Doubling $W$ while having $H$ leaves the
-product $WH$ unchanged.  Of course, the product is all that really
-counts, but in turn, this may result in convergence problems. The NMF
-documentation recommends running {\bf nmf()} multiple times; it will use
-a different seed for the random initial values each time.
+One issue with finding $W$ and $H$ by minimizing \ref{generalwh} is
+uniqueness --- there might not be a unique pair $(W,H)$ that minimizes
+(\ref{generalwh}).  In fact, one can see this immediately:  Doubling $W$
+while halving $H$ leaves the product $WH$ unchanged.  Of course, the
+product is all that really counts, but in turn, this may result in
+convergence problems. Software documentation (see below) recommends
+running the computation multiple times; it will use a different seed for
+the random initial values each time.
 
 The Alternating Least Squares method used here is considered by some to
 have better convergence properties, since the solution at each iteration
