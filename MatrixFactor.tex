@@ -548,83 +548,83 @@ t(tpca$rotation) %*% tpca$rotation
 then check that it produces the identity matrix $I$, then ponder why
 this should be the case.
 
-\subsection{More on the PC Coefficients}
-\label{coors}
-
-There is more to consider.
-
-Do the PC coefficients have any interpretation?  The answer is
-probably no for ordinary people, but for the \textit{domain experts},
-very possibly yes.  In the teaching evaluation example above, a
-specialist in survey design or teaching methods may well be able to
-interpret the dominance of Q1 in the second PC.  A method called
-\textit{factor analysis}, an extension of PCA, is popular in social
-science research.
-
-For the rest of us, PCA is just a handy way to do dimension reduction.
-
-But there is geometric terminology that will be helpful, as follows.
-Let's look at the \textbf{mlb} dataset from the \textbf{regtools}
-package.  This is data on Major League baseball players.
-
-\begin{lstlisting}
-             Name Team       Position Height Weight   Age
-1   Adam_Donachie  BAL        Catcher     74    180 22.99
-2       Paul_Bako  BAL        Catcher     74    215 34.69
-3 Ramon_Hernandez  BAL        Catcher     72    210 30.78
-4    Kevin_Millar  BAL  First_Baseman     72    210 35.43
-5     Chris_Gomez  BAL  First_Baseman     73    188 35.71
-6   Brian_Roberts  BAL Second_Baseman     69    176 29.39
-  PosCategory
-1     Catcher
-2     Catcher
-3     Catcher
-4   Infielder
-5   Infielder
-6   Infielder
-\end{lstlisting}
-
-Let's apply PCA:
-
-\begin{lstlisting}
-> hw <- as.matrix(mlb[,4:5]) 
-> pcout <- prcomp(hw) 
-> pcout$rotation 
-               PC1         PC2
-Height -0.05948695  0.99822908
-Weight -0.99822908 -0.05948695
-\end{lstlisting}
-
-If we were to plot \textbf{hw}, we would put \textbf{hw[1,]} at the
-point (74,180) on our graph.  Recall from high school math that 74 and
-180 are called the \textit{coordinates} of \textbf{hw2[1,]}, with
-respect to our ``H axis'' and ``W axis.''
-
-But in doing PCA, we are creating new axes, PC1 and PC2, which are
-rotated versions of the H and W axes.  (Hence the naming of the $U$
-matrix as ``rotation'' in the \textbf{prcomp()} return value.)  Let's
-find the coordinates of \textbf{hw[1,]} with respect to the new axes:
-
-\begin{lstlisting}
-> hw[1,] %*% pcout$rotation
-           PC1     PC2
-[1,] -184.0833 63.1613
-\end{lstlisting}
-
-So (74,180) has become (-184.1,63.2) under the new coordinate
-system.  Let's see what the angle of rotation is. We can do that by
-seeing where a point on the H axis rotates to.
-
-\begin{lstlisting}
-> pc10 <- c(1,0) %*% pcout$rotation
-> pc10
-             PC1       PC2
-[1,] -0.05948695 0.9982291
-> (atan(pc10[2] / pc10[1])) * 180/pi
-[1] -86.58964
-\end{lstlisting}
-
-Almost 90 degrees clockwise.
+% \subsection{More on the PC Coefficients}
+% \label{coors}
+% 
+% There is more to consider.
+% 
+% Do the PC coefficients have any interpretation?  The answer is
+% probably no for ordinary people, but for the \textit{domain experts},
+% very possibly yes.  In the teaching evaluation example above, a
+% specialist in survey design or teaching methods may well be able to
+% interpret the dominance of Q1 in the second PC.  A method called
+% \textit{factor analysis}, an extension of PCA, is popular in social
+% science research.
+% 
+% For the rest of us, PCA is just a handy way to do dimension reduction.
+% 
+% But there is geometric terminology that will be helpful, as follows.
+% Let's look at the \textbf{mlb} dataset from the \textbf{regtools}
+% package.  This is data on Major League baseball players.
+% 
+% \begin{lstlisting}
+%              Name Team       Position Height Weight   Age
+% 1   Adam_Donachie  BAL        Catcher     74    180 22.99
+% 2       Paul_Bako  BAL        Catcher     74    215 34.69
+% 3 Ramon_Hernandez  BAL        Catcher     72    210 30.78
+% 4    Kevin_Millar  BAL  First_Baseman     72    210 35.43
+% 5     Chris_Gomez  BAL  First_Baseman     73    188 35.71
+% 6   Brian_Roberts  BAL Second_Baseman     69    176 29.39
+%   PosCategory
+% 1     Catcher
+% 2     Catcher
+% 3     Catcher
+% 4   Infielder
+% 5   Infielder
+% 6   Infielder
+% \end{lstlisting}
+% 
+% Let's apply PCA:
+% 
+% \begin{lstlisting}
+% > hw <- as.matrix(mlb[,4:5]) 
+% > pcout <- prcomp(hw) 
+% > pcout$rotation 
+%                PC1         PC2
+% Height -0.05948695  0.99822908
+% Weight -0.99822908 -0.05948695
+% \end{lstlisting}
+% 
+% If we were to plot \textbf{hw}, we would put \textbf{hw[1,]} at the
+% point (74,180) on our graph.  Recall from high school math that 74 and
+% 180 are called the \textit{coordinates} of \textbf{hw2[1,]}, with
+% respect to our ``H axis'' and ``W axis.''
+% 
+% But in doing PCA, we are creating new axes, PC1 and PC2, which are
+% rotated versions of the H and W axes.  (Hence the naming of the $U$
+% matrix as ``rotation'' in the \textbf{prcomp()} return value.)  Let's
+% find the coordinates of \textbf{hw[1,]} with respect to the new axes:
+% 
+% \begin{lstlisting}
+% > hw[1,] %*% pcout$rotation
+%            PC1     PC2
+% [1,] -184.0833 63.1613
+% \end{lstlisting}
+% 
+% So (74,180) has become (-184.1,63.2) under the new coordinate
+% system.  Let's see what the angle of rotation is. We can do that by
+% seeing where a point on the H axis rotates to.
+% 
+% \begin{lstlisting}
+% > pc10 <- c(1,0) %*% pcout$rotation
+% > pc10
+%              PC1       PC2
+% [1,] -0.05948695 0.9982291
+% > (atan(pc10[2] / pc10[1])) * 180/pi
+% [1] -86.58964
+% \end{lstlisting}
+% 
+% Almost 90 degrees clockwise.
 
 \subsection{Scaling}
 
