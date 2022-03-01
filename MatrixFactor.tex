@@ -655,6 +655,12 @@ column by its mean.  This addresses the miles-vs.-kilometers problem,
 and makes sense in that a variance is large or small in relation to its
 mean.
 
+\subsection{Role of PCA in RS}
+
+If in an RS application we have a very large number of covariates, one
+possible remedy is to use PCA for dimension reduction.  A second role is
+to lead us into related operation, SVD, next.
+
 \section{SVD}
 
 The \textit{Singular Value Decomposition} (SVD) is a generalization 
@@ -900,15 +906,17 @@ Why stop with just removing ``biases''?  We can go a step further and
 account for user or item covariates.
 
 The easiest approach to handling covariates is again to subtract (and
-later add back) residuals, in this case those arising from a linear or
-other regression model.  One would first put the data in (user ID, iterm
-ID, rating) format, then run \textbf{lm()} or whatever.  Each element of
-$A$ is then adjusted by subtracting the predicted value for that
+later add back) certain values, in this case those arising from a linear
+or other regression model.  One would first put the data in (user ID,
+iterm ID, rating, covariates) format, then run \textbf{lm()} or
+whatever.  Each element of $A$, or better, each rating in the input
+data, is then adjusted by subtracting the predicted value for that
 element.  One would then perform matrix factorization to fill in the
-ratings matrix, then finally add the predicted values back to the result.
+ratings matrix, then finally add the predicted values back to the
+result.
 
-Another way would be to append user covariates as new columns in the $A$
-matrix, or item covariates as new rows.
+Another way used by some analysts would be to append user covariates as
+new columns in the $A$ matrix, or item covariates as new rows.
 
 \subsection{Predicting New Cases} 
 \label{predictwh}
@@ -920,7 +928,17 @@ may not be too problematic, though, as most numerical methods are easy to
 update, rather than fitting from scratch.
 
 One solution is to use a k-Nearest Neighbors analysis on the completed
-matrix.  For a new case with ratings for a set of items, find the k rows
+matrix aComp.  Say we have a new case with ratings for a set of items, A, R
+and Q, and we want to predict this case's rating of item W.  Suppose R,
+Q and W were in the original dataset, and thus have columns in aComp.
+We look at the R, Q and W columns of that matrix, restricting attention
+to rows in which there is a rating for W.  We now find the k rows
+closest to the R and Q values of our new case, and average the
+corresponding W rating.  That will be our predicted rating for the new
+user.  Of course, if the new user only has rated item A, there is not
+much we can do except predict from covariates.
+
+find the k rows
 closest to the new case, and 
 average their ratings.
 
@@ -945,10 +963,13 @@ In other words, in (\ref{byrow}), we see that:
 \item The entire vector of predicted ratings by user $i$ can be
 expressed as a linear combination of the rows of $H$.
 
-
 \item The rows of $H$ can thus be thought of as synthetic
 ``users'' who are representative of users in general.  $H_{rs}$ is the
 rating that synthetic user $r$ gives item $s$.
+
+\item Row $i$ of $W$ then tells us information about User in that
+sense.  Indeed, we might use this information as a set of covariates in
+predicting ratings.
 
 \end{itemize} 
 
@@ -1129,7 +1150,7 @@ W,H = \arg \min_{w,h} \|A - wh\|_F
 \end{equation}
 
 Of course, minimizing that quantity is equivalent to minimizing its
-square, setting up a leasts-squares approach that we'll describe here.
+square, setting up a least-squares approach that we'll describe here.
 So, we wish to minimize
 
 \begin{equation}
@@ -1149,16 +1170,15 @@ the function
 f(w,h) = \|A - wh\|_F^2
 \end{equation}
 
-which has $nr + rm$ arguments, is not convex.  It generally will have
+which has $nr + rm$ arguments, is not convex.  And it generally will have
 multiple local minima, causing possible convergence problems.
 
 \subsection{A Non-SGD Approach, ALS}
 
 For fixed $h$, the function $f(w,h)$ \textit{is} convex.  In fact, we
 will see below that it's our old friend from the linear model, which not
-only has a unique minimum but in fact has a close-form solution for the
-minimum!  Indeed, we can use R's \textbf{lm()} function to obtain the
-solution.  The same is true if we fix $w$ and allow $h$ to vary.
+only has a unique minimum but in fact has a closed-form solution for the
+minimum!  The same is true if we fix $w$ and allow $h$ to vary.
 
 The \textit{alternating least squares} approach to minimizing (\ref{fwh})
 exploits the fact that $f(w,h)$ is separately convex in $w$ and $h$,
@@ -1193,7 +1213,7 @@ f(w_0,h) = \sum_{j=1}^n
 
 where $h_{0 \cdot j}$ means column $j$ of $h_0$.  If we can find $h$ to
 minimize the $j$ term in (\ref{breakdownbyj}) for each $j$, then we will
-have minimized (\ref{breakdownbyj}), achieving our goal.
+have minimized (\ref{breakdownbyj}) with respect to $h$, achieving our goal.
 
 But luckily this is exactly the structure we had in minimizing
 (\ref{quad}):
@@ -1218,28 +1238,77 @@ So we have
 And again, via matrix partitioning,
 
 \begin{equation}
+\label{hfromw}
 (h_1) = (w_0'w_0)^{-1} w_0' A
 \end{equation}
 
-for each $j$.  In R code,
+for each $j$.  In later steps, $w_0$ is replaced by $w_i$.
 
-\begin{lstlisting}
-> h[,j] <- lm(a[,j] ~ w0 - 1)$coef
-\end{lstlisting}
+% In R code,
+% 
+% \begin{lstlisting}
+% > h[,j] <- lm(a[,j] ~ w0 - 1)$coef
+% \end{lstlisting}
 
-The -1 specifies that we do not want a constant term in
-the model, i.e.\ no 1s column..
+% The -1 specifies that we do not want a constant term in
+% the model, i.e.\ no 1s column..
 
 On the other hand, what about step (3)?.  We could take 
 transposes,
 
 \begin{equation}
-A' = h' w'
+A' \approx h' w'
 \end{equation}
 
-and then just interchange the roles of $w$ and $h$ above.  Here a call
-to {\bf lm()} gives us a column of $w'$, thus a row of $w$, and we do
-this for all rows.
+and then just interchange the roles of $w$ and $h$ above.  
+Then (\ref{hfromw}) becomes something like
+
+\begin{equation}
+(w_1)_{i.} = (hh')^{-1} h A_{i.}
+\end{equation}
+
+One problem arises, though, in that the matrices may become of  
+less than full rank (or close enough to it that R will declare them
+singular).  What can be done?
+
+\begin{itemize}
+
+\item Again, some analysts feel, ``If it's random, shrink it.''  In this
+context, it means that in ``predicting'' $A$ from $w$, we use 
+using ridge regression instead of the ordinary linear model.  It can be
+shown that this means adding $\lambda$ to the diagonal of $w'w$ before
+taking the inverse.  So, we get shrinkage and invertibility, and
+everyone is happy.
+
+\item One can use what is called a \textit{generalized inverse}, or
+\textit{pseudoinverste}.  This can be used not only to ``invert''
+noninvertible matrices, but also even to ``invert'' non-square ones  And
+in (\ref{hfromw}), it turns out (details not shown) that the $w$ factor
+``cancel,'' giving us
+
+\begin{equation}
+(h_{i+1})_{\cdot j} = w_i^{+-} A_{\cdot j}
+\end{equation}
+
+where for any matrix $Q$, the notation $Q^{+}$ means the generalized
+inverse of $q$.
+
+The R function \textbf{MASS::ginv()} does generalized inverse.  The
+body of the iterative loop then, will look something like this (for the
+matrix \lstinline{m} to be factord):
+
+\begin{lstlisting}
+      gw <- ginv(w)
+      for (j in 1:ncol(m)) {
+         h[,j] <- gw %*% m[,j]
+      }
+      gh <- ginv(t(h))
+      for (i in 1:nrow(m)) {
+         w[i,] <- t(gh %*% m[i,])
+      }
+\end{lstlisting}
+
+\end{itemize} 
 
 \subsection{Back to Recommender Systems:  Dealing with the Missing Values}
 
