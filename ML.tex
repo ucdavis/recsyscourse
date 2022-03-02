@@ -1,8 +1,123 @@
-\chapter{Introduction to Machine Learning Methods}
+\chapter{Machine Learning Methods in Recommender Systems}
 \label{chap:ml}
 
-% mainly use ML.md from regtools; do a couple of running recsys exs
+Here we will introduce some famous machine learning (ML) methods, and apply
+them to recomender systems (RS).  In fact, many of the complex RS
+methods used in industry are hybrid, typically combining an ML method
+such as neural networks with matrix factorization; see for instance an
+article on the hybrid system used as Netflix.\footnote{https://ojs.aaai.org/index.php/aimagazine/article/view/18140}
 
-% and first go back to the ratings vs age ex earlier, and see which can
-% predict well
+In contrast to our previous methods for estimation a regression
+function---the linear and logistic models, polynomial models, and LASSO
+and ridge, the methods used in this chapter are all
+\textit{nonparametric}, meaning that there is no ``$\beta$,'' no
+parameter vectors specifying the structure of the regression function.
+
+\section{K-Nearest Neighbor}
+
+We've seen this method, extremely simple.  Say we wish to predict the
+weight of a person 70 inches tall and 25 years old, given
+data on people with known height, weight and age.  We find $k$
+people in our data whose height and age are near 70 and 25, and average
+their weights.  This will be the predicted weight for the new person.
+The value $k$ is a hyperparameter.
+
+While k-NN is very useful in RS, its application is a bit less
+straightforward than in that height-weight-age example.  Let's see why.
+
+Recall that in Section \ref{lincollab}, we found that predicting rating
+from just user and item IDs did not work well.  The IDs needed to be
+converted to dummy variables, resulting in a large number of features $p$
+and possible overfitting.  If we instead predicted from the embeddings
+user and item mean ratings, we get better accuracy.
+
+The same large-$p$ problem occurs if we try to use k-NN to predict
+rating from user and item IDs.  Again, using the embeddings is a better
+bet:
+
+\begin{lstlisting}
+> qeKNN(ml100kpluscovs[,c('rating','userMean','itemMean')],'rating')$testAcc
+holdout set has  1000 rows
+[1] 0.75036
+\end{lstlisting}
+
+\subsection{K-NN in RS Has Special Issues}
+
+There are also problems with using k-NN just on the IDs.  Think of what
+happens in the process of finding neighbors.  To predict the rating
+that, say, User 12 would give Item 88, we would first look at that
+user's vector of dummy variables (1 for rated, 0 for not).  The closest
+rows to this user will have rated mostly the same items as this user.
+That may be worth something, but it would be better if we could compare
+the ratings themselves:  Among the items that User 12 has rated, which
+rows (a) have ratings for the same items, and (b) having ratings similar
+to those of User 12 for those items?
+
+\subsection{Implementation in rectools}
+
+The relevant functions are \textbf{formUserData()} and
+\textbf{predict.usrData()}.  True to its name, the latter does do
+prediction.  The former works on the training set, but in a very
+different way from what we've seen so far.
+
+For instance, our first step with the MovieLens data would be:
+
+\begin{lstlisting}a
+> class(udata)
+[1] "usrData"
+> udata[[88]]
+$userID
+[1] "88"
+
+$itms
+ [1]  261  286  300  301  302  308  311  313  315  319  321  326  354  690  750
+[16]  880  881  886  898  904 1191
+
+$ratings
+ 261  286  300  301  302  308  311  313  315  319  321  326  354  690  750  880 
+   5    5    3    4    3    4    5    3    4    3    1    5    5    4    2    3 
+ 881  886  898  904 1191 
+   5    5    4    5    5 
+
+attr(,"class")
+[1] "usrDatum"
+\end{lstlisting}
+
+So, \textbf{formUserData()} returns an object of class
+\textbf{'usrData'}, which is an R list.  Each element of the list
+represents the data on one user; we see that user 88, for instance, has
+rated movies 261, 286, 300 and so on, and with ratings 5, 5, 3 etc.
+ 
+This allows an efficient structure for searching for neighbors of a user
+for whom we wish to form a prediction.  The latter operation is then
+performed using the second function:
+
+\begin{lstlisting}
+# predict the rating that User 12 would give to Item 15, using k = 8
+> predict.usrData(udata,udata[[12]],15,8) 
+[1] 4.125
+\end{lstlisting}
+
+\subsection{Not Really a Distance}
+
+In many ML algorithms, the ``distance'' computed between two objects 
+does not use the ordinary Euclidean metric.  In fact, it's not a metric,
+but rather a ``similarity.''
+
+The similarity between two rows $u$ and $v$ in the ratings matrix
+is defined by
+
+\begin{equation}
+\frac{u'v}{||u||_2 ~ ||v||_2}
+\end{equation}
+
+In two or three dimensions, this actually is the cosine between the two
+vectors.  Note too that if $u$ and $v$ were centered, i.e. had their
+means subtracted, this would be the definition of correlation.  In other
+words, two users are considered similar to each other if their ratings
+are highly correlated.  That makes this similar measure intuitively
+reasonable, though only if they had similar means to begin with.  If,
+say, $v = 2u$, their similarity would have the maximum value, +1, yet we
+would want to scale $v$ down if we wish to predict $u$ from it.
+
 
