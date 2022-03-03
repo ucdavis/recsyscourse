@@ -774,6 +774,10 @@ over all $n \times m$ matrices $Q$ having rank $r$.
 
 \end{itemize} 
 
+Note that ALS is not guaranteed to converge.  It is simply a heuristic,
+\textit{ad hoc} method.  But it has been found to work well, and
+is quite popular.
+
 \subsection{Back to RS}
 
 Since $D$ is a diagonal matrix with nonnegative diagonal entries, it has
@@ -1287,7 +1291,7 @@ in (\ref{hfromw}), it turns out (details not shown) that the $w$ factor
 ``cancel,'' giving us
 
 \begin{equation}
-(h_{i+1})_{\cdot j} = w_i^{+-} A_{\cdot j}
+(h_{i+1})_{\cdot j} = w_i^{+} A_{\cdot j}
 \end{equation}
 
 where for any matrix $Q$, the notation $Q^{+}$ means the generalized
@@ -1295,7 +1299,7 @@ inverse of $q$.
 
 The R function \textbf{MASS::ginv()} does generalized inverse.  The
 body of the iterative loop then, will look something like this (for the
-matrix \lstinline{m} to be factord):
+matrix \lstinline{m} to be factored):
 
 \begin{lstlisting}
       gw <- ginv(w)
@@ -1323,6 +1327,10 @@ But we can easily adapt to that.  Roughly speaking, in
 \item replace $w_0$ by the corresponding rows of $w_0$
 
 \end{itemize} 
+
+Note that $w_0$ will still have the same number of columns as before,
+and thus there is no problem with conformability in multiplying
+$h_{.j}$.
 
 Then proceed as before.  
 
