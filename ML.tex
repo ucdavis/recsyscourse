@@ -48,7 +48,7 @@ holdout set has  1000 rows
 
 There are also problems with using k-NN just on the IDs.  Think of what
 happens in the process of finding neighbors.  To predict the rating
-that, say, User 12 would give Item 88, we would first look at that
+that, say, User 12 would give Item 88, we would first look at that 
 user's vector of dummy variables (1 for rated, 0 for not).  The closest
 rows to this user will have rated mostly the same items as this user.
 That may be worth something, but it would be better if we could compare
@@ -102,6 +102,32 @@ performed using the second function:
 [1] 3.625
 \end{lstlisting}
 
+\subsection{Assesment of Predictive Ability}
+
+Note that, unlike the case for other methods, we do not need to split
+into training and test sets.  Recall that such a split is needed in
+general to avoid having the same data used for both model fitting and
+prediction.  With k-NN, though, as long as we don't treat a data point
+as its own ``neighbor,'' it is fine.
+
+Here is an assessment of k-NN for the MovieLens data:
+
+\begin{lstlisting}
+
+> predOneRow
+function(rw)
+{
+   user <- rw[1]
+   item <- rw[2]
+   predict.usrData(udata,udata[[user]],item,5)
+}
+> preds <- apply(mvl[,-3],1,predOneRow)
+> mean(abs(mvl[,3] - preds))
+[1] 0.5706778
+
+\end{lstlisting}
+
+
 \subsection{Not Really a Distance}
 
 In many ML algorithms, the ``distance'' computed between two objects 
@@ -124,4 +150,139 @@ reasonable, though only if they had similar means to begin with.  If,
 say, $v = 2u$, their similarity would have the maximum value, +1, yet we
 would want to scale $v$ down if we wish to predict $u$ from it.
 
+\section{Random Forests}
 
+Credit for the invention of random forests is generally given to the
+famous statistician Leo Breiman, but actually the earliest proposal
+seems to have been by Tin Kam Ho.  She called the method \textit{random
+decision forests}.  What is this concept about?
+
+We first must discuss individual ``trees
+
+\subsection{Decision Trees}
+
+Many have worked in the area of decision trees, which are essentially
+flow charts.  As an example, here is an example from the \textbf{party}
+package, run on the dataset \textbf{airquality} built in to R.
+
+\begin{lstlisting}
+> head(airquality)
+  Ozone Solar.R Wind Temp Month Day
+1    41     190  7.4   67     5   1
+2    36     118  8.0   72     5   2
+3    12     149 12.6   74     5   3
+4    18     313 11.5   62     5   4
+5    NA      NA 14.3   56     5   5
+6    28      NA 14.9   66     5   6
+\end{lstlisting}
+
+We are predicting \textbf{Ozone}.  Here is the tree that is produced:
+
+\includegraphics[width=4.5in]{AirQCTree.pdf}
+
+To predict \textbf{Ozone} level on a particular day, we start at the
+root of the tree, looking at \textbf{Temp}.  If it is less than 82, we
+next go left, otherwise to the right.  In the latter case, we next look
+at \textbf{Wind}.  Say it's greater than 10.3.  Then we end up in Node
+8, predicting \textbf{Ozone} to be about 50.  More precise predictions
+are also provided (not shown in the plot).
+
+The final predicted value for a new case is determined as follows:  We
+first note that leaf nodes that each of the data points in the training set
+fall into.  Then for a new case, its predicted value is the average of
+all the \textbf{Ozone} values for the training set data points in the
+node in which the new case falls.
+
+There are various hyperparameters.  For instance, note that here Node 6
+has only 2 training set data points.  Taking an average of a sample of 2
+numbers is not going to be very accurate.  So the software gives the
+user the option of specifying a minimum number of points in each node.
+If we were to increase that here, we would probably have fewer levels in
+the tree.  We can also specify that number.  Of course, this dataset is
+very small, only 153 rows, so there is not much room for trying
+different hyperparameter values.
+
+There is also the issue of criteria to use in splitting a node.  Here we
+did split Node 2 but left Node 7 intact; the edges coming out of the
+latter node lead directly to leaf nodes.  Splitting criteria tend to be
+complex; we will not pursue that point here.
+
+\subsection{Sets of Many Trees}
+
+
+\noindent
+\begin{quote}
+{\it
+For want of a nail, a horse was lost \\
+For want of a horse, the battle was lost \\
+For want of the battle, the war was lost
+} --- old proverb
+\end{quote}
+
+In the tree shown above, look at the output of Node 7.  Depending on
+whether \textbf{Wind}is below or above 10.3, we get very different
+predictions.  If wind speed is, say, 10.28, very close to the threshold,
+we may be wary, especially since the wind speed itself may not be
+measured very accurately.
+
+To overcome problems arising from this discrete nature of decision
+trees, we generate many of them, randomizing the order in which we make
+nodes from the features, thus creating \textit{random forests}.
+
+To predict a new case, we run it through each tree, thus generating a
+predicting value from each tree.  Those values are then averaged to
+determine the final predicted \textbf{Ozone} level.
+
+The number of trees to generate is---you guessed it!--yet another
+hyperparameter.
+
+\subsection{Example:  Baseball Data}
+
+Recall our data on major league baseball players:
+
+\begin{lstlisting}
+> library(regtools)
+> data(mlb)
+> mlb <- mlb[,3:6]
+> head(mlb)
+        Position Height Weight   Age
+1        Catcher     74    180 22.99
+2        Catcher     74    215 34.69
+3        Catcher     72    210 30.78
+4  First_Baseman     72    210 35.43
+5  First_Baseman     73    188 35.71
+6 Second_Baseman     69    176 29.39
+\end{lstlisting}
+
+Let's try predicting \textbf{Weight}:
+
+\begin{lstlisting} > qeRF(mlb,'Weight')$testAcc
+[1] 14.43367
+\end{lstlisting}
+
+On average, our prediction is off by about 14 pounds, about the same
+accuracy as we got with a linear model.  Let's try a minimum node size
+of 25, instead of the default 10:
+
+\begin{lstlisting}
+> qeRF(mlb,'Weight',minNodeSize=25)$testAcc
+[1] 13.10866
+\end{lstlisting}
+
+Seems better, though we should use \textbf{replicMeans()} etc.
+
+\subsection{Example:  MovieLens}
+
+In collaborative filtering contexts, most ML methods encounter the 
+problem cited earlier if we predict rating from user and item IDs---too 
+many dummy variables.  But once again, we can use embeddings.  We'll try
+\textbf{grf}, a faster, more advanced implementation:
+
+\begin{lstlisting}
+> mluimeans <- ml100kpluscovs[,c('rating','userMean','itemMean')]
+> qeRFgrf(mluimeans,'rating')$testAcc
+[1] 0.7319664
+\end{lstlisting}
+
+This is about the same as we obtained with a linear model, not as good
+as k-NN, though again there are hyperparameters to vary.
