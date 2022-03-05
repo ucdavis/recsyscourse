@@ -150,12 +150,19 @@ reasonable, though only if they had similar means to begin with.  If,
 say, $v = 2u$, their similarity would have the maximum value, +1, yet we
 would want to scale $v$ down if we wish to predict $u$ from it.
 
-\section{Random Forests}
+\section{Decision Trees and Random Forests}
 
-Credit for the invention of random forests is generally given to the
-famous statistician Leo Breiman, but actually the earliest proposal
-seems to have been by Tin Kam Ho.  She called the method \textit{random
-decision forests}.  What is this concept about?
+\textit{A decision tree} is a set of prediction rules formed in a flow
+chart.  (Example below.)  The idea was developed by many, but first
+became popular with the algorithm Classicification and Regression Trees
+(CART), by famous statistician Leo Breiman, Jerry Friedman, Richard
+Olshen and Chuck Stone.  (Stone's theoretical work on k-NN also helped
+to popularize that method.)
+
+Credit for the invention of random forests is generally given to
+Breiman, but actually the earliest proposal seems to have been by Tin
+Kam Ho.  She called the method \textit{random decision forests}.  What
+is all this about?
 
 We first must discuss individual ``trees
 
@@ -163,7 +170,9 @@ We first must discuss individual ``trees
 
 Many have worked in the area of decision trees, which are essentially
 flow charts.  As an example, here is an example from the \textbf{party}
-package, run on the dataset \textbf{airquality} built in to R.
+package,\footnote{A pun on the word ``partitioning''; a tree
+partitions the dataset.} run on the dataset \textbf{airquality} built in
+to R.
 
 \begin{lstlisting}
 > head(airquality)
@@ -176,7 +185,8 @@ package, run on the dataset \textbf{airquality} built in to R.
 6    28      NA 14.9   66     5   6
 \end{lstlisting}
 
-We are predicting \textbf{Ozone}.  Here is the tree that is produced:
+We are predicting \textbf{Ozone}.  Here is the tree that is produced
+(picture from the \textbf{party} package's \textbf{plot()} function):
 
 \includegraphics[width=4.5in]{AirQCTree.pdf}
 
@@ -202,13 +212,29 @@ the tree.  We can also specify that number.  Of course, this dataset is
 very small, only 153 rows, so there is not much room for trying
 different hyperparameter values.
 
-There is also the issue of criteria to use in splitting a node.  Here we
-did split Node 2 but left Node 7 intact; the edges coming out of the
-latter node lead directly to leaf nodes.  Splitting criteria tend to be
-complex; we will not pursue that point here.
+\subsection{Splitting Criteria}
+
+So, how is the tree derived?  We start with all the training data in the
+root node.  We then decide whether to split the node, using our first
+feature, \textbf{Temp} in the above example.  If we do split it, we now
+have three nodes, and decide whether to split them.  This is then
+continued recursively until no more splits are done.
+
+What criteria should we use to decided whether to split a node?
+Splitting criteria tend to be complex, and different implementations of
+decision trees and random forests use different criteria.
+
+In the \textbf{party} package, a hypothesis testing approach is used.
+It considers all possible split points, such as 82 in the example.  For
+each split point, we tentatively split into two groups,  We then do a
+hypothesis test for mean ``Y'' (ozone here) being the same in the two
+groups.  We look at the smallest p-value coming from the various splits;
+if it is below our specified threshold (another hyperparameter), we do
+that split.  If no p-value is below our threshold, we do not split.
+So, in the picture above, Nodes 8 and 9 were not split, and became leaf
+nodes.
 
 \subsection{Sets of Many Trees}
-
 
 \noindent
 \begin{quote}
@@ -220,7 +246,7 @@ For want of the battle, the war was lost
 \end{quote}
 
 In the tree shown above, look at the output of Node 7.  Depending on
-whether \textbf{Wind}is below or above 10.3, we get very different
+whether \textbf{Wind} is below or above 10.3, we get very different
 predictions.  If wind speed is, say, 10.28, very close to the threshold,
 we may be wary, especially since the wind speed itself may not be
 measured very accurately.
@@ -286,3 +312,5 @@ many dummy variables.  But once again, we can use embeddings.  We'll try
 
 This is about the same as we obtained with a linear model, not as good
 as k-NN, though again there are hyperparameters to vary.
+
+\section{Gradient Boosting}
