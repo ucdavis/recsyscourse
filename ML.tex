@@ -220,7 +220,7 @@ feature, \textbf{Temp} in the above example.  If we do split it, we now
 have three nodes, and decide whether to split them.  This is then
 continued recursively until no more splits are done.
 
-What criteria should we use to decided whether to split a node?
+What criteria should we use to decide whether to split a node?
 Splitting criteria tend to be complex, and different implementations of
 decision trees and random forests use different criteria.
 
@@ -287,15 +287,16 @@ Let's try predicting \textbf{Weight}:
 \end{lstlisting}
 
 On average, our prediction is off by about 14 pounds, about the same
-accuracy as we got with a linear model.  Let's try a minimum node size
-of 25, instead of the default 10:
+accuracy as we got with a linear model in Section \ref{firstqelin}.
+Let's try a minimum node size of 25, instead of the default 10:
 
 \begin{lstlisting}
 > qeRF(mlb,'Weight',minNodeSize=25)$testAcc
 [1] 13.10866
 \end{lstlisting}
 
-Seems better, though we should use \textbf{replicMeans()} etc.
+Seems better, though we should use \textbf{replicMeans()}, try other
+hyperparameter combinations, and so on.
 
 \subsection{Example:  MovieLens}
 
