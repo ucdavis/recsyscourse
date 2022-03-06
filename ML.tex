@@ -314,4 +314,108 @@ many dummy variables.  But once again, we can use embeddings.  We'll try
 This is about the same as we obtained with a linear model, not as good
 as k-NN, though again there are hyperparameters to vary.
 
-\section{Gradient Boosting}
+\section{Gradient Boosting:  Repeatedly Tweaking a Tree}
+
+\textit{Boosting} methods, of which \textit{gradient boosting} is one
+type, are sometimes described as ``Making a strong learner as the
+sum of weak learners.''  I am not a fan of that interpretation, but it
+will become clear as we go through the details.
+
+\subsection{Basic Idea}
+
+The idea of \textit{gradient boosting} is extremely simple: 
+
+\begin{itemize}
+
+\item [(a)]  Fit a tree to the data.
+
+\item [(b)]  Find the prediction errors, the \textit{residuals,}
+for that tree (on the same data,).
+
+\item [(c)]  Fit a tree to the residuals, producing \textit{new}
+residuals.
+
+\item [(d)]  Go to step (b).
+
+\end{itemize} 
+
+One keeps up this process until one acquires a desired number of trees
+(a hyperparameter).  
+
+To predict a new case, use its features to get a predicted value for
+each tree.  Then since the first tree was fitted to the $Y_i$, and the
+others were fitted to the residuals, the residuals of residuals and so
+on, then \textit{our overall predicted value for the new case is the sum
+of the predicted values from the individual trees}.
+
+% \begin{itemize}
+% 
+% \item [1.]  Using our features, fit a tree to our $Y$ data,
+% $Y_1, Y_2,...,Y_n$.  Name this tree $T_0$, and 
+% let $Y_i^{0}$ denote the values predicted by this 
+% tree,  $i = 1,2,...,n$.
+% 
+% \item [2.]  Look at the \textit{residuals}, the prediction errors,
+% 
+% \begin{equation}
+% R_i^{(0)}
+% \end{equation}
+% 
+% \end{itemize} 
+
+\subsection{Role of the Gradient}
+
+At each step, we try to fit the optimal tree, minimizing Mean
+Squared Prediction Error.  To do so, we could set the derivative (in $p$ 
+dimensions, the \textit{gradient}), to 0.  But with the MSPE objective
+function, the partial derivative with respect to data point $i$
+is essentially the residual $i$.  So, in Step (c) above, we are
+essentially fit a tree to the gradient values at each data point.
+
+\subsection{The Learning Rte}
+
+One typically sets a learning rate $\alpha$ (another hyperparameter).
+So, each time a new tree is generated, instead of adding its residuals
+to our running total, we only add $\alpha$ times those residuals.  
+
+Note that this has the effect that the residuals in tree $i$ will have
+an impact of only $\alpha^i$ of the first set of residuals.  This sets
+up convergence of the overall tree.  The larger $\alpha$ is, the faster
+the convergence---but at a risk of converging to the wrong value, a
+local rather than global minimum.  Of course, this is the usual tradeoff
+of learning rates.
+
+\subsection{Variants}
+
+The above description is for tree-based gradient boosting, with
+MSPE is the loss function.  Of course there are many other
+possibilities, though this one is probably the most common..
+
+\subsection{Rec Sys Example}
+
+Gradient boosting gives us similar values to the other (non-k-NN)
+methods on the MovieLens data:
+
+\begin{lstlisting}
+> qeGBoost(ml100kpluscovs[,c('rating','userMean','itemMean')],'rating')$testAcc
+[1] 0.7389659
+\end{lstlisting}
+
+\section{Machine Learning Rumors and Folklore}
+
+There is rather little theory to support most of these methods,
+especially SVM and neural networks.  So a lot of what is ``known'' is of
+the ``I tried such-and-such on my data and it seemed to work well.
+
+If such statements come from a prominent person, they become treated as
+``fact.''  Needless to say, such proclamations should be ``taken with a
+grain of salt.''
+
+Currently one of the most common ``facts'' is:
+
+\begin{quote}
+
+For tabular data, use gradient boosting.  For image or text
+classification, use convolutional neural networks.
+\end{quote}
+
