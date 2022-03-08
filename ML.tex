@@ -282,7 +282,8 @@ Recall our data on major league baseball players:
 
 Let's try predicting \textbf{Weight}:
 
-\begin{lstlisting} > qeRF(mlb,'Weight')$testAcc
+\begin{lstlisting} 
+> qeRF(mlb,'Weight')$testAcc
 [1] 14.43367
 \end{lstlisting}
 
@@ -372,7 +373,7 @@ function, the partial derivative with respect to data point $i$
 is essentially the residual $i$.  So, in Step (c) above, we are
 essentially fit a tree to the gradient values at each data point.
 
-\subsection{The Learning Rte}
+\subsection{The Learning Rate}
 
 One typically sets a learning rate $\alpha$ (another hyperparameter).
 So, each time a new tree is generated, instead of adding its residuals
@@ -401,6 +402,180 @@ methods on the MovieLens data:
 [1] 0.7389659
 \end{lstlisting}
 
+\section{Support Vector Machines}
+
+SVM is used primarily for the cases of binary or categorical $Y$.
+Consider the binary case, $Y = 1,0$ (coding Has Disease, Does Not have
+Disease).  
+
+\subsection{Overview}
+
+Here is a summary, for given training data, $p$ predictor
+variables/features (e.g.\  $p = 2$ with features Blood Pressure and
+Glucose):
+
+\begin{itemize}
+
+\item We try to find a straight line ($p = 2$ case), a plane ($p = 3$)
+or a hyperplane ($p > 3$) that fully separates our training points
+having $Y = 1$ from those having $Y = 0$.  This can be shown to be
+equivalent to minimizing a sum of a loss function (more complicated than
+squared-error loss, not shown here).
+
+\item If we find such a line/plane/hyperplane, then for any new case, we
+simply determine which side of the line/plane/hyperplane the new point
+falls on, and predict the $Y$ for the new point accordingly
+
+\item If we can't find a fully separating line/plane/hyperplane, we do
+one or both of the following:
+
+   \begin{itemize}
+
+   \item Apply a tranformation to the features, e.g.\ running them
+   through a polynomial, in the hope that the tranformed data can be
+   cleanly separated by $Y$ class, with some line/plane/hyperplane.  The
+   degree of the polynomial is a hyperparameter.
+
+   \item In minimizing the summed loss, allow some exceptions to cleanly
+   separating the two classes, with each exceptional point penalizing us
+   with a cost $C$, again a hyperparameter.
+   
+   \end{itemize} 
+
+\end{itemize} 
+
+If $Y$ has more than two categories, we use the One vs.\ All or All vs.\
+All method.
+
+\subsection{Example:  Anderson Iris Data}
+
+This is a very famous dataset, built into R and used as an example in
+numerous textbooks, was compiled by Edgar Anderson and later popularized
+by Sir Ronald Fisher, a pioneering statistician.\footnote{A few years
+ago, Fisher was ``canceled'' by some social activists, who wanted other
+data to be used an example, rather than use his name.  But the data
+should be named after Anderson anwyay.} There are three classes,
+\textit{setosa}, \textit{versicolor} and \textit{virginica}.  It turns
+out that the setosa data points are linearly separable from the other
+two classes, so this is a good place to start.  Thus, our two classes
+will be setosa and non-setosa.  As before, in order to graph things in
+two dimensions, let's use only two of the features, sepal width and
+petal length:
+
+Let's take a look:
+
+\begin{lstlisting}
+> i2 <- iris[,c(2,3,5)]
+> i2[,3] <- as.integer(i2[,3] == 'setosa')
+> head(i2)
+  Sepal.Width Petal.Length Species
+1         3.5          1.4       1
+2         3.0          1.4       1
+3         3.2          1.3       1
+4         3.1          1.5       1
+5         3.6          1.4       1
+6         3.9          1.7       1
+> plot(i2[,1:2],pch=3*i2[,3],xlim=c(0,7),ylim=c(0,7))
+\end{lstlisting}
+
+\includegraphics[width=3in]{IrisOrigNew.png}
+
+Clearly the data are linearly separable --- we can draw a straight line
+completely separating the setosas (pluses) from the non-setosas
+(squares).  In fact, we can draw lots and lots of such lines.
+
+Which line should we use?  One can show that if we draw the convex hull
+of the $Y = 1$ data, and one for the $Y = 0$ data, minimal loss line is
+the perpendicular bisector between the closest points of the two sets.
+
+\includegraphics[width=3in]{IrisConvNew.png}
+
+The actual computation for the separating line/plane/hyperplane does not
+use this convex hull property, but it gives us an intutive view.
+
+\subsection{Example:  House Voting Data}
+
+\begin{lstlisting}
+
+>  hv <- getHouseVoting()
+>  hv <- hv[,-17]
+>  hvsyn <- toUserItemRatings(hv)
+>  ums <- tapply(hvsyn$ratings,hvsyn$userID,mean)
+>  hvsyn$uMean <- ums[hvsyn$userID]
+>  ims <- tapply(hvsyn$ratings,hvsyn$itemID,mean)
+>  hvsyn$iMean <- ims[hvsyn$itemID]
+>  hvsyn$ratings <- as.factor(hvsyn$ratings)
+>  z <- qeSVM(hvsyn[,3:5],'ratings')
+> z$testAcc
+[1] 0.3963415
+> z$baseAcc
+[1] 0.4807172
+\end{lstlisting}
+
+Using the user and item mean embeddings worked pretty well.  (Here and
+below, again keep in mind that we should use \textbf{replicMeans()}, try
+different hyperparameter values and so on.)
+
+But a logit model worked just as well, if not better:
+
+\begin{lstlisting}
+
+> z <- qeLogit(hvsyn[,3:5],'ratings')
+> z$testAcc
+[1] 0.3704268
+
+\end{lstlisting}
+
+By the way, would it help to add in the party?  After adding it:
+
+\begin{lstlisting}
+
+>    qeSVM(hvsyn[,3:6],'ratings')$testAcc
+[1] 0.3734756
+>    qeLogit(hvsyn[,3:6],'ratings')$testAcc
+[1] 0.4192073
+\end{lstlisting}
+
+No, it doesn't seem to help, maybe even hurting.  The underlying cause is
+likely that, once we know the politician's voting record, even with an
+NA or two, we have a good idea of what her party is.  The actual party
+status is then redundant, maybe even overfitting.
+
+\subsection{Predicted Probabilities}
+
+One drawback of SVM is that the model does not inherently provide
+probabilities.  For instance, recall our vertebral disease dataset
+(Section \ref{vertdisease}).  There \textbf{qeLogit()} not only
+predicted the disease state of a patient, DH, NO or SL, but also
+provided the probabilities of each state.  
+
+The logit model gives us these probabilities; the model itself is
+defined in terms of them.  Tree models can do so too:  Find the leaf
+node that the new case falls into, then look at the proportions of the
+various $Y$ classes in this node---they are then our estimated
+probabilities.
+
+SVM by itself cannot compute probabilities, as all it does is define a
+bounday---predict $Y = 1$ on one side of the boundary, $Y = 0$ on the
+other.  However, one can use \textit{calibration} methods to model such
+probabilities as functions of the new cases \textit{score}, which
+essentially is its distance to the boundary.  So, \textbf{qeSVM()} does
+return the probabilities, not just the predicted classes.
+
+With the House Voting data, say:
+
+\begin{lstlisting}
+> w <- qeSVM(hvsyn[,3:5],'ratings')
+> predict(w,hvsyn[1,4:5])  # "predict 1st case, actually known"
+$predClasses
+[1] "0"
+
+$probs
+          0         1
+2 0.5051594 0.4948406
+
+\end{lstlisting}
+
 \section{Machine Learning Rumors and Folklore}
 
 There is rather little theory to support most of these methods,
@@ -417,5 +592,8 @@ Currently one of the most common ``facts'' is:
 
 For tabular data, use gradient boosting.  For image or text
 classification, use convolutional neural networks.
+
 \end{quote}
+
+
 
