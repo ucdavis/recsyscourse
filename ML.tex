@@ -486,12 +486,21 @@ completely separating the setosas (pluses) from the non-setosas
 
 Which line should we use?  One can show that if we draw the convex hull
 of the $Y = 1$ data, and one for the $Y = 0$ data, minimal loss line is
-the perpendicular bisector between the closest points of the two sets.
+the perpendicular bisector between the closest points of the two sets:
 
 \includegraphics[width=3in]{IrisConvNew.png}
 
 The actual computation for the separating line/plane/hyperplane does not
 use this convex hull property, but it gives us an intutive view.
+
+Note that there are two other lines in the above figure, parallel to the
+boundary line midway between the two convex hulls.  They define a ``no
+man's land'' in which there are no data points; that region is called
+the \textit{margin}.  The data points that barely touch the margin are
+the \textit{support vectors}; here, there is one support vector in the
+``squares'' data and there are two in the ``pluses'' data.
+
+The boundary is defined to be the one that has the widest margin.
 
 \subsection{Example:  House Voting Data}
 
@@ -576,6 +585,163 @@ $probs
 
 \end{lstlisting}
 
+\section{Neural Networks}
+
+Let's start with an example, predicting weight from height and age in
+the \textbf{mlb} data.  Here we are using the \textbf{neuralnet}
+package, a rather basic implementation but with nice plots:
+
+\begin{lstlisting}
+z <- neuralnet(Weight ~ .,data=mlb,hidden=2) 
+plot(z) 
+\end{lstlisting}
+
+\includegraphics[width=5.5in]{MLBnn.pdf}
+
+We have two \textit{hidden} layers here, represented by columns of
+nodes, represented by circles.  Going from left to right, top to bottom,
+let's speak of the node row $i$, column $j$ 
+
+Each node finds some linear combination of its inputs, with the
+``$\beta$'' values---\textit{weights}---shown on the edges emanating to
+the right from the node.  So, for example, node (1,1) outputs 0.59 times
+height to node (1,2), and 0.53 to node (2,2).  The constant terms
+(recall, often termed \textit{biases}) are the ones coming from the top,
+with nodes labeled ``1.''
+
+Each node is known as a \textit{neuron}.  Typically networks in practice
+are far larger than what we see above, say hundreds of neurons per
+layer, and dozens of layers.  The number of layers, and the number of
+neurons per layer, are hyperparameters.
+
+The weights are computed by minimizing the sum of squared prediction
+errors, as in the linear model.  But there is one point we haven't
+mentioned yet:  \textit{activation functions}.  
+
+If things were exactly as above, each layer would be computing linear
+combinations of previous layers.  So, in moving to the right, we would
+be computing linear combinations of linear combinations...of linear
+combinations of height and age---which are still linear combinations of
+height and age!  In other words, we would have the ordinary linear
+model.  
+
+Instead, the outputs of a given layer are fed through a nonlinear
+function, so the logistic $f(t) = 1/(1+\exp({-t}))$, to induce nonlinear
+modeling capability.\footnote{Note that this is just for the purpose of
+allowing nonlinearity; we are \textit{not} fitting a logistic regression
+model.}  The activtion function used here is the default, the logistic,
+though many if not most analysts prefer $ReLU(t) = \max(0,t)$.  The
+activation function is a hyperparameter.
+
+Of course, nonlinearity means that the sum of squares is now nonlinear,
+and iterative methods must be used to determine the optimal weights.
+Neural networks are notorious for having convergence problems, and
+various techniques are used to try to avoid that, such as choosing a
+learning rate, a hyperparameter.  Another hyperparameter is the number
+of iterations (\textit{epochs}.
+
+There is a severe risk of overfitting.  Even in the simple example
+above, we have 6 weights for only two input features.  There are various
+ways to try to counter this, notably shrinkage similar to the LASSO and
+\textit{dropout}---randomly setting a certain proportion of the weights
+to 0.  The proportion is yet another hyperparameter.
+
+In prediction, the next case is fed through the various layers, subject
+to the weights found in the training set.
+
+\begin{lstlisting}
+> compute(z,data.frame(Height=70,Age=25))
+$neurons
+$neurons[[1]]
+       Height Age
+[1,] 1     70  25
+
+$neurons[[2]]
+     [,1] [,2] [,3]
+[1,]    1    1    1
+
+
+$net.result
+         [,1]
+[1,] 201.3488
+\end{lstlisting}
+
+We predict this player's weight to be 201.35 pounds.
+
+\subsection{Example:  MovieLens}
+
+\begin{lstlisting}
+> m1 <- ml100kpluscovs[,c('rating','userMean','itemMean')]
+> z <- qeNeural(m1,'rating')
+Loading required package: keras
+holdout set has  1000 rows
+2022-03-08 16:52:52.589474: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /usr/local/lib/R/lib:/usr/local/lib:/usr/lib/jvm/java-14-openjdk-amd64/lib/server:/usr/local/lib
+...
+...
+Epoch 29/30
+619/619 [==============================] - 1s 1ms/step - loss: 0.0541 - mae: 0.1840
+619/619 [==============================] - 1s 1ms/step - loss: 0.0541 - mae: 0.1840 - val_loss: 0.0577 - val_mae: 0.1943
+Epoch 30/30
+619/619 [==============================] - 1s 1ms/step - loss: 0.0541 - mae: 0.1842
+619/619 [==============================] - 1s 1ms/step - loss: 0.0541 - mae: 0.1842 - val_loss: 0.0559 - val_mae: 0.1901
+\end{lstlisting}
+
+Most ardent advocates of neural networks are Python users, and they have
+developed very elaborate Python packages.  Our \textbf{qeNeural()}
+function uses the R package \textbf{keras}, which is an interface to the
+Python package of the same name, which in turn is an interface to a
+Python library, \textbf{tensorflow}.
+
+So, after all that commotion, how did we do?
+
+\begin{lstlisting}
+> z$testAcc
+[1] 0.7340965
+\end{lstlisting}
+
+Of course, we could try playing with various hyperparameters, but at
+least here, neural networks had about the same performance as all our
+other methods, with the interesting exception of k-NN.
+
+\subsection{View as Polynomial Regression}
+
+Suppose we were to use $f(t) = t^2$ as our activation function.
+Not a common choice at all, but let's see what would happen.
+
+The output of the first layer would be quadratic combinations of height
+and weight.  Then the output of the second layer would be quadratic
+combinations of the inputs, thus \textit{quartic} (degree 4)
+combinations, and so on.  In other words, the fitted neural network
+would be essentially be polynomial regression.
+
+Now from calculus we know that we can expand common functions, so the
+logistic, in a Taylor series.  Taking a finite number of terms, it
+becomes a polynomial.  And even ReLU, not differentiable, still can be
+approximated by a polynomial.  In other words:
+
+\begin{quote}
+Neural networks would seem to be approximately doing polynomial
+regression.
+\end{quote}
+
+Of course, with all the tricks, e.g.\ dropout, we may be departing from
+that polynomial approximation somewhat, but again we have something to
+guide our intuition.
+
+\subsection{``Black Box'' Nature}
+
+Why do neural networks work (when indeed they do)?  And in particular,
+how do they get away with overfitting?  No one knows, and this fact
+bothers many analysts.  Current research, especially on \textit{double
+decent}, is attempting to find answers.
+
+\section{Hybrid Approaches to Recommender Systems}
+
+A number of methods have been developed in which one first applied a
+non-NN method for collaborative filtering, and then treats the output as
+an embedding, feeding it into a neural network.  Some are claimed to
+work quite well, but they are beyond the scope of this book.
+
 \section{Machine Learning Rumors and Folklore}
 
 There is rather little theory to support most of these methods,
@@ -595,5 +761,14 @@ classification, use convolutional neural networks.
 
 \end{quote}
 
+There is a grain of truth to such claims, but they are exaggerated, and
+greatly oversimplify the situation.
 
+Also:  Note that when NNs are applied to images, they have a special
+pre-processing \textit{convolutional} layer, which is the ``secret
+sauce.'' Presumaby one could do well with images using a convolutional
+front end and, say, a gradient boosting back end.  In fact, some
+research has shown success with an SVM back end.  In other words, there
+is nothing inherently appropriate of NNs themselves for images.  Similar
+statements could be made for text.
 
